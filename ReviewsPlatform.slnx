@@ -1,1 +1,8 @@
-<Solution />
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/microservices/" />
+  <Folder Name="/src/microservices/account/">
+    <Project Path="src/microservices/account/AccountMicroservice.Api/AccountMicroservice.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+</Solution>
