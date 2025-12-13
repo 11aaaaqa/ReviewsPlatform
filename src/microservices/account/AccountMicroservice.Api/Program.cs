@@ -1,4 +1,17 @@
+using AccountMicroservice.Api.Database;
+using AccountMicroservice.Api.Services.Password_services;
+using AccountMicroservice.Api.Services.Token_services;
+using AccountMicroservice.Api.Services.User_services;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<ApplicationDbContext>(x => 
+    x.UseNpgsql(builder.Configuration["Database:ConnectionString"]));
+
+builder.Services.AddTransient<IPasswordService, PasswordService>();
+builder.Services.AddTransient<IUserService, UserService>();
+builder.Services.AddTransient<ITokenService, TokenService>();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
