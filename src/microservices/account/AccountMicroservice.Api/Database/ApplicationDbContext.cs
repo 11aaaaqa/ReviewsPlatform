@@ -1,4 +1,4 @@
-﻿using AccountMicroservice.Api.Models;
+﻿using AccountMicroservice.Api.Models.Business;
 using Microsoft.EntityFrameworkCore;
 
 namespace AccountMicroservice.Api.Database
