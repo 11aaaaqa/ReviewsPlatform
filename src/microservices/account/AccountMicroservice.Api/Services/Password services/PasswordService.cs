@@ -16,7 +16,7 @@ namespace AccountMicroservice.Api.Services.Password_services
             return new FormatHashResult{PasswordHash = hashResult.PasswordHash, Salt = hashResult.Salt};
         }
 
-        public bool CheckPassword(byte[] originalPasswordHash, string userPassword, byte[] salt)
+        public bool CheckPassword(byte[] originalPasswordHash, byte[] salt, string userPassword)
         {
             var hashResult = Hash(userPassword, salt);
 
