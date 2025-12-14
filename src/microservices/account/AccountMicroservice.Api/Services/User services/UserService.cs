@@ -9,6 +9,9 @@ namespace AccountMicroservice.Api.Services.User_services
         public async Task<User?> GetUserByIdAsync(Guid userId)
             => await context.Users.SingleOrDefaultAsync(x => x.Id == userId);
 
+        public async Task<User?> GetUserByUserNameAsync(string userName)
+            => await context.Users.SingleOrDefaultAsync(x => x.UserName == userName);
+
         public async Task<User?> GetUserByEmailAsync(string email)
             => await context.Users.SingleOrDefaultAsync(x => x.Email == email);
 
