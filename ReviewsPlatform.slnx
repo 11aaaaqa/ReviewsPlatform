@@ -4,5 +4,8 @@
   <Folder Name="/src/microservices/account/">
     <Project Path="src/microservices/account/AccountMicroservice.Api/AccountMicroservice.Api.csproj" />
   </Folder>
+  <Folder Name="/src/mvc/">
+    <Project Path="src/mvc/Web.MVC/Web.MVC.csproj" Id="39c39cf2-87e0-45c4-9151-21646c326053" />
+  </Folder>
   <Folder Name="/tests/" />
 </Solution>
