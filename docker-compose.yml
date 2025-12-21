@@ -1,0 +1,28 @@
+services:
+  account-microservice-api:
+    container_name: account-microservice-api
+    image: ${DOCKER_REGISTRY-}accountmicroservice-api
+    build:
+      context: .
+      dockerfile: src/microservices/account/AccountMicroservice.Api/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - 32167:8080
+    depends_on:
+      - postgres-account
+
+  postgres-account:
+    container_name: postgres-account
+    image: postgres:latest
+    expose:
+      - 5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ReviewsPlatformAccountMicroservice
+    volumes:
+      - postgres-account-data:/var/lib/postgresql
+
+volumes:
+  postgres-account-data: {}  
