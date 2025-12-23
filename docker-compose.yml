@@ -1,4 +1,15 @@
 services:
+  api-gateway:
+    container_name: api-gateway
+    image: ${DOCKER_REGISTRY-}api-gateway
+    build:
+      context: .
+      dockerfile: src/gateway/ApiGateway/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - 22521:8080
+
   account-microservice-api:
     container_name: account-microservice-api
     image: ${DOCKER_REGISTRY-}accountmicroservice-api
@@ -11,6 +22,7 @@ services:
       - 32167:8080
     depends_on:
       - postgres-account
+      - api-gateway
 
   postgres-account:
     container_name: postgres-account
