@@ -1,4 +1,17 @@
 services:
+  web-mvc:
+    container_name: web-mvc
+    image: ${DOCKER_REGISTRY-}web-mvc
+    build:
+      context: .
+      dockerfile: src/mvc/Web.MVC/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - 17429:8080
+    depends_on:
+      - account-microservice-api
+
   api-gateway:
     container_name: api-gateway
     image: ${DOCKER_REGISTRY-}api-gateway
