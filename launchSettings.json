@@ -4,7 +4,8 @@
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
       "serviceActions": {
-        "accountmicroservice.api": "StartDebugging"
+        "accountmicroservice.api": "StartDebugging",
+        "apigateway": "StartDebugging"
       }
     }
   }
