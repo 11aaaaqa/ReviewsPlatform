@@ -5,7 +5,8 @@
       "commandVersion": "1.0",
       "serviceActions": {
         "accountmicroservice.api": "StartDebugging",
-        "apigateway": "StartDebugging"
+        "apigateway": "StartDebugging",
+        "web.mvc": "StartDebugging"
       }
     }
   }
