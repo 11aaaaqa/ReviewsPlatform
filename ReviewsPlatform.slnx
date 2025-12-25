@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/configs/">
+    <File Path="redis.conf" />
+  </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/gateway/">
     <Project Path="src/gateway/ApiGateway/ApiGateway.csproj" Id="3e799f2e-6e86-4576-9420-71302faa391f" />
