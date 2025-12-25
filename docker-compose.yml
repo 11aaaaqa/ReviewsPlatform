@@ -11,6 +11,7 @@ services:
       - 17429:8080
     depends_on:
       - account-microservice-api
+      - redis
 
   api-gateway:
     container_name: api-gateway
@@ -49,5 +50,16 @@ services:
     volumes:
       - postgres-account-data:/var/lib/postgresql
 
+
+  redis:
+    container_name: redis
+    image: redis:latest
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+
 volumes:
-  postgres-account-data: {}  
+  postgres-account-data: {}
+  redis_data: {}
