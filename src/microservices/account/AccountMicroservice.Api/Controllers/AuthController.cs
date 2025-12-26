@@ -1,4 +1,6 @@
 ﻿using System.Security.Claims;
+using System.Text;
+using AccountMicroservice.Api.Constants;
 using AccountMicroservice.Api.DTOs.Auth;
 using AccountMicroservice.Api.Models.Business;
 using AccountMicroservice.Api.Services.Password_services;
@@ -17,6 +19,8 @@ namespace AccountMicroservice.Api.Controllers
         public async Task<IActionResult> RegisterAsync([FromBody] RegisterDto model)
         {
             var hashFormatResult = passwordService.HashPassword(model.Password);
+            string passwordHashStr = Encoding.UTF8.GetString(hashFormatResult.PasswordHash);
+            string passwordSaltStr = Encoding.UTF8.GetString(hashFormatResult.Salt);
 
             try
             {
@@ -26,8 +30,8 @@ namespace AccountMicroservice.Api.Controllers
                     Email = model.Email,
                     UserName = model.UserName,
                     IsEmailVerified = false,
-                    PasswordHash = hashFormatResult.PasswordHash,
-                    PasswordSalt = hashFormatResult.Salt
+                    PasswordHash = passwordHashStr,
+                    PasswordSalt = passwordSaltStr
                 });
             }
             catch (Exception e) //заменить на exception, возникающий при конфликте уникальных индексов
@@ -45,17 +49,23 @@ namespace AccountMicroservice.Api.Controllers
             var user = await userService.GetUserByEmailAsync(model.UserNameOrEmail) 
                        ?? await userService.GetUserByUserNameAsync(model.UserNameOrEmail);
 
-            bool checkPassword = passwordService.CheckPassword(user.PasswordHash, user.PasswordSalt, model.Password);
+            if (user == null)
+                return Unauthorized("User is not exist");
+
+            bool checkPassword = passwordService.CheckPassword(Encoding.UTF8.GetBytes(user.PasswordHash),
+                Encoding.UTF8.GetBytes(user.PasswordSalt), model.Password);
 
             if (!checkPassword)
                 return Unauthorized("Incorrect password");
 
             var claims = new List<Claim>
             {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.UserName),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, user.UserName)
+                new Claim(AdditionalClaimTypes.IsEmailVerified, user.IsEmailVerified.ToString())
             };
-            var token = tokenService.GenerateAccessToken(claims);
+            string token = tokenService.GenerateAccessToken(claims);
 
             user.RefreshToken = tokenService.GenerateRefreshToken();
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMonths(1);
