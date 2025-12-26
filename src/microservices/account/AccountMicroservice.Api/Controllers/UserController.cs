@@ -1,4 +1,5 @@
-﻿using AccountMicroservice.Api.DTOs.User;
+﻿using System.Text;
+using AccountMicroservice.Api.DTOs.User;
 using AccountMicroservice.Api.Services.Password_services;
 using AccountMicroservice.Api.Services.User_services;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +11,7 @@ namespace AccountMicroservice.Api.Controllers
     public class UserController(IUserService userService, IPasswordService passwordService) : ControllerBase
     {
         [HttpGet]
-        [Route("get-user-by-id")]
+        [Route("get-user-by-id/{userId}")]
         public async Task<IActionResult> GetUserByIdAsync(Guid userId)
         {
             var user = await userService.GetUserByIdAsync(userId);
@@ -71,8 +72,8 @@ namespace AccountMicroservice.Api.Controllers
             if (user == null) return NotFound();
             
             var passwordHashFormatResult = passwordService.HashPassword(model.NewPassword);
-            user.PasswordHash = passwordHashFormatResult.PasswordHash;
-            user.PasswordSalt = passwordHashFormatResult.Salt;
+            user.PasswordHash = Encoding.UTF8.GetString(passwordHashFormatResult.PasswordHash);
+            user.PasswordSalt = Encoding.UTF8.GetString(passwordHashFormatResult.Salt);
 
             await userService.UpdateUserAsync(user);
 
