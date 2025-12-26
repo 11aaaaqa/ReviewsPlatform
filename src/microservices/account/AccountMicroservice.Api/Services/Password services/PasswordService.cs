@@ -20,6 +20,9 @@ namespace AccountMicroservice.Api.Services.Password_services
         {
             var hashResult = Hash(userPassword, salt);
 
+            if (originalPasswordHash.Length != hashResult.PasswordHash.Length)
+                return false;
+
             for (int i = 0; i < originalPasswordHash.Length; i++)
             {
                 if (originalPasswordHash[i] != hashResult.PasswordHash[i])
