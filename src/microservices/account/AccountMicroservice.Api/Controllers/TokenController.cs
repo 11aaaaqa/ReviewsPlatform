@@ -9,11 +9,11 @@ namespace AccountMicroservice.Api.Controllers
     [ApiController]
     public class TokenController(IUserService userService, ITokenService tokenService) : ControllerBase
     {
-        [Route("revoke")]
+        [Route("revoke/{userId}")]
         [HttpGet]
-        public async Task<IActionResult> RevokeAsync(string userEmail)
+        public async Task<IActionResult> RevokeAsync(Guid userId)
         {
-            var user = await userService.GetUserByEmailAsync(userEmail);
+            var user = await userService.GetUserByIdAsync(userId);
             if (user == null) return NotFound();
 
             user.RefreshTokenExpiryTime = new DateTime();
