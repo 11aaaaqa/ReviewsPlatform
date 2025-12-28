@@ -9,8 +9,8 @@ namespace AccountMicroservice.Api.Services.User_services.Role_services
         public async Task<List<Role>> GetUserRolesAsync(Guid userId)
             => await context.Users
                 .Where(x => x.Id == userId)
-                .Include(x => x.UserRoles)
-                .SelectMany(x => x.UserRoles)
+                .Include(x => x.Roles)
+                .SelectMany(x => x.Roles)
                 .ToListAsync();
 
         public async Task AddUserToRoleAsync(Guid userId, Guid roleId)
