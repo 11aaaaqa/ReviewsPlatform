@@ -2,7 +2,6 @@
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
-using System.Web;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Web.MVC.Constants;
@@ -31,7 +30,7 @@ namespace Web.MVC.Controllers
 
         [Route("account/signup")]
         [HttpPost]
-        public async Task<IActionResult> Register(RegisterDto model) //risks
+        public async Task<IActionResult> Register(RegisterDto model)
         {
             if (ModelState.IsValid)
             {
@@ -49,10 +48,11 @@ namespace Web.MVC.Controllers
                 }
                 registerResponse.EnsureSuccessStatusCode();
 
-                string encodedEmail = HttpUtility.UrlEncode(model.Email);
-                var generateAccessTokenResponse = await httpClient.GetAsync($"{url}/api/Token/generate?userEmail={encodedEmail}"); //potential risks
-                generateAccessTokenResponse.EnsureSuccessStatusCode();
-                string accessToken = await generateAccessTokenResponse.Content.ReadFromJsonAsync<string>();
+                using StringContent authJsonContent = new(JsonSerializer.Serialize
+                    (new { UserNameOrEmail = model.Email, model.Password}), Encoding.UTF8, "application/json");
+                var authResponse = await httpClient.PostAsync($"{url}/api/Auth/login", authJsonContent);
+                authResponse.EnsureSuccessStatusCode();
+                string accessToken = await authResponse.Content.ReadAsStringAsync();
 
                 SaveAccessToken(accessToken);
 
@@ -92,7 +92,7 @@ namespace Web.MVC.Controllers
                 }
                 authenticatedResponse.EnsureSuccessStatusCode();
 
-                string accessToken = await authenticatedResponse.Content.ReadFromJsonAsync<string>();
+                string accessToken = await authenticatedResponse.Content.ReadAsStringAsync();
 
                 SaveAccessToken(accessToken);
 
@@ -110,9 +110,10 @@ namespace Web.MVC.Controllers
         public async Task<IActionResult> Logout(string returnUrl)
         {
             HttpClient httpClient = httpClientFactory.CreateClient();
-            string userEmail = User.Claims.Single(x => x.Type == ClaimTypes.Email).Value;
+            string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid userId = new Guid(userIdStr);
 
-            var revokeResponse = await httpClient.GetAsync($"{url}/api/Token/revoke?userEmail={userEmail}");
+            var revokeResponse = await httpClient.GetAsync($"{url}/api/Token/revoke/{userId}");
             revokeResponse.EnsureSuccessStatusCode();
 
             Response.Cookies.Delete(CookieNames.AccessToken);
