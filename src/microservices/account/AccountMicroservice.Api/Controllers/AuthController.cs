@@ -1,26 +1,29 @@
 ﻿using System.Security.Claims;
-using System.Text;
 using AccountMicroservice.Api.Constants;
 using AccountMicroservice.Api.DTOs.Auth;
 using AccountMicroservice.Api.Models.Business;
 using AccountMicroservice.Api.Services.Password_services;
+using AccountMicroservice.Api.Services.Roles_services;
 using AccountMicroservice.Api.Services.Token_services;
 using AccountMicroservice.Api.Services.User_services;
+using AccountMicroservice.Api.Services.User_services.Role_services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AccountMicroservice.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController(IPasswordService passwordService, IUserService userService, ITokenService tokenService) : ControllerBase
+    public class AuthController(IPasswordService passwordService, IUserService userService, ITokenService tokenService,
+        IUserRolesService userRolesService, IRoleService roleService) : ControllerBase
     {
         [Route("register")]
         [HttpPost]
         public async Task<IActionResult> RegisterAsync([FromBody] RegisterDto model)
         {
             var hashFormatResult = passwordService.HashPassword(model.Password);
-            string passwordHashStr = Encoding.UTF8.GetString(hashFormatResult.PasswordHash);
-            string passwordSaltStr = Encoding.UTF8.GetString(hashFormatResult.Salt);
+
+            string passwordHashStr = Convert.ToBase64String(hashFormatResult.PasswordHash);
+            string passwordSaltStr = Convert.ToBase64String(hashFormatResult.Salt);
 
             try
             {
@@ -39,6 +42,9 @@ namespace AccountMicroservice.Api.Controllers
                 return Conflict("Current user already exists");
             }
 
+            var role = await roleService.GetRoleByNameAsync(RoleNames.User);
+            await userRolesService.AddUserToRoleAsync(model.Id, role.Id);
+
             return Ok();
         }
 
@@ -52,8 +58,8 @@ namespace AccountMicroservice.Api.Controllers
             if (user == null)
                 return Unauthorized("User is not exist");
 
-            bool checkPassword = passwordService.CheckPassword(Encoding.UTF8.GetBytes(user.PasswordHash),
-                Encoding.UTF8.GetBytes(user.PasswordSalt), model.Password);
+            bool checkPassword = passwordService.CheckPassword(Convert.FromBase64String(user.PasswordHash),
+                Convert.FromBase64String(user.PasswordSalt), model.Password);
 
             if (!checkPassword)
                 return Unauthorized("Incorrect password");
@@ -65,6 +71,12 @@ namespace AccountMicroservice.Api.Controllers
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(AdditionalClaimTypes.IsEmailVerified, user.IsEmailVerified.ToString())
             };
+            var userRoles = await userRolesService.GetUserRolesAsync(user.Id);
+            foreach (var userRole in userRoles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, userRole.Name));
+            }
+
             string token = tokenService.GenerateAccessToken(claims);
 
             user.RefreshToken = tokenService.GenerateRefreshToken();
