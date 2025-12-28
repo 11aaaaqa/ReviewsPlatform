@@ -10,5 +10,7 @@
         public string PasswordSalt { get; set; }
         public string? RefreshToken { get; set; }
         public DateTime RefreshTokenExpiryTime { get; set; }
+
+        public List<Role> Roles { get; set; } = new();
     }
 }
