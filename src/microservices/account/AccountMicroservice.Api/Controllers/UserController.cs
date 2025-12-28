@@ -21,28 +21,6 @@ namespace AccountMicroservice.Api.Controllers
             return Ok(user);
         }
 
-        [Route("get-user-by-user-name")]
-        [HttpGet]
-        public async Task<IActionResult> GetUserByUserName(string userName)
-        {
-            var user = await userService.GetUserByUserNameAsync(userName);
-            if (user == null)
-                return NotFound();
-
-            return Ok(user);
-        }
-
-        [Route("get-user-by-email")]
-        [HttpGet]
-        public async Task<IActionResult> GetUserByEmailAsync(string email)
-        {
-            var user = await userService.GetUserByEmailAsync(email);
-            if (user == null) 
-                return NotFound();
-
-            return Ok(user);
-        }
-
         [Route("update-user-name")]
         [HttpPut]
         public async Task<IActionResult> UpdateUserNameAsync([FromBody] UpdateUserNameDto model)
