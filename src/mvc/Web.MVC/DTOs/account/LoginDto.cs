@@ -12,7 +12,7 @@ namespace Web.MVC.DTOs.account
         [Required(ErrorMessage = "Поле \"Пароль\" обязательно")]
         [Display(Name = "Пароль")]
         [DataType(DataType.Password)]
-        [StringLength(100, MinimumLength = 8, ErrorMessage = "Минимальная длина пароля 8 символов")]
+        [StringLength(100)]
         public string Password { get; set; }
 
         public string? ReturnUrl { get; set; }
