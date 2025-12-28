@@ -2,7 +2,21 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@if (true)
+{
+    string returnUrl = Context.Request.Path;
+    if (Context.Request.QueryString.HasValue)
+        returnUrl += Context.Request.QueryString;
+
+    @if (User.Identity.IsAuthenticated)
+    {
+        <form method="post" asp-action="Logout" asp-controller="Account" asp-route-returnUrl="@returnUrl">
+            <input type="submit" value="Выйти"/>
+        </form>
+    }
+    else
+    {
+        <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl">Войти</a>
+        <a asp-controller="Account" asp-action="Register" asp-route-returnUrl="@returnUrl">Зарегистрироваться</a>
+    }
+}
