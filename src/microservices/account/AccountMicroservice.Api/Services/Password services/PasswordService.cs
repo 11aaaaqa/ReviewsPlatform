@@ -23,13 +23,13 @@ namespace AccountMicroservice.Api.Services.Password_services
             if (originalPasswordHash.Length != hashResult.PasswordHash.Length)
                 return false;
 
+            bool areSame = true;
             for (int i = 0; i < originalPasswordHash.Length; i++)
             {
-                if (originalPasswordHash[i] != hashResult.PasswordHash[i])
-                    return false;
+                areSame = areSame && (originalPasswordHash[i] == hashResult.PasswordHash[i]);
             }
 
-            return true;
+            return areSame;
         }
 
         private byte[] GenerateSecureSalt(int size = 16)
