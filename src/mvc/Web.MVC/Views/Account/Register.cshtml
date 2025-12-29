@@ -1,0 +1,40 @@
+﻿@model Web.MVC.DTOs.account.RegisterDto
+
+<h3>Зарегистрироваться</h3>
+<form method="post">
+    <div asp-validation-summary="ModelOnly"></div>
+    <div>
+        <div>
+            <span asp-validation-for="Email"></span>
+        </div>
+        <div>
+            <span asp-validation-for="Email"></span>
+        </div>
+        <div>
+            <span asp-validation-for="Password"></span>
+        </div>
+        <div>
+            <span asp-validation-for="ConfirmPassword"></span>
+        </div>
+    </div>
+
+    <input type="hidden" asp-for="ReturnUrl" />
+
+    <div>
+        <input asp-for="Email" placeholder="Адрес эл. почты" required/>
+    </div>
+    
+    <div>
+        <input asp-for="UserName" placeholder="Имя пользователя" required/>
+    </div>
+    
+    <div>
+        <input asp-for="Password" placeholder="Пароль" required/>
+    </div>
+    
+    <div>
+        <input asp-for="ConfirmPassword" placeholder="Подтвердите пароль" required/>
+    </div>
+    
+    <input type="submit" value="Зарегистрироваться"/>
+</form>

@@ -1,4 +1,5 @@
-﻿using AccountMicroservice.Api.DTOs.User;
+﻿using System.Text;
+using AccountMicroservice.Api.DTOs.User;
 using AccountMicroservice.Api.Services.Password_services;
 using AccountMicroservice.Api.Services.User_services;
 using Microsoft.AspNetCore.Mvc;
@@ -10,33 +11,11 @@ namespace AccountMicroservice.Api.Controllers
     public class UserController(IUserService userService, IPasswordService passwordService) : ControllerBase
     {
         [HttpGet]
-        [Route("get-user-by-id")]
+        [Route("get-user-by-id/{userId}")]
         public async Task<IActionResult> GetUserByIdAsync(Guid userId)
         {
             var user = await userService.GetUserByIdAsync(userId);
             if (user == null)
-                return NotFound();
-
-            return Ok(user);
-        }
-
-        [Route("get-user-by-user-name")]
-        [HttpGet]
-        public async Task<IActionResult> GetUserByUserName(string userName)
-        {
-            var user = await userService.GetUserByUserNameAsync(userName);
-            if (user == null)
-                return NotFound();
-
-            return Ok(user);
-        }
-
-        [Route("get-user-by-email")]
-        [HttpGet]
-        public async Task<IActionResult> GetUserByEmailAsync(string email)
-        {
-            var user = await userService.GetUserByEmailAsync(email);
-            if (user == null) 
                 return NotFound();
 
             return Ok(user);
@@ -49,16 +28,11 @@ namespace AccountMicroservice.Api.Controllers
             var user = await userService.GetUserByIdAsync(model.UserId);
             if(user == null) return NotFound();
 
-            user.UserName = model.NewUserName;
-
-            try
-            {
-                await userService.UpdateUserAsync(user);
-            }
-            catch (Exception e) //заменить на exception, возникающий при конфликте уникальных индексов
-            {
+            if (await userService.GetUserByUserNameAsync(model.NewUserName) != null)
                 return Conflict("User with current name already exists");
-            }
+
+            user.UserName = model.NewUserName;
+            await userService.UpdateUserAsync(user);
 
             return Ok();
         }
@@ -71,8 +45,8 @@ namespace AccountMicroservice.Api.Controllers
             if (user == null) return NotFound();
             
             var passwordHashFormatResult = passwordService.HashPassword(model.NewPassword);
-            user.PasswordHash = passwordHashFormatResult.PasswordHash;
-            user.PasswordSalt = passwordHashFormatResult.Salt;
+            user.PasswordHash = Encoding.UTF8.GetString(passwordHashFormatResult.PasswordHash);
+            user.PasswordSalt = Encoding.UTF8.GetString(passwordHashFormatResult.Salt);
 
             await userService.UpdateUserAsync(user);
 

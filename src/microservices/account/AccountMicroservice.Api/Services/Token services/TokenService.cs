@@ -37,7 +37,7 @@ namespace AccountMicroservice.Api.Services.Token_services
             var tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateAudience = false,
-                ValidateActor = false,
+                ValidateIssuer = false,
                 ValidateIssuerSigningKey = false,
                 ValidateLifetime = false,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Secret"]))

@@ -1,5 +1,11 @@
 <Solution>
+  <Folder Name="/configs/">
+    <File Path="redis.conf" />
+  </Folder>
   <Folder Name="/src/" />
+  <Folder Name="/src/gateway/">
+    <Project Path="src/gateway/ApiGateway/ApiGateway.csproj" Id="3e799f2e-6e86-4576-9420-71302faa391f" />
+  </Folder>
   <Folder Name="/src/microservices/" />
   <Folder Name="/src/microservices/account/">
     <Project Path="src/microservices/account/AccountMicroservice.Api/AccountMicroservice.Api.csproj" />
@@ -8,4 +14,7 @@
     <Project Path="src/mvc/Web.MVC/Web.MVC.csproj" Id="39c39cf2-87e0-45c4-9151-21646c326053" />
   </Folder>
   <Folder Name="/tests/" />
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
 </Solution>
