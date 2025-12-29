@@ -11,5 +11,8 @@ namespace AccountMicroservice.Api.Services.Roles_services
 
         public async Task<Role> GetRoleByNameAsync(string roleName)
             => await context.Roles.SingleAsync(x => x.Name == roleName);
+
+        public async Task<List<Role>> GetAllRolesAsync()
+            => await context.Roles.ToListAsync();
     }
 }

@@ -6,5 +6,6 @@ namespace AccountMicroservice.Api.Services.Roles_services
     {
         Task<Role> GetRoleByIdAsync(Guid roleId);
         Task<Role> GetRoleByNameAsync(string roleName);
+        Task<List<Role>> GetAllRolesAsync();
     }
 }
