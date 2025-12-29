@@ -7,7 +7,7 @@ using AccountMicroservice.Api.Services.Roles_services;
 using AccountMicroservice.Api.Services.Token_services;
 using AccountMicroservice.Api.Services.User_services;
 using AccountMicroservice.Api.Services.User_services.Role_services;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc; 
 
 namespace AccountMicroservice.Api.Controllers
 {
@@ -20,27 +20,19 @@ namespace AccountMicroservice.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> RegisterAsync([FromBody] RegisterDto model)
         {
+            if (await userService.GetUserByUserNameAsync(model.UserName) != null || await userService.GetUserByEmailAsync(model.Email) != null)
+                return Conflict("Current user already exists");
+
             var hashFormatResult = passwordService.HashPassword(model.Password);
 
             string passwordHashStr = Convert.ToBase64String(hashFormatResult.PasswordHash);
             string passwordSaltStr = Convert.ToBase64String(hashFormatResult.Salt);
 
-            try
+            await userService.AddUserAsync(new User 
             {
-                await userService.AddUserAsync(new User
-                {
-                    Id = model.Id,
-                    Email = model.Email,
-                    UserName = model.UserName,
-                    IsEmailVerified = false,
-                    PasswordHash = passwordHashStr,
-                    PasswordSalt = passwordSaltStr
-                });
-            }
-            catch (Exception e) //заменить на exception, возникающий при конфликте уникальных индексов
-            {
-                return Conflict("Current user already exists");
-            }
+                Id = model.Id, Email = model.Email, UserName = model.UserName, IsEmailVerified = false,
+                PasswordHash = passwordHashStr, PasswordSalt = passwordSaltStr
+            });
 
             var role = await roleService.GetRoleByNameAsync(RoleNames.User);
             await userRolesService.AddUserToRoleAsync(model.Id, role.Id);

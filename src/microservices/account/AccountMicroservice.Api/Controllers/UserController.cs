@@ -28,16 +28,11 @@ namespace AccountMicroservice.Api.Controllers
             var user = await userService.GetUserByIdAsync(model.UserId);
             if(user == null) return NotFound();
 
-            user.UserName = model.NewUserName;
-
-            try
-            {
-                await userService.UpdateUserAsync(user);
-            }
-            catch (Exception e) //заменить на exception, возникающий при конфликте уникальных индексов
-            {
+            if (await userService.GetUserByUserNameAsync(model.NewUserName) != null)
                 return Conflict("User with current name already exists");
-            }
+
+            user.UserName = model.NewUserName;
+            await userService.UpdateUserAsync(user);
 
             return Ok();
         }
