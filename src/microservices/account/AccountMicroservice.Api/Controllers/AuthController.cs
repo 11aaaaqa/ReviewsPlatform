@@ -31,7 +31,7 @@ namespace AccountMicroservice.Api.Controllers
             await userService.AddUserAsync(new User 
             {
                 Id = model.Id, Email = model.Email, UserName = model.UserName, IsEmailVerified = false,
-                PasswordHash = passwordHashStr, PasswordSalt = passwordSaltStr
+                PasswordHash = passwordHashStr, PasswordSalt = passwordSaltStr, RegistrationDate = DateOnly.FromDateTime(DateTime.UtcNow)
             });
 
             var role = await roleService.GetRoleByNameAsync(RoleNames.User);
