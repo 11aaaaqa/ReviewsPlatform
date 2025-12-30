@@ -8,7 +8,7 @@ namespace Web.MVC.DTOs.account
 
         [Required(ErrorMessage = "Поле \"Имя пользователя\" обязательно")]
         [Display(Name = "Имя пользователя")]
-        [StringLength(50)]
+        [StringLength(30)]
         public string UserName { get; set; }
 
         [Required(ErrorMessage = "Поле \"Адрес эл. почты\" обязательно")]
