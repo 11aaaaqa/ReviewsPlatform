@@ -1,6 +1,6 @@
 ﻿using StackExchange.Redis;
 
-namespace Web.MVC.Models.Api_responses.Auth
+namespace Web.MVC.Models.Api_responses.account
 {
     public class UserResponse
     {
