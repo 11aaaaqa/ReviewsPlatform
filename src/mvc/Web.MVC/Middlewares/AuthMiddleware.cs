@@ -4,7 +4,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using Web.MVC.Constants;
-using Web.MVC.Models.Api_responses.Auth;
+using Web.MVC.Models.Api_responses.account;
 
 namespace Web.MVC.Middlewares
 {
