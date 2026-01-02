@@ -29,7 +29,7 @@ namespace AccountMicroservice.Api.Database
 
             builder.Entity<User>()
                 .HasMany(x => x.Roles)
-                .WithMany(x => x.Users)
+                .WithMany()
                 .UsingEntity<UserRole>();
         }
     }
