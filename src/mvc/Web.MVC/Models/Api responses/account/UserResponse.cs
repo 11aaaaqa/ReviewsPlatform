@@ -1,6 +1,4 @@
-﻿using StackExchange.Redis;
-
-namespace Web.MVC.Models.Api_responses.account
+﻿namespace Web.MVC.Models.Api_responses.account
 {
     public class UserResponse
     {
@@ -12,6 +10,6 @@ namespace Web.MVC.Models.Api_responses.account
         public string? RefreshToken { get; set; }
         public DateTime RefreshTokenExpiryTime { get; set; }
 
-        public List<Role> Roles { get; set; } = new();
+        public List<RoleResponse> Roles { get; set; } = new();
     }
 }
