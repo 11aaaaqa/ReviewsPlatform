@@ -7,13 +7,13 @@ namespace AccountMicroservice.Api.Services.User_services
     public class UserService(ApplicationDbContext context) : IUserService
     {
         public async Task<User?> GetUserByIdAsync(Guid userId)
-            => await context.Users.SingleOrDefaultAsync(x => x.Id == userId);
+            => await context.Users.Include(x => x.Roles).SingleOrDefaultAsync(x => x.Id == userId);
 
         public async Task<User?> GetUserByUserNameAsync(string userName)
-            => await context.Users.SingleOrDefaultAsync(x => x.UserName == userName);
+            => await context.Users.Include(x => x.Roles).SingleOrDefaultAsync(x => x.UserName == userName);
 
         public async Task<User?> GetUserByEmailAsync(string email)
-            => await context.Users.SingleOrDefaultAsync(x => x.Email == email);
+            => await context.Users.Include(x => x.Roles).SingleOrDefaultAsync(x => x.Email == email);
 
         public async Task AddUserAsync(User user)
         {
