@@ -1,9 +1,11 @@
-﻿using System.Net;
+﻿using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Mvc;
+using System.Text.RegularExpressions;
 using Web.MVC.Constants;
 using Web.MVC.DTOs.account;
 
@@ -34,6 +36,7 @@ namespace Web.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
+                model.UserName = Regex.Replace(model.UserName.Trim(), @"\s+", " ");
                 HttpClient httpClient = httpClientFactory.CreateClient();
                 using StringContent jsonContent = new(JsonSerializer.Serialize(new
                 {
