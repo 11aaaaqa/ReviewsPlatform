@@ -35,6 +35,8 @@ namespace AccountMicroservice.Api.Migrations
                     IsEmailVerified = table.Column<bool>(type: "boolean", nullable: false),
                     PasswordHash = table.Column<string>(type: "text", nullable: false),
                     PasswordSalt = table.Column<string>(type: "text", nullable: false),
+                    AvatarSource = table.Column<byte[]>(type: "bytea", nullable: false),
+                    RegistrationDate = table.Column<DateOnly>(type: "date", nullable: false),
                     RefreshToken = table.Column<string>(type: "text", nullable: true),
                     RefreshTokenExpiryTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },

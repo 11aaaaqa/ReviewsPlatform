@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AccountMicroservice.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251228105501_Initial")]
+    [Migration("20260106102810_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -71,6 +71,10 @@ namespace AccountMicroservice.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<byte[]>("AvatarSource")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
@@ -91,6 +95,9 @@ namespace AccountMicroservice.Api.Migrations
 
                     b.Property<DateTime>("RefreshTokenExpiryTime")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("RegistrationDate")
+                        .HasColumnType("date");
 
                     b.Property<string>("UserName")
                         .IsRequired()
