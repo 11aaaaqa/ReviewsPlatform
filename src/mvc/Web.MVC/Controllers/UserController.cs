@@ -28,7 +28,12 @@ namespace Web.MVC.Controllers
 
             bool canUserSetTheRoles = User.IsInRole(RoleNames.Admin);
             bool canUserViewTheRoles = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.Moderator);
-            var model = new GetUserByIdViewModel { User = user, CanUserSetTheRoles = canUserSetTheRoles, CanUserViewTheRoles = canUserViewTheRoles};
+            string avatarSrc = $"data:image/png;base64,{Convert.ToBase64String(user.AvatarSource)}";
+            var model = new GetUserByIdViewModel
+            {
+                User = user, CanUserSetTheRoles = canUserSetTheRoles,
+                CanUserViewTheRoles = canUserViewTheRoles, AvatarSrc = avatarSrc
+            };
             if (canUserSetTheRoles)
             {
                 var allRolesResponse = await httpClient.GetAsync($"{url}/api/Role/all");

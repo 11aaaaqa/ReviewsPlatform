@@ -7,7 +7,8 @@ using AccountMicroservice.Api.Services.Roles_services;
 using AccountMicroservice.Api.Services.Token_services;
 using AccountMicroservice.Api.Services.User_services;
 using AccountMicroservice.Api.Services.User_services.Role_services;
-using Microsoft.AspNetCore.Mvc; 
+using Microsoft.AspNetCore.Mvc;
+using SkiaSharp;
 
 namespace AccountMicroservice.Api.Controllers
 {
@@ -23,6 +24,11 @@ namespace AccountMicroservice.Api.Controllers
             if (await userService.GetUserByUserNameAsync(model.UserName) != null || await userService.GetUserByEmailAsync(model.Email) != null)
                 return Conflict("Current user already exists");
 
+            using MemoryStream ms = new MemoryStream(model.AvatarSource);
+            using SKBitmap image = SKBitmap.Decode(ms);
+            if (image == null)
+                return BadRequest("Invalid avatar");
+
             var hashFormatResult = passwordService.HashPassword(model.Password);
 
             string passwordHashStr = Convert.ToBase64String(hashFormatResult.PasswordHash);
@@ -31,7 +37,8 @@ namespace AccountMicroservice.Api.Controllers
             await userService.AddUserAsync(new User 
             {
                 Id = model.Id, Email = model.Email, UserName = model.UserName, IsEmailVerified = false,
-                PasswordHash = passwordHashStr, PasswordSalt = passwordSaltStr, RegistrationDate = DateOnly.FromDateTime(DateTime.UtcNow)
+                PasswordHash = passwordHashStr, PasswordSalt = passwordSaltStr, RegistrationDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                AvatarSource = model.AvatarSource
             });
 
             var role = await roleService.GetRoleByNameAsync(RoleNames.User);

@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Web.MVC.Constants;
 using Web.MVC.DTOs.account;
+using Web.MVC.Services.User_services.Avatar_services;
 
 namespace Web.MVC.Controllers
 {
@@ -16,10 +17,13 @@ namespace Web.MVC.Controllers
         private readonly string url;
         private readonly IHttpClientFactory httpClientFactory;
         private readonly IDataProtector dataProtector;
-        public AccountController(IConfiguration configuration, IHttpClientFactory httpClientFactory, IDataProtectionProvider dataProtectionFactory)
+        private readonly IAvatarService avatarService;
+        public AccountController(IConfiguration configuration, IHttpClientFactory httpClientFactory, IDataProtectionProvider dataProtectionFactory,
+            IAvatarService avatarService)
         {
             url = $"{configuration["ApiGateway:Protocol"]}://{configuration["ApiGateway:Domain"]}";
             this.httpClientFactory = httpClientFactory;
+            this.avatarService = avatarService;
             dataProtector = dataProtectionFactory.CreateProtector("JWT");
         }
 
@@ -37,10 +41,13 @@ namespace Web.MVC.Controllers
             if (ModelState.IsValid)
             {
                 model.UserName = Regex.Replace(model.UserName.Trim(), @"\s+", " ");
+
+                byte[] avatarSource = avatarService.GetDefaultUserAvatar(model);
+
                 HttpClient httpClient = httpClientFactory.CreateClient();
                 using StringContent jsonContent = new(JsonSerializer.Serialize(new
                 {
-                    model.Id, model.Email, model.Password, model.UserName
+                    model.Id, model.Email, model.Password, model.UserName, AvatarSource = avatarSource
                 }), Encoding.UTF8, "application/json");
 
                 var registerResponse = await httpClient.PostAsync($"{url}/api/Auth/register", jsonContent);

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 using Web.MVC.Middlewares;
+using Web.MVC.Services.User_services.Avatar_services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,8 @@ builder.Services.AddAuthentication(x =>
 builder.Services.AddDataProtection()
     .PersistKeysToStackExchangeRedis(ConnectionMultiplexer.Connect(builder.Configuration["ConnectionStrings:Redis"]),
         "DataProtection-Keys");
+
+builder.Services.AddTransient<IAvatarService, AvatarService>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddControllersWithViews();

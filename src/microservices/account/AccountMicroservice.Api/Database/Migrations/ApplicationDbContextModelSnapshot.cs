@@ -68,6 +68,10 @@ namespace AccountMicroservice.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<byte[]>("AvatarSource")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
