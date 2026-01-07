@@ -16,25 +16,29 @@ namespace Web.MVC.Services.User_services.Avatar_services
         {
             string displaySymbol = registerModel.UserName.Trim().ToUpper()[0].ToString();
 
-            int colorIndex = Math.Abs(registerModel.GetHashCode()) % (colors.Length - 1);
+            int colorIndex = Math.Abs(registerModel.GetHashCode()) % colors.Length;
             SKColor backgroundColor = colors[colorIndex];
 
             using SKSurface surface = SKSurface.Create(new SKImageInfo(size, size));
             SKCanvas canvas = surface.Canvas;
             canvas.Clear(SKColors.Transparent);
 
-            using var paint = new SKPaint { Color = backgroundColor, IsAntialias = true };
-            canvas.DrawCircle(size / 2, size / 2, size / 2, paint);
+            using var paint = new SKPaint();
+            paint.Color = backgroundColor;
+            paint.IsAntialias = true;
 
-            using var textPaint = new SKPaint { Color = SKColors.White, IsAntialias = true, };
+            canvas.DrawCircle(size / 2f, size / 2f, size / 2f, paint);
 
-            var font = new SKFont(SKTypeface.FromFamilyName("Arial", SKFontStyleWeight.Bold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright), size * 0.5f);
-            var textBounds = new SKRect();
-            font.MeasureText(displaySymbol, out textBounds);
-            float y = size / 2 - textBounds.MidY;
-            float x = size / 2 - textBounds.MidX;
+            using var textPaint = new SKPaint();
+            textPaint.Color = SKColors.White;
+            textPaint.IsAntialias = true;
 
-            canvas.DrawText(displaySymbol, x, y, font, textPaint);
+            using var font = new SKFont(SKTypeface.FromFamilyName("Noto Sans", SKFontStyleWeight.Bold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright),
+                size * 0.5f);
+            font.MeasureText(displaySymbol, out SKRect textBounds);
+
+            float y = size / 2f - textBounds.MidY;
+            canvas.DrawText(displaySymbol, new SKPoint(size / 2f, y), SKTextAlign.Center, font, textPaint);
 
             using var image = surface.Snapshot();
             using var data = image.Encode(SKEncodedImageFormat.Png, 100);
