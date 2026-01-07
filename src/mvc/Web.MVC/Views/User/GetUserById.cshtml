@@ -1,6 +1,7 @@
 ﻿@using System.Security.Claims
 @model Web.MVC.Models.View_models.User.GetUserByIdViewModel
 
+<img src="@Model.AvatarSrc"/>
 <h3>@Model.User.UserName</h3>
 <h4>Дата регистрации: @Model.User.RegistrationDate.ToString("dd.MM.yyyy")</h4>
 @if (Model.CanUserViewTheRoles)
