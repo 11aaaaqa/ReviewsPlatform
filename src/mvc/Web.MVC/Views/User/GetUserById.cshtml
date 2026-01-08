@@ -41,17 +41,22 @@
                                 <div class="roles-checkboxes">
                                     @foreach (var role in Model.AllRoles)
                                     {
-                                        <p>
-                                            @if (Model.User.Roles.Any(x => x.Id == role.Id))
-                                            {
-                                                <input type="checkbox" name="roleIds" value="@role.Id" checked />
-                                            }
-                                            else
-                                            {
-                                                <input type="checkbox" name="roleIds" value="@role.Id" />
-                                            }
-                                            @role.Name
-                                        </p>
+                                        @if (Model.User.Roles.Any(x => x.Id == role.Id))
+                                        {
+                                            <label class="checkbox-container">
+                                                <input class="checkbox" type="checkbox" name="roleIds" value="@role.Id" checked />
+                                                <div class="custom-checkbox"></div>
+                                                <span class="checkbox-text">@role.Name</span>
+                                            </label>
+                                        }
+                                        else
+                                        {
+                                            <label class="checkbox-container">
+                                                <input class="checkbox" type="checkbox" name="roleIds" value="@role.Id" />
+                                                <div class="custom-checkbox"></div>
+                                                <span class="checkbox-text">@role.Name</span>
+                                            </label>
+                                        }
                                     }
                                 </div>
 

@@ -3,6 +3,54 @@ p {
     padding: 0;
 }
 
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+    cursor: pointer;
+}
+
+.checkbox {
+    position: absolute;
+    opacity: 0;
+}
+
+.checkbox:checked + .custom-checkbox {
+    background-color: salmon;
+    border-color: salmon;
+}
+
+.checkbox:checked + .custom-checkbox::after {
+    display: block;
+}
+
+.custom-checkbox {
+    width: 20px;
+    height: 20px;
+    background-color: #fff;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.custom-checkbox::after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 5px;
+    top: 1px;
+    width: 6px;
+    height: 12px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.checkbox-text {
+    margin-left: 8px;
+}
+
 .btn {
     border: none;
     cursor: pointer;
