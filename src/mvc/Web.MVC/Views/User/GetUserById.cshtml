@@ -1,50 +1,86 @@
 ﻿@using System.Security.Claims
 @model Web.MVC.Models.View_models.User.GetUserByIdViewModel
+<link rel="stylesheet" href="~/css/user/get-user-by-id.css"/>
 
-<img src="@Model.AvatarSrc"/>
-<h3>@Model.User.UserName</h3>
-<h4>Дата регистрации: @Model.User.RegistrationDate.ToString("dd.MM.yyyy")</h4>
-@if (Model.CanUserViewTheRoles)
-{
-    @if (Model.User.Roles.Count > 0)
-    {
-        <h4>Роли:
-            <span>@Model.User.Roles[0].Name</span>
-            @for(int i = 1; i < Model.User.Roles.Count; i++)
+<div class="get-user-by-id-page-block">
+    <div class="user-info-block">
+        <div class="avatar-block">
+            <img src="@Model.AvatarSrc" width="180" height="180" />
+        </div>
+        <div>
+            <h4>@Model.User.UserName</h4>
+            <p class="dim-colored bolder">Дата регистрации: @Model.User.RegistrationDate.ToString("dd.MM.yyyy")</p>
+            @if (Model.CanUserViewTheRoles)
             {
-                <span>, @Model.User.Roles[i].Name</span>
+                @if (Model.User.Roles.Count > 0)
+                {
+                    <p>
+                        Роли:
+                        <span>@Model.User.Roles[0].Name</span>
+                        @for (int i = 1; i < Model.User.Roles.Count; i++)
+                        {
+                            <span>, @Model.User.Roles[i].Name</span>
+                        }
+                    </p>
+                }
+                else
+                {
+                    <p>Ролей нет</p>
+                }
+
+                @if (Model.CanUserSetTheRoles && Model.User.Id != new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
+                {
+                    <button class="btn-wide-stretched" id="openModalBtn">Назначить роль</button>
+                    string returnUrl = Context.Request.Path;
+                    if (Context.Request.QueryString.HasValue)
+                        returnUrl += Context.Request.QueryString;
+                    <div class="overlay" id="modalOverlay">
+                        <div class="modal-form">
+                            <form class="hidden" method="post" asp-controller="User" asp-action="SetUserRoles" asp-route-userId="@Model.User.Id">
+                                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                <div class="roles-checkboxes">
+                                    @foreach (var role in Model.AllRoles)
+                                    {
+                                        @if (Model.User.Roles.Any(x => x.Id == role.Id))
+                                        {
+                                            <label class="checkbox-container">
+                                                <input class="checkbox" type="checkbox" name="roleIds" value="@role.Id" checked />
+                                                <div class="custom-checkbox"></div>
+                                                <span class="checkbox-text">@role.Name</span>
+                                            </label>
+                                        }
+                                        else
+                                        {
+                                            <label class="checkbox-container">
+                                                <input class="checkbox" type="checkbox" name="roleIds" value="@role.Id" />
+                                                <div class="custom-checkbox"></div>
+                                                <span class="checkbox-text">@role.Name</span>
+                                            </label>
+                                        }
+                                    }
+                                </div>
+
+                                <input class="btn-green" type="submit" value="Сохранить" />
+                            </form>
+                        </div>
+                    </div>
+                }
             }
-        </h4>
-    }
-    else
-    {
-        <h4>Ролей нет</h4>
+        </div>
+    </div>
+</div>
+
+<script>
+    const overlay = document.getElementById('modalOverlay');
+    const openModalBtn = document.getElementById('openModalBtn');
+
+    overlay.onclick = (e) => {
+      if(e.target === overlay) {
+        overlay.style.display = 'none';
+      }
     }
 
-    @if (Model.CanUserSetTheRoles && Model.User.Id != new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
-    {
-        <button>Назначить роль</button>
-        string returnUrl = Context.Request.Path;
-        if (Context.Request.QueryString.HasValue)
-            returnUrl += Context.Request.QueryString;
-        <form method="post" asp-controller="User" asp-action="SetUserRoles" asp-route-userId="@Model.User.Id">
-            <input type="hidden" name="returnUrl" value="@returnUrl"/>
-            @foreach (var role in Model.AllRoles)
-            {
-                <p>
-                    @if (Model.User.Roles.Any(x => x.Id == role.Id))
-                    {
-                        <input type="checkbox" name="roleIds" value="@role.Id" checked />
-                    }
-                    else
-                    {
-                        <input type="checkbox" name="roleIds" value="@role.Id" />
-                    }
-                    @role.Name
-                </p>
-            }
-            
-            <input type="submit" value="Сохранить"/>
-        </form>
+    openModalBtn.onclick = () => {
+        overlay.style.display = 'flex';
     }
-}
+</script>
