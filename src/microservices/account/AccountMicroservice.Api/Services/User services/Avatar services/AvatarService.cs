@@ -1,7 +1,7 @@
-﻿using SkiaSharp;
-using Web.MVC.DTOs.account;
+﻿using AccountMicroservice.Api.Models.Business;
+using SkiaSharp;
 
-namespace Web.MVC.Services.User_services.Avatar_services
+namespace AccountMicroservice.Api.Services.User_services.Avatar_services
 {
     public class AvatarService : IAvatarService
     {
@@ -12,11 +12,11 @@ namespace Web.MVC.Services.User_services.Avatar_services
             SKColors.DarkMagenta, SKColors.Red, SKColors.DeepPink
         };
 
-        public byte[] GetDefaultUserAvatar(RegisterDto registerModel, int size = 200)
+        public byte[] GetDefaultUserAvatar(User user, int size = 200)
         {
-            string displaySymbol = registerModel.UserName.Trim().ToUpper()[0].ToString();
+            string displaySymbol = user.UserName.Trim().ToUpper()[0].ToString();
 
-            int colorIndex = Math.Abs(registerModel.GetHashCode()) % colors.Length;
+            int colorIndex = Math.Abs(user.GetHashCode()) % colors.Length;
             SKColor backgroundColor = colors[colorIndex];
 
             using SKSurface surface = SKSurface.Create(new SKImageInfo(size, size));

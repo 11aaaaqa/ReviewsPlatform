@@ -4,8 +4,6 @@ namespace Web.MVC.DTOs.account
 {
     public class RegisterDto
     {
-        public Guid Id { get; } = Guid.NewGuid();
-
         [Required(ErrorMessage = "Поле \"Имя пользователя\" обязательно")]
         [Display(Name = "Имя пользователя")]
         [StringLength(30)]
@@ -31,17 +29,5 @@ namespace Web.MVC.DTOs.account
         public string ConfirmPassword { get; set; }
 
         public string? ReturnUrl { get; set; }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Id);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (obj is RegisterDto user)
-                return user.Id == Id;
-            return false;
-        }
     }
 }
