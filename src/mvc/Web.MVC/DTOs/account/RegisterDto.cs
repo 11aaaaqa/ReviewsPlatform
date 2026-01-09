@@ -4,8 +4,6 @@ namespace Web.MVC.DTOs.account
 {
     public class RegisterDto
     {
-        public Guid Id { get; } = Guid.NewGuid();
-
         [Required(ErrorMessage = "Поле \"Имя пользователя\" обязательно")]
         [Display(Name = "Имя пользователя")]
         [StringLength(30)]

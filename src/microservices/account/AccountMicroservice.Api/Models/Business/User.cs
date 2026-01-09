@@ -2,7 +2,7 @@
 {
     public class User
     {
-        public Guid Id { get; set; }
+        public Guid Id { get; init; } = Guid.NewGuid();
         public string UserName { get; set; }
         public string Email { get; set; }
         public bool IsEmailVerified { get; set; }

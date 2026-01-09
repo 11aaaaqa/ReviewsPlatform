@@ -31,18 +31,18 @@ namespace AccountMicroservice.Api.Controllers
 
             User userToAdd = new User
             {
-                Id = model.Id, Email = model.Email, UserName = model.UserName, IsEmailVerified = false,
+                Id = Guid.NewGuid(), Email = model.Email, UserName = model.UserName, IsEmailVerified = false,
                 PasswordHash = passwordHashStr, PasswordSalt = passwordSaltStr, 
                 RegistrationDate = DateOnly.FromDateTime(DateTime.UtcNow)
             };
             userToAdd.AvatarSource = avatarService.GetDefaultUserAvatar(userToAdd);
-
+            
             await userService.AddUserAsync(userToAdd);
 
             var role = await roleService.GetRoleByNameAsync(RoleNames.User);
-            await userRolesService.AddUserToRoleAsync(model.Id, role.Id);
+            await userRolesService.AddUserToRoleAsync(userToAdd.Id, role.Id);
 
-            return Ok();
+            return Ok(userToAdd.Id);
         }
 
         [Route("login")]

@@ -40,7 +40,7 @@ namespace Web.MVC.Controllers
                 HttpClient httpClient = httpClientFactory.CreateClient();
                 using StringContent jsonContent = new(JsonSerializer.Serialize(new
                 {
-                    model.Id, model.Email, model.Password, model.UserName
+                    model.Email, model.Password, model.UserName
                 }), Encoding.UTF8, "application/json");
 
                 var registerResponse = await httpClient.PostAsync($"{url}/api/Auth/register", jsonContent);
@@ -50,6 +50,7 @@ namespace Web.MVC.Controllers
                     return View(model);
                 }
                 registerResponse.EnsureSuccessStatusCode();
+                Guid registeredUserId = await registerResponse.Content.ReadFromJsonAsync<Guid>();
 
                 using StringContent authJsonContent = new(JsonSerializer.Serialize
                     (new { UserNameOrEmail = model.Email, model.Password}), Encoding.UTF8, "application/json");
@@ -62,7 +63,7 @@ namespace Web.MVC.Controllers
                 if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                     return LocalRedirect(model.ReturnUrl);
 
-                return RedirectToAction("Index","Home");
+                return RedirectToAction("GetUserById","User", new { userId = registeredUserId});
             }
 
             return View(model);
