@@ -12,12 +12,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>(x => 
     x.UseNpgsql(builder.Configuration["Database:ConnectionString"]));
 
-builder.Services.AddTransient<IPasswordService, PasswordService>();
-builder.Services.AddTransient<IUserService, UserService>();
-builder.Services.AddTransient<ITokenService, TokenService>();
-builder.Services.AddTransient<IUserRolesService, UserRolesService>();
-builder.Services.AddTransient<IRoleService, RoleService>();
-builder.Services.AddTransient<IAvatarService, AvatarService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserRolesService, UserRolesService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+
+builder.Services.AddSingleton<IPasswordService, PasswordService>();
+builder.Services.AddSingleton<ITokenService, TokenService>();
+builder.Services.AddSingleton<IAvatarService, AvatarService>();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
