@@ -14,5 +14,17 @@
         public DateTime RefreshTokenExpiryTime { get; set; }
 
         public List<Role> Roles { get; set; } = new();
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is User user)
+                return Id == user.Id;
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Id);
+        }
     }
 }

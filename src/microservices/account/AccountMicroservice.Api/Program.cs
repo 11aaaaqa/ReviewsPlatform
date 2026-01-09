@@ -3,6 +3,7 @@ using AccountMicroservice.Api.Services.Password_services;
 using AccountMicroservice.Api.Services.Roles_services;
 using AccountMicroservice.Api.Services.Token_services;
 using AccountMicroservice.Api.Services.User_services;
+using AccountMicroservice.Api.Services.User_services.Avatar_services;
 using AccountMicroservice.Api.Services.User_services.Role_services;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,6 +17,7 @@ builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<ITokenService, TokenService>();
 builder.Services.AddTransient<IUserRolesService, UserRolesService>();
 builder.Services.AddTransient<IRoleService, RoleService>();
+builder.Services.AddTransient<IAvatarService, AvatarService>();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();

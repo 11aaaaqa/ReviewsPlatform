@@ -6,16 +6,16 @@ using AccountMicroservice.Api.Services.Password_services;
 using AccountMicroservice.Api.Services.Roles_services;
 using AccountMicroservice.Api.Services.Token_services;
 using AccountMicroservice.Api.Services.User_services;
+using AccountMicroservice.Api.Services.User_services.Avatar_services;
 using AccountMicroservice.Api.Services.User_services.Role_services;
 using Microsoft.AspNetCore.Mvc;
-using SkiaSharp;
 
 namespace AccountMicroservice.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController(IPasswordService passwordService, IUserService userService, ITokenService tokenService,
-        IUserRolesService userRolesService, IRoleService roleService) : ControllerBase
+        IUserRolesService userRolesService, IRoleService roleService, IAvatarService avatarService) : ControllerBase
     {
         [Route("register")]
         [HttpPost]
@@ -24,22 +24,20 @@ namespace AccountMicroservice.Api.Controllers
             if (await userService.GetUserByUserNameAsync(model.UserName) != null || await userService.GetUserByEmailAsync(model.Email) != null)
                 return Conflict("Current user already exists");
 
-            using MemoryStream ms = new MemoryStream(model.AvatarSource);
-            using SKBitmap image = SKBitmap.Decode(ms);
-            if (image == null)
-                return BadRequest("Invalid avatar");
-
             var hashFormatResult = passwordService.HashPassword(model.Password);
 
             string passwordHashStr = Convert.ToBase64String(hashFormatResult.PasswordHash);
             string passwordSaltStr = Convert.ToBase64String(hashFormatResult.Salt);
 
-            await userService.AddUserAsync(new User 
+            User userToAdd = new User
             {
                 Id = model.Id, Email = model.Email, UserName = model.UserName, IsEmailVerified = false,
-                PasswordHash = passwordHashStr, PasswordSalt = passwordSaltStr, RegistrationDate = DateOnly.FromDateTime(DateTime.UtcNow),
-                AvatarSource = model.AvatarSource
-            });
+                PasswordHash = passwordHashStr, PasswordSalt = passwordSaltStr, 
+                RegistrationDate = DateOnly.FromDateTime(DateTime.UtcNow)
+            };
+            userToAdd.AvatarSource = avatarService.GetDefaultUserAvatar(userToAdd);
+
+            await userService.AddUserAsync(userToAdd);
 
             var role = await roleService.GetRoleByNameAsync(RoleNames.User);
             await userRolesService.AddUserToRoleAsync(model.Id, role.Id);

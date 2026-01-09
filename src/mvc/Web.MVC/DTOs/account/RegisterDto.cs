@@ -31,17 +31,5 @@ namespace Web.MVC.DTOs.account
         public string ConfirmPassword { get; set; }
 
         public string? ReturnUrl { get; set; }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Id);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (obj is RegisterDto user)
-                return user.Id == Id;
-            return false;
-        }
     }
 }
