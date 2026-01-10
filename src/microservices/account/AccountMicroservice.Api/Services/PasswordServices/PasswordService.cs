@@ -3,7 +3,7 @@ using System.Text;
 using AccountMicroservice.Api.Models.General;
 using Konscious.Security.Cryptography;
 
-namespace AccountMicroservice.Api.Services.Password_services
+namespace AccountMicroservice.Api.Services.PasswordServices
 {
     public class PasswordService : IPasswordService
     {

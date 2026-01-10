@@ -1,7 +1,7 @@
 ﻿using AccountMicroservice.Api.Database;
 using AccountMicroservice.Api.Exceptions;
-using AccountMicroservice.Api.Services.User_services;
-using AccountMicroservice.Api.Services.User_services.Role_services;
+using AccountMicroservice.Api.Services.UserServices;
+using AccountMicroservice.Api.Services.UserServices.RoleServices;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace AccountMicroservice.Api.Services.UnitOfWork

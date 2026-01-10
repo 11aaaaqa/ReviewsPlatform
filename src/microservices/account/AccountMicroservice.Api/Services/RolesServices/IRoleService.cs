@@ -1,6 +1,6 @@
 ﻿using AccountMicroservice.Api.Models.Business;
 
-namespace AccountMicroservice.Api.Services.Roles_services
+namespace AccountMicroservice.Api.Services.RolesServices
 {
     public interface IRoleService
     {

@@ -3,11 +3,11 @@ using System.Security.Claims;
 using AccountMicroservice.Api.Constants;
 using AccountMicroservice.Api.DTOs.Auth;
 using AccountMicroservice.Api.Models.Business;
-using AccountMicroservice.Api.Services.Password_services;
-using AccountMicroservice.Api.Services.Roles_services;
-using AccountMicroservice.Api.Services.Token_services;
+using AccountMicroservice.Api.Services.PasswordServices;
+using AccountMicroservice.Api.Services.RolesServices;
+using AccountMicroservice.Api.Services.TokenServices;
 using AccountMicroservice.Api.Services.UnitOfWork;
-using AccountMicroservice.Api.Services.User_services.Avatar_services;
+using AccountMicroservice.Api.Services.UserServices.AvatarServices;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AccountMicroservice.Api.Controllers

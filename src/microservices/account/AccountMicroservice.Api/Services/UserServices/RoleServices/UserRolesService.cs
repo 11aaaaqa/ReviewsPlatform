@@ -2,7 +2,7 @@
 using AccountMicroservice.Api.Models.Business;
 using Microsoft.EntityFrameworkCore;
 
-namespace AccountMicroservice.Api.Services.User_services.Role_services
+namespace AccountMicroservice.Api.Services.UserServices.RoleServices
 {
     public class UserRolesService(ApplicationDbContext context) : IUserRolesService
     {

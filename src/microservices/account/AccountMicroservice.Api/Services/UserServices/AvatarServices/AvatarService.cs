@@ -1,7 +1,7 @@
 ﻿using AccountMicroservice.Api.Models.Business;
 using SkiaSharp;
 
-namespace AccountMicroservice.Api.Services.User_services.Avatar_services
+namespace AccountMicroservice.Api.Services.UserServices.AvatarServices
 {
     public class AvatarService : IAvatarService
     {

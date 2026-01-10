@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 
-namespace AccountMicroservice.Api.Services.Token_services
+namespace AccountMicroservice.Api.Services.TokenServices
 {
     public class TokenService(IConfiguration configuration) : ITokenService
     {

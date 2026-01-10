@@ -1,6 +1,6 @@
 ﻿using AccountMicroservice.Api.Models.General;
 
-namespace AccountMicroservice.Api.Services.Password_services
+namespace AccountMicroservice.Api.Services.PasswordServices
 {
     public interface IPasswordService
     {
