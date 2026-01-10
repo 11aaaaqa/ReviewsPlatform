@@ -1,6 +1,6 @@
 ﻿using AccountMicroservice.Api.Models.Business;
 
-namespace AccountMicroservice.Api.Services.User_services.Avatar_services
+namespace AccountMicroservice.Api.Services.UserServices.AvatarServices
 {
     public interface IAvatarService
     {

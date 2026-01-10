@@ -1,5 +1,5 @@
-﻿using AccountMicroservice.Api.Services.User_services;
-using AccountMicroservice.Api.Services.User_services.Role_services;
+﻿using AccountMicroservice.Api.Services.UserServices;
+using AccountMicroservice.Api.Services.UserServices.RoleServices;
 
 namespace AccountMicroservice.Api.Services.UnitOfWork
 {

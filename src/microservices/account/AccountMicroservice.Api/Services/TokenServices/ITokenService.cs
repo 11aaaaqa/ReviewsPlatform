@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 
-namespace AccountMicroservice.Api.Services.Token_services
+namespace AccountMicroservice.Api.Services.TokenServices
 {
     public interface ITokenService
     {
