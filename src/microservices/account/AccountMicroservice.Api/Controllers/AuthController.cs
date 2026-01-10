@@ -1,27 +1,28 @@
-﻿using System.Security.Claims;
+﻿using System.Net;
+using System.Security.Claims;
 using AccountMicroservice.Api.Constants;
 using AccountMicroservice.Api.DTOs.Auth;
 using AccountMicroservice.Api.Models.Business;
 using AccountMicroservice.Api.Services.Password_services;
 using AccountMicroservice.Api.Services.Roles_services;
 using AccountMicroservice.Api.Services.Token_services;
-using AccountMicroservice.Api.Services.User_services;
+using AccountMicroservice.Api.Services.UnitOfWork;
 using AccountMicroservice.Api.Services.User_services.Avatar_services;
-using AccountMicroservice.Api.Services.User_services.Role_services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AccountMicroservice.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController(IPasswordService passwordService, IUserService userService, ITokenService tokenService,
-        IUserRolesService userRolesService, IRoleService roleService, IAvatarService avatarService) : ControllerBase
+    public class AuthController(IPasswordService passwordService, ITokenService tokenService, IUnitOfWork unitOfWork,
+        IRoleService roleService, IAvatarService avatarService) : ControllerBase
     {
         [Route("register")]
         [HttpPost]
         public async Task<IActionResult> RegisterAsync([FromBody] RegisterDto model)
         {
-            if (await userService.GetUserByUserNameAsync(model.UserName) != null || await userService.GetUserByEmailAsync(model.Email) != null)
+            if (await unitOfWork.UserService.GetUserByUserNameAsync(model.UserName) != null
+                || await unitOfWork.UserService.GetUserByEmailAsync(model.Email) != null)
                 return Conflict("Current user already exists");
 
             var hashFormatResult = passwordService.HashPassword(model.Password);
@@ -36,11 +37,23 @@ namespace AccountMicroservice.Api.Controllers
                 RegistrationDate = DateOnly.FromDateTime(DateTime.UtcNow)
             };
             userToAdd.AvatarSource = avatarService.GetDefaultUserAvatar(userToAdd);
-            
-            await userService.AddUserAsync(userToAdd);
 
-            var role = await roleService.GetRoleByNameAsync(RoleNames.User);
-            await userRolesService.AddUserToRoleAsync(userToAdd.Id, role.Id);
+            try
+            {
+                await unitOfWork.BeginTransactionAsync();
+
+                await unitOfWork.UserService.AddUserAsync(userToAdd);
+
+                var role = await roleService.GetRoleByNameAsync(RoleNames.User);
+                await unitOfWork.UserRolesService.AddUserToRoleAsync(userToAdd.Id, role.Id);
+
+                await unitOfWork.CommitTransactionAsync();
+            }
+            catch (Exception ex)
+            {
+                await unitOfWork.RollbackTransactionAsync();
+                return StatusCode((int)HttpStatusCode.InternalServerError, new {errorMessage = ex.Message});
+            }
 
             return Ok(userToAdd.Id);
         }
@@ -49,8 +62,8 @@ namespace AccountMicroservice.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> LoginAsync([FromBody] LoginDto model)
         {
-            var user = await userService.GetUserByEmailAsync(model.UserNameOrEmail) 
-                       ?? await userService.GetUserByUserNameAsync(model.UserNameOrEmail);
+            var user = await unitOfWork.UserService.GetUserByEmailAsync(model.UserNameOrEmail) 
+                       ?? await unitOfWork.UserService.GetUserByUserNameAsync(model.UserNameOrEmail);
 
             if (user == null)
                 return Unauthorized("User is not exist");
@@ -68,7 +81,7 @@ namespace AccountMicroservice.Api.Controllers
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(AdditionalClaimTypes.IsEmailVerified, user.IsEmailVerified.ToString())
             };
-            var userRoles = await userRolesService.GetUserRolesAsync(user.Id);
+            var userRoles = await unitOfWork.UserRolesService.GetUserRolesAsync(user.Id);
             foreach (var userRole in userRoles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, userRole.Name));
@@ -79,7 +92,8 @@ namespace AccountMicroservice.Api.Controllers
             user.RefreshToken = tokenService.GenerateRefreshToken();
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMonths(1);
             
-            await userService.UpdateUserAsync(user);
+            await unitOfWork.UserService.UpdateUserAsync(user);
+            await unitOfWork.CompleteAsync();
 
             return Ok(token);
         }
