@@ -18,13 +18,11 @@ namespace AccountMicroservice.Api.Services.User_services
         public async Task AddUserAsync(User user)
         {
             await context.Users.AddAsync(user);
-            await context.SaveChangesAsync();
         }
 
         public async Task UpdateUserAsync(User user)
         {
             context.Users.Update(user);
-            await context.SaveChangesAsync();
         }
     }
 }

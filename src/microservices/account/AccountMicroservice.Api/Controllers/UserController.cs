@@ -3,22 +3,20 @@ using AccountMicroservice.Api.DTOs.User;
 using AccountMicroservice.Api.Models.Business;
 using AccountMicroservice.Api.Services.Password_services;
 using AccountMicroservice.Api.Services.Roles_services;
-using AccountMicroservice.Api.Services.User_services;
-using AccountMicroservice.Api.Services.User_services.Role_services;
+using AccountMicroservice.Api.Services.UnitOfWork;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AccountMicroservice.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController(IUserService userService, IPasswordService passwordService, IUserRolesService userRoleService,
-        IRoleService roleService) : ControllerBase
+    public class UserController(IPasswordService passwordService, IUnitOfWork unitOfWork, IRoleService roleService) : ControllerBase
     {
         [HttpGet]
         [Route("get-user-by-id/{userId}")]
         public async Task<IActionResult> GetUserByIdAsync(Guid userId)
         {
-            var user = await userService.GetUserByIdAsync(userId);
+            var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
             if (user == null)
                 return NotFound();
 
@@ -29,14 +27,15 @@ namespace AccountMicroservice.Api.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateUserNameAsync([FromBody] UpdateUserNameDto model)
         {
-            var user = await userService.GetUserByIdAsync(model.UserId);
+            var user = await unitOfWork.UserService.GetUserByIdAsync(model.UserId);
             if(user == null) return NotFound();
 
-            if (await userService.GetUserByUserNameAsync(model.NewUserName) != null)
+            if (await unitOfWork.UserService.GetUserByUserNameAsync(model.NewUserName) != null)
                 return Conflict("User with current name already exists");
 
             user.UserName = model.NewUserName;
-            await userService.UpdateUserAsync(user);
+            await unitOfWork.UserService.UpdateUserAsync(user);
+            await unitOfWork.CompleteAsync();
 
             return Ok();
         }
@@ -45,14 +44,15 @@ namespace AccountMicroservice.Api.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateUserPasswordAsync([FromBody] UpdateUserPasswordDto model)
         {
-            var user = await userService.GetUserByIdAsync(model.UserId);
+            var user = await unitOfWork.UserService.GetUserByIdAsync(model.UserId);
             if (user == null) return NotFound();
             
             var passwordHashFormatResult = passwordService.HashPassword(model.NewPassword);
             user.PasswordHash = Encoding.UTF8.GetString(passwordHashFormatResult.PasswordHash);
             user.PasswordSalt = Encoding.UTF8.GetString(passwordHashFormatResult.Salt);
 
-            await userService.UpdateUserAsync(user);
+            await unitOfWork.UserService.UpdateUserAsync(user);
+            await unitOfWork.CompleteAsync();
 
             return Ok();
         }
@@ -61,7 +61,7 @@ namespace AccountMicroservice.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> SetUserRolesAsync([FromBody] SetUserRolesDto model)
         {
-            var user = await userService.GetUserByIdAsync(model.UserId);
+            var user = await unitOfWork.UserService.GetUserByIdAsync(model.UserId);
             if (user == null)
                 return NotFound("User not found");
 
@@ -72,19 +72,21 @@ namespace AccountMicroservice.Api.Controllers
             if (model.RoleIds.Except(allRoleIds).Any())
                 return BadRequest("Role with current id does not exist");
 
-            var currentUserRoles = await userRoleService.GetUserRolesAsync(model.UserId);
+            var currentUserRoles = await unitOfWork.UserRolesService.GetUserRolesAsync(model.UserId);
             if (currentUserRoles.Count == 0)
             {
-                await userRoleService.AddUserToRolesRangeAsync(model.UserId, model.RoleIds);
+                await unitOfWork.UserRolesService.AddUserToRolesRangeAsync(model.UserId, model.RoleIds);
             }
             else
             {
                 List<Guid> currentUserRoleIds = currentUserRoles.Select(x => x.Id).ToList();
                 List<Guid> userRoleIdsToDelete = currentUserRoleIds.Except(model.RoleIds).ToList();
                 List<Guid> userRoleIdsToAdd = model.RoleIds.Except(currentUserRoleIds).ToList();
-                await userRoleService.AddUserToRolesRangeAsync(model.UserId, userRoleIdsToAdd);
-                await userRoleService.RemoveUserRolesRangeAsync(model.UserId, userRoleIdsToDelete);
+                await unitOfWork.UserRolesService.AddUserToRolesRangeAsync(model.UserId, userRoleIdsToAdd);
+                await unitOfWork.UserRolesService.RemoveUserRolesRangeAsync(model.UserId, userRoleIdsToDelete);
             }
+
+            await unitOfWork.CompleteAsync();
 
             return Ok();
         }
