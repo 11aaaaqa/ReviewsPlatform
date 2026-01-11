@@ -26,7 +26,7 @@ namespace AccountMicroservice.Api.Services.UserServices.RoleServices
                 rolesToAdd.Add(new UserRole { RoleId = roleIdToAdd, UserId = userId });
             }
 
-            context.UserRoles.AddRange(rolesToAdd);
+            await context.UserRoles.AddRangeAsync(rolesToAdd);
         }
 
         public async Task RemoveUserRoleAsync(Guid userId, Guid roleId)
