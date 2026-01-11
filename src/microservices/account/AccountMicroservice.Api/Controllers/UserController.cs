@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Net;
+using System.Text;
+using AccountMicroservice.Api.Constants;
 using AccountMicroservice.Api.DTOs.User;
 using AccountMicroservice.Api.Models.Business;
 using AccountMicroservice.Api.Services.PasswordServices;
@@ -72,21 +74,35 @@ namespace AccountMicroservice.Api.Controllers
             if (model.RoleIds.Except(allRoleIds).Any())
                 return BadRequest("Role with current id does not exist");
 
-            var currentUserRoles = await unitOfWork.UserRolesService.GetUserRolesAsync(model.UserId);
-            if (currentUserRoles.Count == 0)
-            {
-                await unitOfWork.UserRolesService.AddUserToRolesRangeAsync(model.UserId, model.RoleIds);
-            }
-            else
-            {
-                List<Guid> currentUserRoleIds = currentUserRoles.Select(x => x.Id).ToList();
-                List<Guid> userRoleIdsToDelete = currentUserRoleIds.Except(model.RoleIds).ToList();
-                List<Guid> userRoleIdsToAdd = model.RoleIds.Except(currentUserRoleIds).ToList();
-                await unitOfWork.UserRolesService.AddUserToRolesRangeAsync(model.UserId, userRoleIdsToAdd);
-                await unitOfWork.UserRolesService.RemoveUserRolesRangeAsync(model.UserId, userRoleIdsToDelete);
-            }
+            var currentUserRoles = user.Roles;
 
-            await unitOfWork.CompleteAsync();
+            try
+            {
+                await unitOfWork.BeginTransactionAsync();
+
+                if (currentUserRoles.Count == 0)
+                {
+                    await unitOfWork.UserRolesService.AddUserToRolesRangeAsync(model.UserId, model.RoleIds);
+                }
+                else
+                {
+                    List<Guid> currentUserRoleIds = currentUserRoles.Select(x => x.Id).ToList();
+                    List<Guid> userRoleIdsToDelete = currentUserRoleIds.Except(model.RoleIds).ToList();
+                    List<Guid> userRoleIdsToAdd = model.RoleIds.Except(currentUserRoleIds).ToList();
+                    await unitOfWork.UserRolesService.AddUserToRolesRangeAsync(model.UserId, userRoleIdsToAdd);
+                    await unitOfWork.UserRolesService.RemoveUserRolesRangeAsync(model.UserId, userRoleIdsToDelete);
+                }
+
+                user.IsEmailVerified = model.RoleIds.Any(x => x == new Guid(RoleIds.VerifiedId));
+                await unitOfWork.UserService.UpdateUserAsync(user);
+
+                await unitOfWork.CommitTransactionAsync();
+            }
+            catch (Exception e)
+            {
+                await unitOfWork.RollbackTransactionAsync();
+                return StatusCode((int)HttpStatusCode.InternalServerError, new { errorMessage = e.Message });
+            }
 
             return Ok();
         }
