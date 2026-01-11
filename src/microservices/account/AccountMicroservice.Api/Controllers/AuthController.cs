@@ -81,7 +81,7 @@ namespace AccountMicroservice.Api.Controllers
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(AdditionalClaimTypes.IsEmailVerified, user.IsEmailVerified.ToString())
             };
-            var userRoles = await unitOfWork.UserRolesService.GetUserRolesAsync(user.Id);
+            var userRoles = user.Roles;
             foreach (var userRole in userRoles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, userRole.Name));
