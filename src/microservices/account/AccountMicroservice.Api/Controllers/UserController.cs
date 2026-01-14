@@ -12,7 +12,8 @@ namespace AccountMicroservice.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController(IPasswordService passwordService, IUnitOfWork unitOfWork, IRoleService roleService) : ControllerBase
+    public class UserController(IPasswordService passwordService, IUnitOfWork unitOfWork, IRoleService roleService,
+        ILogger<UserController> logger) : ControllerBase
     {
         [HttpGet]
         [Route("get-user-by-id/{userId}")]
@@ -32,12 +33,16 @@ namespace AccountMicroservice.Api.Controllers
             var user = await unitOfWork.UserService.GetUserByIdAsync(model.UserId);
             if(user == null) return NotFound();
 
+            string userName = user.UserName;
+
             if (await unitOfWork.UserService.GetUserByUserNameAsync(model.NewUserName) != null)
                 return Conflict("User with current name already exists");
 
             user.UserName = model.NewUserName;
             await unitOfWork.UserService.UpdateUserAsync(user);
             await unitOfWork.CompleteAsync();
+
+            logger.LogInformation("User {UserId} updated his name from {UserName} to {NewUserName}", user.Id, userName, model.NewUserName);
 
             return Ok();
         }
@@ -55,6 +60,8 @@ namespace AccountMicroservice.Api.Controllers
 
             await unitOfWork.UserService.UpdateUserAsync(user);
             await unitOfWork.CompleteAsync();
+
+            logger.LogInformation("User {UserId} updated his password", user.Id);
 
             return Ok();
         }
