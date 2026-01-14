@@ -7,7 +7,7 @@ namespace AccountMicroservice.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TokenController(IUnitOfWork unitOfWork, ITokenService tokenService) : ControllerBase
+    public class TokenController(IUnitOfWork unitOfWork, ITokenService tokenService, ILogger<TokenController> logger) : ControllerBase
     {
         [Route("revoke/{userId}")]
         [HttpGet]
@@ -21,6 +21,8 @@ namespace AccountMicroservice.Api.Controllers
 
             await unitOfWork.UserService.UpdateUserAsync(user);
             await unitOfWork.CompleteAsync();
+
+            logger.LogInformation("User {UserId} logged out", userId);
 
             return Ok();
         }
@@ -44,6 +46,8 @@ namespace AccountMicroservice.Api.Controllers
 
             await unitOfWork.UserService.UpdateUserAsync(user);
             await unitOfWork.CompleteAsync();
+
+            logger.LogInformation("Token for user {UserId} refreshed", user.Id);
 
             return Ok(accessToken);
         }
