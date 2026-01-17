@@ -5,14 +5,23 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Web.MVC.Filters.ActionFilters
 {
-    public class ValidatePassedUserIdActionFilterService(ILogger logger) : IActionFilter
+    public class ValidatePassedUserIdActionFilterService(ILogger<ValidatePassedUserIdActionFilterService> logger) : IActionFilter
     {
         public void OnActionExecuting(ActionExecutingContext context)
         {
-            object? userIdObj = context.ActionArguments["userId"];
+            object? userIdObj;
+            try
+            {
+                userIdObj = context.ActionArguments["userId"];
+            }
+            catch
+            {
+                context.Result = new NotFoundResult();
+                return;
+            }
             if (userIdObj == null)
             {
-                context.Result = new BadRequestResult();
+                context.Result = new NotFoundResult();
                 return;
             }
 
