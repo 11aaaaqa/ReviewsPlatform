@@ -69,18 +69,20 @@
         </div>
     </div>
 </div>
+@if (Model.CanUserSetTheRoles && Model.User.Id != new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
+{
+    <script>
+        const overlay = document.getElementById('modalOverlay');
+        const openModalBtn = document.getElementById('openModalBtn');
 
-<script>
-    const overlay = document.getElementById('modalOverlay');
-    const openModalBtn = document.getElementById('openModalBtn');
+        overlay.onclick = (e) => {
+            if(e.target === overlay) {
+                overlay.style.display = 'none';
+            }
+        }
 
-    overlay.onclick = (e) => {
-      if(e.target === overlay) {
-        overlay.style.display = 'none';
-      }
-    }
-
-    openModalBtn.onclick = () => {
-        overlay.style.display = 'flex';
-    }
-</script>
+        openModalBtn.onclick = () => {
+            overlay.style.display = 'flex';
+        }
+    </script>
+}
