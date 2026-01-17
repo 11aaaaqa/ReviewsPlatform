@@ -113,7 +113,7 @@ h1, h2, h3, h4, h5, h6, p {
 }
 
 .dim-colored {
-    color: rgb(128, 128, 128, 0.6);
+    color: rgba(128, 128, 128, 0.6);
 }
 
 .bolder {
@@ -125,7 +125,7 @@ h1, h2, h3, h4, h5, h6, p {
 }
 
 .hidden {
-    display: hidden;
+    display: none;
 }
 
 html {
