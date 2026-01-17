@@ -7,6 +7,7 @@ using AccountMicroservice.Api.Services.PasswordServices;
 using AccountMicroservice.Api.Services.RolesServices;
 using AccountMicroservice.Api.Services.UnitOfWork;
 using Microsoft.AspNetCore.Mvc;
+using SkiaSharp;
 
 namespace AccountMicroservice.Api.Controllers
 {
@@ -110,6 +111,47 @@ namespace AccountMicroservice.Api.Controllers
                 await unitOfWork.RollbackTransactionAsync();
                 return StatusCode((int)HttpStatusCode.InternalServerError, new { errorMessage = e.Message });
             }
+
+            return Ok();
+        }
+
+        [RequestSizeLimit(2 * 1024 * 1024)]
+        [Route("set-avatar")]
+        [HttpPut]
+        public async Task<IActionResult> SetUserAvatar([FromBody] SetUserAvatarDto model)
+        {
+            var user = await unitOfWork.UserService.GetUserByIdAsync(model.UserId);
+            if (user == null)
+                return NotFound();
+
+            using var memoryStream = new MemoryStream(model.AvatarSource);
+            using var codec = SKCodec.Create(memoryStream);
+            var format = codec.EncodedFormat;
+            if (format != SKEncodedImageFormat.Png && format != SKEncodedImageFormat.Jpeg)
+            {
+                return BadRequest("Incorrect file format");
+            }
+
+            using SKBitmap bitmap = SKBitmap.Decode(model.AvatarSource);
+            int size = Math.Min(bitmap.Height, bitmap.Width);
+            using SKBitmap editedBitmap = new SKBitmap(size, size);
+
+            using SKCanvas canvas = new SKCanvas(editedBitmap);
+            using SKPath path = new SKPath();
+
+            canvas.Clear(SKColors.Transparent);
+            path.AddCircle(size / 2f, size / 2f, size / 2f);
+            canvas.ClipPath(path);
+            canvas.DrawBitmap(bitmap, (size - bitmap.Width) / 2f, (size - bitmap.Height) / 2f);
+
+            using SKImage editedImage = SKImage.FromBitmap(editedBitmap);
+            using SKData data = editedImage.Encode(SKEncodedImageFormat.Png, 100);
+
+            byte[] avatarSource = data.ToArray();
+            user.AvatarSource = avatarSource;
+            await unitOfWork.UserService.UpdateUserAsync(user);
+
+            await unitOfWork.CompleteAsync();
 
             return Ok();
         }
