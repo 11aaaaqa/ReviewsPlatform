@@ -13,8 +13,9 @@
         <div id="errorMessageContainer" class="hidden" style="color: red;"></div>
         <form id="updateAvatarForm" method="post" asp-controller="User" asp-action="UpdateUserAvatar" asp-route-returnUrl="@returnUrl"
               asp-route-userId="@Model.UserId" enctype="multipart/form-data">
-            <input id="updateAvatarInput" type="file" name="Image"/>
+            <input id="updateAvatarInput" type="file" name="Image" class="hidden"/>
         </form>
+        <button id="updateAvatarBtn" class="btn-wide-stretched">Выбрать изображение</button>
     </div>
 }
 
@@ -22,6 +23,10 @@
     const updateAvatarInput = document.getElementById('updateAvatarInput');
     const errorMessageContainer = document.getElementById('errorMessageContainer');
     const avatarExtensions = ['.jpg', '.jpeg', '.png'];
+
+    document.getElementById('updateAvatarBtn').addEventListener('click', () => {
+        updateAvatarInput.click();
+    });
 
     updateAvatarInput.addEventListener('change', async function(e) {
         const file = this.files[0];

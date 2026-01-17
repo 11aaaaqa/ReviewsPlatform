@@ -36,7 +36,7 @@
                         returnUrl += Context.Request.QueryString;
                     <div class="overlay" id="modalOverlay">
                         <div class="modal-form">
-                            <form class="hidden" method="post" asp-controller="User" asp-action="SetUserRoles" asp-route-userId="@Model.User.Id">
+                            <form method="post" asp-controller="User" asp-action="SetUserRoles" asp-route-userId="@Model.User.Id">
                                 <input type="hidden" name="returnUrl" value="@returnUrl" />
                                 <div class="roles-checkboxes">
                                     @foreach (var role in Model.AllRoles)
