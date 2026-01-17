@@ -44,5 +44,36 @@ namespace AccountMicroservice.Api.Services.UserServices.AvatarServices
             using var data = image.Encode(SKEncodedImageFormat.Png, 100);
             return data.ToArray();
         }
+
+        public byte[] CropCustomUserAvatar(byte[] avatarSource)
+        {
+            using SKBitmap bitmap = SKBitmap.Decode(avatarSource);
+            int size = Math.Min(bitmap.Height, bitmap.Width);
+            using SKBitmap editedBitmap = new SKBitmap(size, size);
+
+            using SKCanvas canvas = new SKCanvas(editedBitmap);
+            using SKPath path = new SKPath();
+
+            canvas.Clear(SKColors.Transparent);
+            path.AddCircle(size / 2f, size / 2f, size / 2f);
+            canvas.ClipPath(path);
+            canvas.DrawBitmap(bitmap, (size - bitmap.Width) / 2f, (size - bitmap.Height) / 2f);
+
+            using SKImage editedImage = SKImage.FromBitmap(editedBitmap);
+            using SKData data = editedImage.Encode(SKEncodedImageFormat.Png, 100);
+
+            return data.ToArray();
+        }
+
+        public bool ValidateAvatar(byte[] avatarSource)
+        {
+            using var memoryStream = new MemoryStream(avatarSource);
+            using var codec = SKCodec.Create(memoryStream);
+            var format = codec.EncodedFormat;
+            if (format != SKEncodedImageFormat.Png && format != SKEncodedImageFormat.Jpeg)
+                return false;
+
+            return true;
+        }
     }
 }

@@ -6,6 +6,7 @@ using AccountMicroservice.Api.Models.Business;
 using AccountMicroservice.Api.Services.PasswordServices;
 using AccountMicroservice.Api.Services.RolesServices;
 using AccountMicroservice.Api.Services.UnitOfWork;
+using AccountMicroservice.Api.Services.UserServices.AvatarServices;
 using Microsoft.AspNetCore.Mvc;
 using SkiaSharp;
 
@@ -13,7 +14,7 @@ namespace AccountMicroservice.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController(IPasswordService passwordService, IUnitOfWork unitOfWork, IRoleService roleService,
+    public class UserController(IPasswordService passwordService, IUnitOfWork unitOfWork, IRoleService roleService, IAvatarService avatarService,
         ILogger<UserController> logger) : ControllerBase
     {
         [HttpGet]
@@ -124,31 +125,10 @@ namespace AccountMicroservice.Api.Controllers
             if (user == null)
                 return NotFound();
 
-            using var memoryStream = new MemoryStream(model.AvatarSource);
-            using var codec = SKCodec.Create(memoryStream);
-            var format = codec.EncodedFormat;
-            if (format != SKEncodedImageFormat.Png && format != SKEncodedImageFormat.Jpeg)
-            {
+            if(!avatarService.ValidateAvatar(model.AvatarSource))
                 return BadRequest("Incorrect file format");
-            }
 
-            using SKBitmap bitmap = SKBitmap.Decode(model.AvatarSource);
-            int size = Math.Min(bitmap.Height, bitmap.Width);
-            using SKBitmap editedBitmap = new SKBitmap(size, size);
-
-            using SKCanvas canvas = new SKCanvas(editedBitmap);
-            using SKPath path = new SKPath();
-
-            canvas.Clear(SKColors.Transparent);
-            path.AddCircle(size / 2f, size / 2f, size / 2f);
-            canvas.ClipPath(path);
-            canvas.DrawBitmap(bitmap, (size - bitmap.Width) / 2f, (size - bitmap.Height) / 2f);
-
-            using SKImage editedImage = SKImage.FromBitmap(editedBitmap);
-            using SKData data = editedImage.Encode(SKEncodedImageFormat.Png, 100);
-
-            byte[] avatarSource = data.ToArray();
-            user.AvatarSource = avatarSource;
+            user.AvatarSource = avatarService.CropCustomUserAvatar(model.AvatarSource);
             await unitOfWork.UserService.UpdateUserAsync(user);
 
             await unitOfWork.CompleteAsync();
