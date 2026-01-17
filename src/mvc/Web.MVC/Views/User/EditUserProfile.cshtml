@@ -1,0 +1,69 @@
+﻿@model Web.MVC.Models.View_models.User.EditUserProfileViewModel
+
+<h4>Фотография профиля</h4>
+
+@if (true)
+{
+    string returnUrl = Context.Request.Path;
+    if (Context.Request.QueryString.HasValue)
+        returnUrl += Context.Request.QueryString;
+
+    <div>
+        <img src="@Model.AvatarSrc" width="100" height="100" />
+        <div id="errorMessageContainer" class="hidden" style="color: red;"></div>
+        <form id="updateAvatarForm" method="post" asp-controller="User" asp-action="UpdateUserAvatar" asp-route-returnUrl="@returnUrl"
+              asp-route-userId="@Model.UserId" enctype="multipart/form-data">
+            <input id="updateAvatarInput" type="file" name="Image"/>
+        </form>
+    </div>
+}
+
+<script>
+    const updateAvatarInput = document.getElementById('updateAvatarInput');
+    const errorMessageContainer = document.getElementById('errorMessageContainer');
+    const avatarExtensions = ['.jpg', '.jpeg', '.png'];
+
+    updateAvatarInput.addEventListener('change', async function(e) {
+        const file = this.files[0];
+        if (!file.type.startsWith('image/')) {
+            this.value = '';
+            errorMessageContainer.textContent = 'Неверный формат';
+            errorMessageContainer.style.display = 'block';
+            return;
+        }
+
+        const fileName = file.name.toLowerCase();
+        if (!avatarExtensions.some(x => fileName.endsWith(x))) {
+            this.value = '';
+            errorMessageContainer.textContent = 'Неверный формат';
+            errorMessageContainer.style.display = 'block';
+            return;
+        }
+
+        const updateAvatarForm = document.getElementById('updateAvatarForm');
+        const formData = new FormData(updateAvatarForm);
+
+        const response = await fetch(updateAvatarForm.action,
+            {
+                method: 'POST',
+                body: formData
+            });
+
+        if (response.redirected) {
+            window.location.href = response.url;
+        }
+        else if (response.status === 400) {
+            errorMessageContainer.textContent = await response.text();
+            errorMessageContainer.style.display = 'block';
+            this.value = '';
+        }
+        else if (response.ok) {
+            window.location.reload();
+        }
+        else if (response.status === 404) {
+            errorMessageContainer.textContent = "Размер файла превышает 2 мб";
+            errorMessageContainer.style.display = 'block';
+            this.value = '';
+        }
+    });
+</script>
