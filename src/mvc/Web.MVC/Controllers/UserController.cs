@@ -73,7 +73,7 @@ namespace Web.MVC.Controllers
 
         [Authorize]
         [ValidatePassedUserIdActionFilter]
-        [Route("users/{userId}/edit")]
+        [Route("users/{userId}/settings")]
         [HttpGet]
         public async Task<IActionResult> EditUserProfile(Guid userId)
         {
