@@ -23,7 +23,7 @@
 .profile-link {
     display: block;
     width: 100%;
-    text-align: center;
+    /*text-align: center;*/
     padding: 7px 14px;
     background-color: white;
     color: black;
@@ -32,9 +32,15 @@
 
 .profile-link:hover {
     color: salmon;
+    fill: salmon;
 }
 
 .active, .active:hover {
     color: white;
+    fill: white;
     background-color: salmon;
+}
+
+.profile-link-svg {
+    margin-right: 6px;
 }
