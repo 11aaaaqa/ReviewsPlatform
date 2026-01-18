@@ -1,0 +1,13 @@
+﻿.user-profile-email-input {
+    cursor: default;
+    border: 1px solid salmon;
+    border-radius: 5px;
+    padding: 5px 12px;
+    background-color: white;
+    outline: none;
+}
+
+.block-underline {
+    border-bottom: 2px solid rgba(0,0,0,0.08);
+    padding-bottom: 20px;
+}

@@ -6,13 +6,15 @@ using AccountMicroservice.Api.Models.Business;
 using AccountMicroservice.Api.Services.PasswordServices;
 using AccountMicroservice.Api.Services.RolesServices;
 using AccountMicroservice.Api.Services.UnitOfWork;
+using AccountMicroservice.Api.Services.UserServices.AvatarServices;
 using Microsoft.AspNetCore.Mvc;
+using SkiaSharp;
 
 namespace AccountMicroservice.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController(IPasswordService passwordService, IUnitOfWork unitOfWork, IRoleService roleService,
+    public class UserController(IPasswordService passwordService, IUnitOfWork unitOfWork, IRoleService roleService, IAvatarService avatarService,
         ILogger<UserController> logger) : ControllerBase
     {
         [HttpGet]
@@ -110,6 +112,26 @@ namespace AccountMicroservice.Api.Controllers
                 await unitOfWork.RollbackTransactionAsync();
                 return StatusCode((int)HttpStatusCode.InternalServerError, new { errorMessage = e.Message });
             }
+
+            return Ok();
+        }
+
+        [RequestSizeLimit(2 * 1024 * 1024)]
+        [Route("set-avatar")]
+        [HttpPut]
+        public async Task<IActionResult> SetUserAvatar([FromBody] SetUserAvatarDto model)
+        {
+            var user = await unitOfWork.UserService.GetUserByIdAsync(model.UserId);
+            if (user == null)
+                return NotFound();
+
+            if(!avatarService.ValidateAvatar(model.AvatarSource))
+                return BadRequest("Incorrect file format");
+
+            user.AvatarSource = avatarService.CropCustomUserAvatar(model.AvatarSource);
+            await unitOfWork.UserService.UpdateUserAsync(user);
+
+            await unitOfWork.CompleteAsync();
 
             return Ok();
         }

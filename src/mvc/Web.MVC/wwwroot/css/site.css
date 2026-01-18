@@ -57,12 +57,14 @@ h1, h2, h3, h4, h5, h6, p {
 }
 
 .btn {
+    display: block;
     border: none;
     cursor: pointer;
     background: salmon;
     color: white;
     padding: 7px 14px;
     border-radius: 10px;
+    text-decoration: none;
     transition: background 0.2s;
 }
 
@@ -71,12 +73,14 @@ h1, h2, h3, h4, h5, h6, p {
 }
 
 .btn-wide-stretched {
+    display: block;
     border: none;
     cursor: pointer;
     background: salmon;
     color: white;
     padding: 7px 50px;
     border-radius: 10px;
+    text-decoration: none;
     transition: background 0.2s;
 }
 
@@ -85,12 +89,14 @@ h1, h2, h3, h4, h5, h6, p {
 }
 
 .btn-green {
+    display: block;
     border: none;
     cursor: pointer;
     background-color: hsl(120, 100%, 32%);
     color: white;
     padding: 6px 12px;
     border-radius: 8px;
+    text-decoration: none;
     transition: background 0.1s;
 }
 
@@ -99,12 +105,14 @@ h1, h2, h3, h4, h5, h6, p {
 }
 
 .btn-red {
+    display: block;
     border: none;
     cursor: pointer;
     background-color: rgb(255, 0, 0);
     color: white;
     padding: 6px 12px;
     border-radius: 8px;
+    text-decoration: none;
     transition: background 0.1s;
 }
 
@@ -113,7 +121,7 @@ h1, h2, h3, h4, h5, h6, p {
 }
 
 .dim-colored {
-    color: rgb(128, 128, 128, 0.6);
+    color: rgba(128, 128, 128, 0.6);
 }
 
 .bolder {
@@ -125,7 +133,7 @@ h1, h2, h3, h4, h5, h6, p {
 }
 
 .hidden {
-    display: hidden;
+    display: none;
 }
 
 html {

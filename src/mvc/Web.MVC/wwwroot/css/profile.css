@@ -1,0 +1,47 @@
+﻿.profile-container {
+    display: flex;
+    align-items: flex-start;
+}
+
+.profile-main-container {
+    width: 80%;
+    margin-right: 40px;
+}
+
+.profile-links-container {
+    width: 20%;
+}
+
+.highlited-block {
+    background-color: white;
+    border: 1px solid rgba(0,0,0, 0.08);
+    box-shadow: 5px 5px 6px rgba(0, 0, 0, 0.08);
+    border-radius: 6px;
+    padding: 20px;
+}
+
+.profile-link {
+    display: block;
+    width: 100%;
+    /*text-align: center;*/
+    padding: 7px 14px;
+    background-color: white;
+    color: black;
+    fill: rgba(0,0,0,0.5);
+    text-decoration: none;
+}
+
+.profile-link:hover {
+    color: salmon;
+    fill: salmon;
+}
+
+.active, .active:hover {
+    color: white;
+    fill: white;
+    background-color: salmon;
+}
+
+.profile-link-svg {
+    margin-right: 6px;
+}

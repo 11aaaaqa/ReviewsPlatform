@@ -30,13 +30,13 @@
 
                 @if (Model.CanUserSetTheRoles && Model.User.Id != new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
                 {
-                    <button class="btn-wide-stretched" id="openModalBtn">Назначить роль</button>
+                    <button class="btn-wide-stretched" style="margin-top: 5px;" id="openModalBtn">Назначить роль</button>
                     string returnUrl = Context.Request.Path;
                     if (Context.Request.QueryString.HasValue)
                         returnUrl += Context.Request.QueryString;
                     <div class="overlay" id="modalOverlay">
                         <div class="modal-form">
-                            <form class="hidden" method="post" asp-controller="User" asp-action="SetUserRoles" asp-route-userId="@Model.User.Id">
+                            <form method="post" asp-controller="User" asp-action="SetUserRoles" asp-route-userId="@Model.User.Id">
                                 <input type="hidden" name="returnUrl" value="@returnUrl" />
                                 <div class="roles-checkboxes">
                                     @foreach (var role in Model.AllRoles)
@@ -65,22 +65,31 @@
                         </div>
                     </div>
                 }
+
+                @if (Model.User.Id == new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
+                {
+                    <a class="btn-wide-stretched" style="margin-top: 5px;" asp-controller="User" asp-action="EditUserProfile" asp-route-userId="@Model.User.Id">
+                        Настройка профиля
+                    </a>
+                }
             }
         </div>
     </div>
 </div>
+@if (Model.CanUserSetTheRoles && Model.User.Id != new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
+{
+    <script>
+        const overlay = document.getElementById('modalOverlay');
+        const openModalBtn = document.getElementById('openModalBtn');
 
-<script>
-    const overlay = document.getElementById('modalOverlay');
-    const openModalBtn = document.getElementById('openModalBtn');
+        overlay.onclick = (e) => {
+            if(e.target === overlay) {
+                overlay.style.display = 'none';
+            }
+        }
 
-    overlay.onclick = (e) => {
-      if(e.target === overlay) {
-        overlay.style.display = 'none';
-      }
-    }
-
-    openModalBtn.onclick = () => {
-        overlay.style.display = 'flex';
-    }
-</script>
+        openModalBtn.onclick = () => {
+            overlay.style.display = 'flex';
+        }
+    </script>
+}
