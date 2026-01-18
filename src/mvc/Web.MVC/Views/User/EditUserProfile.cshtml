@@ -1,23 +1,44 @@
 ﻿@model Web.MVC.Models.View_models.User.EditUserProfileViewModel
+<link rel="stylesheet" href="~/css/user/edit-user-profile.css"/>
+<link rel="stylesheet" href="~/css/profile.css"/>
 
-<h4>Фотография профиля</h4>
+<div class="profile-container">
+    <div class="profile-main-container">
+        <h3>Настройка профиля</h3>
+        <div class="highlited-block">
+            <div class="block-underline">
+                <h4>Данные авторизации</h4>
+                <input class="user-profile-email-input" type="text" value="@Model.UserEmail" readonly/>
+                <div style="margin-top: 25px;">
+                    <button class="btn-wide-stretched">Изменить пароль</button>
+                </div>
+            </div>
 
-@if (true)
-{
-    string returnUrl = Context.Request.Path;
-    if (Context.Request.QueryString.HasValue)
-        returnUrl += Context.Request.QueryString;
+            <div style="padding-top: 20px;">
+                @if (true)
+                {
+                    string returnUrl = Context.Request.Path;
+                    if (Context.Request.QueryString.HasValue)
+                        returnUrl += Context.Request.QueryString;
 
-    <div>
-        <img src="@Model.AvatarSrc" width="100" height="100" />
-        <div id="errorMessageContainer" class="hidden" style="color: red;"></div>
-        <form id="updateAvatarForm" method="post" asp-controller="User" asp-action="UpdateUserAvatar" asp-route-returnUrl="@returnUrl"
-              asp-route-userId="@Model.UserId" enctype="multipart/form-data">
-            <input id="updateAvatarInput" type="file" name="Image" class="hidden"/>
-        </form>
-        <button id="updateAvatarBtn" class="btn-wide-stretched">Выбрать изображение</button>
+                    <h4>Фотография профиля</h4>
+                    <img src="@Model.AvatarSrc" width="100" height="100"/>
+                    <div style="margin-top: 8px;">
+                        <div id="errorMessageContainer" class="hidden" style="color: red; margin-bottom: 3px;"></div>
+                        <form id="updateAvatarForm" method="post" asp-controller="User" asp-action="UpdateUserAvatar" asp-route-returnUrl="@returnUrl"
+                              asp-route-userId="@Model.UserId" enctype="multipart/form-data">
+                            <input id="updateAvatarInput" type="file" name="Image" class="hidden"/>
+                        </form>
+                        <button id="updateAvatarBtn" class="btn-wide-stretched">Выбрать изображение</button>
+                    </div>
+                }
+            </div>
+        </div>
     </div>
-}
+    <div class="highlited-block profile-links-container">
+        <a class="profile-link active" asp-controller="User" asp-action="EditUserProfile" asp-route-userId="@Model.UserId">Настройки</a>
+    </div>
+</div>
 
 <script>
     const updateAvatarInput = document.getElementById('updateAvatarInput');
