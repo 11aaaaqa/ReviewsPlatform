@@ -65,13 +65,12 @@
                         </div>
                     </div>
                 }
-
-                @if (Model.User.Id == new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
-                {
-                    <a class="btn-wide-stretched" style="margin-top: 5px;" asp-controller="User" asp-action="EditUserProfile" asp-route-userId="@Model.User.Id">
-                        Настройка профиля
-                    </a>
-                }
+            }
+            @if (Model.User.Id == new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
+            {
+                <a class="btn-wide-stretched" style="margin-top: 5px;" asp-controller="User" asp-action="EditUserProfile" asp-route-userId="@Model.User.Id">
+                    Настройка профиля
+                </a>
             }
         </div>
     </div>
