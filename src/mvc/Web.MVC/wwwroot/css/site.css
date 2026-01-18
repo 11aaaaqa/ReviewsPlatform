@@ -63,6 +63,7 @@ h1, h2, h3, h4, h5, h6, p {
     color: white;
     padding: 7px 14px;
     border-radius: 10px;
+    text-decoration: none;
     transition: background 0.2s;
 }
 
@@ -77,6 +78,7 @@ h1, h2, h3, h4, h5, h6, p {
     color: white;
     padding: 7px 50px;
     border-radius: 10px;
+    text-decoration: none;
     transition: background 0.2s;
 }
 
@@ -91,6 +93,7 @@ h1, h2, h3, h4, h5, h6, p {
     color: white;
     padding: 6px 12px;
     border-radius: 8px;
+    text-decoration: none;
     transition: background 0.1s;
 }
 
@@ -105,6 +108,7 @@ h1, h2, h3, h4, h5, h6, p {
     color: white;
     padding: 6px 12px;
     border-radius: 8px;
+    text-decoration: none;
     transition: background 0.1s;
 }
 
