@@ -57,6 +57,7 @@ h1, h2, h3, h4, h5, h6, p {
 }
 
 .btn {
+    display: block;
     border: none;
     cursor: pointer;
     background: salmon;
@@ -72,6 +73,7 @@ h1, h2, h3, h4, h5, h6, p {
 }
 
 .btn-wide-stretched {
+    display: block;
     border: none;
     cursor: pointer;
     background: salmon;
@@ -87,6 +89,7 @@ h1, h2, h3, h4, h5, h6, p {
 }
 
 .btn-green {
+    display: block;
     border: none;
     cursor: pointer;
     background-color: hsl(120, 100%, 32%);
@@ -102,6 +105,7 @@ h1, h2, h3, h4, h5, h6, p {
 }
 
 .btn-red {
+    display: block;
     border: none;
     cursor: pointer;
     background-color: rgb(255, 0, 0);

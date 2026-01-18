@@ -30,7 +30,7 @@
 
                 @if (Model.CanUserSetTheRoles && Model.User.Id != new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
                 {
-                    <button class="btn-wide-stretched" id="openModalBtn">Назначить роль</button>
+                    <button class="btn-wide-stretched" style="margin-top: 5px;" id="openModalBtn">Назначить роль</button>
                     string returnUrl = Context.Request.Path;
                     if (Context.Request.QueryString.HasValue)
                         returnUrl += Context.Request.QueryString;
@@ -64,6 +64,13 @@
                             </form>
                         </div>
                     </div>
+                }
+
+                @if (Model.User.Id == new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
+                {
+                    <a class="btn-wide-stretched" style="margin-top: 5px;" asp-controller="User" asp-action="EditUserProfile" asp-route-userId="@Model.User.Id">
+                        Настройка профиля
+                    </a>
                 }
             }
         </div>
