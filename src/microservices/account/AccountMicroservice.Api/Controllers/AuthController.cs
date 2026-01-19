@@ -37,6 +37,7 @@ namespace AccountMicroservice.Api.Controllers
                 RegistrationDate = DateOnly.FromDateTime(DateTime.UtcNow)
             };
             userToAdd.AvatarSource = avatarService.GetDefaultUserAvatar(userToAdd);
+            userToAdd.IsAvatarDefault = true;
 
             try
             {

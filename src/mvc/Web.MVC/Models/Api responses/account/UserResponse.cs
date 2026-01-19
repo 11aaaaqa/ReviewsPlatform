@@ -7,6 +7,7 @@
         public string Email { get; set; }
         public bool IsEmailVerified { get; set; }
         public byte[] AvatarSource { get; set; }
+        public bool IsAvatarDefault { get; set; }
         public DateOnly RegistrationDate { get; set; }
         public string? RefreshToken { get; set; }
         public DateTime RefreshTokenExpiryTime { get; set; }

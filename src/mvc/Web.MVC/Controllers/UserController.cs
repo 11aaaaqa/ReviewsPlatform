@@ -94,7 +94,7 @@ namespace Web.MVC.Controllers
 
             string avatarSrc = avatarConverter.GetAvatarSrc(user!.AvatarSource);
 
-            return View(new EditUserProfileViewModel {AvatarSrc = avatarSrc, UserEmail = user.Email, UserId = userId});
+            return View(new EditUserProfileViewModel {AvatarSrc = avatarSrc, UserEmail = user.Email, UserId = userId, IsAvatarDefault = user.IsAvatarDefault});
         }
 
         [RequestSizeLimit(2 * 1024 * 1024)] // При изменении изменить в EditUserProfile view "Размер файла превышает 2 мб" на актуальное значение
@@ -124,6 +124,23 @@ namespace Web.MVC.Controllers
                 return RedirectToAction("EditUserProfile", routeValues: new { userId });
 
             return LocalRedirect(returnUrl);
+        }
+
+        [Authorize]
+        [ValidatePassedUserIdActionFilter]
+        [Route("user/{userId}/reset-avatar")]
+        [HttpPost]
+        public async Task<IActionResult> SetDefaultUserAvatar(Guid userId, string returnUrl)
+        {
+            HttpClient httpClient = httpClientFactory.CreateClient();
+
+            var response = await httpClient.GetAsync($"{url}/api/User/reset-avatar/{userId}");
+            response.EnsureSuccessStatusCode();
+
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return LocalRedirect(returnUrl);
+
+            return RedirectToAction("EditUserProfile", new { userId });
         }
     }
 }
