@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
@@ -61,6 +62,14 @@ namespace Web.MVC.Controllers
         [HttpPost]
         public async Task<IActionResult> SetUserRoles(Guid userId, List<Guid> roleIds, string returnUrl)
         {
+            string currentUserIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid currentUserId = new Guid(currentUserIdStr);
+            if (currentUserId == userId)
+            {
+                logger.LogWarning("User {UserId} tried to set roles to himself", currentUserId);
+                return BadRequest();
+            }
+
             using StringContent jsonContent = new(JsonSerializer.Serialize(new { UserId = userId, RoleIds = roleIds }),
                 Encoding.UTF8, "application/json");
             HttpClient httpClient = httpClientFactory.CreateClient();
