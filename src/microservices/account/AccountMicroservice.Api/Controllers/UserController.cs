@@ -25,7 +25,11 @@ namespace AccountMicroservice.Api.Controllers
             if (user == null)
                 return NotFound();
 
-            return Ok(user);
+            return Ok(new
+            {
+                user.Id, user.UserName, user.Email, user.IsEmailVerified, user.AvatarSource, user.RegistrationDate,
+                user.RefreshToken, user.RefreshTokenExpiryTime, user.Roles
+            });
         }
 
         [Route("update-user-name")]
