@@ -29,7 +29,22 @@
                               asp-route-userId="@Model.UserId" enctype="multipart/form-data">
                             <input id="updateAvatarInput" type="file" name="Image" class="hidden"/>
                         </form>
-                        <button id="updateAvatarBtn" class="btn-wide-stretched">Выбрать изображение</button>
+                        @if (Model.IsAvatarDefault)
+                        {
+                            <button id="updateAvatarBtn" class="btn-wide-stretched">Выбрать изображение</button>
+                        }
+                        else
+                        {
+                            <div class="flex" style="flex-wrap: wrap;">
+                                <button id="updateAvatarBtn" class="btn-wide-stretched" style="margin-right: 10px; margin-bottom: 5px;">
+                                    Выбрать изображение
+                                </button>
+                                <form method="post" asp-controller="User" asp-action="SetDefaultUserAvatar" asp-route-returnUrl="@returnUrl"
+                                      asp-route-userId="@Model.UserId">
+                                    <input class="btn-wide-stretched" type="submit" value="Удалить изображение"/>
+                                </form>
+                            </div>
+                        }
                     </div>
                 }
             </div>

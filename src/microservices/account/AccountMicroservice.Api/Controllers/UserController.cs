@@ -8,7 +8,6 @@ using AccountMicroservice.Api.Services.RolesServices;
 using AccountMicroservice.Api.Services.UnitOfWork;
 using AccountMicroservice.Api.Services.UserServices.AvatarServices;
 using Microsoft.AspNetCore.Mvc;
-using SkiaSharp;
 
 namespace AccountMicroservice.Api.Controllers
 {
@@ -28,7 +27,7 @@ namespace AccountMicroservice.Api.Controllers
             return Ok(new
             {
                 user.Id, user.UserName, user.Email, user.IsEmailVerified, user.AvatarSource, user.RegistrationDate,
-                user.RefreshToken, user.RefreshTokenExpiryTime, user.Roles
+                user.RefreshToken, user.RefreshTokenExpiryTime, user.Roles, user.IsAvatarDefault
             });
         }
 
@@ -133,6 +132,27 @@ namespace AccountMicroservice.Api.Controllers
                 return BadRequest("Incorrect file format");
 
             user.AvatarSource = avatarService.CropCustomUserAvatar(model.AvatarSource);
+            user.IsAvatarDefault = false;
+            await unitOfWork.UserService.UpdateUserAsync(user);
+
+            await unitOfWork.CompleteAsync();
+
+            return Ok();
+        }
+
+        [Route("reset-avatar/{userId}")]
+        [HttpGet]
+        public async Task<IActionResult> SetDefaultUserAvatar(Guid userId)
+        {
+            var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
+            if (user == null)
+                return NotFound();
+
+            if (user.IsAvatarDefault)
+                return BadRequest("Avatar is already default");
+
+            user.AvatarSource = avatarService.GetDefaultUserAvatar(user);
+            user.IsAvatarDefault = true;
             await unitOfWork.UserService.UpdateUserAsync(user);
 
             await unitOfWork.CompleteAsync();
