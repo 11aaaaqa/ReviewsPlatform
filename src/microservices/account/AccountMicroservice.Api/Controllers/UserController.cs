@@ -106,6 +106,8 @@ namespace AccountMicroservice.Api.Controllers
                 }
 
                 user.IsEmailVerified = model.RoleIds.Any(x => x == new Guid(RoleIds.VerifiedId));
+                user.RefreshToken = null;
+                user.RefreshTokenExpiryTime = new DateTime();
                 await unitOfWork.UserService.UpdateUserAsync(user);
 
                 await unitOfWork.CommitTransactionAsync();
