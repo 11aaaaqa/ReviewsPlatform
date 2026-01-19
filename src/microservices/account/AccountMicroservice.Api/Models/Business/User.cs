@@ -9,6 +9,7 @@
         public string PasswordHash { get; set; }
         public string PasswordSalt { get; set; }
         public byte[] AvatarSource { get; set; }
+        public bool IsAvatarDefault { get; set; }
         public DateOnly RegistrationDate { get; set; }
         public string? RefreshToken { get; set; }
         public DateTime RefreshTokenExpiryTime { get; set; }
