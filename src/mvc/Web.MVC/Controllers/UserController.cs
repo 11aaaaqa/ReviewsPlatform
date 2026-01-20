@@ -66,16 +66,26 @@ namespace Web.MVC.Controllers
             Guid currentUserId = new Guid(currentUserIdStr);
             if (currentUserId == userId)
             {
-                logger.LogWarning("User {UserId} tried to set roles to himself", currentUserId);
+                logger.LogWarning("{Timestamp}: User {UserId} tried to set roles to himself",
+                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), currentUserId);
                 return BadRequest();
             }
 
+            HttpClient httpClient = httpClientFactory.CreateClient();
+
+            var allRolesResponse = await httpClient.GetAsync($"{url}/api/Role/all");
+            allRolesResponse.EnsureSuccessStatusCode();
+            var allRoles = await allRolesResponse.Content.ReadFromJsonAsync<List<RoleResponse>>();
+
             using StringContent jsonContent = new(JsonSerializer.Serialize(new { UserId = userId, RoleIds = roleIds }),
                 Encoding.UTF8, "application/json");
-            HttpClient httpClient = httpClientFactory.CreateClient();
 
             var setUserRolesResponse = await httpClient.PostAsync($"{url}/api/User/set-user-roles", jsonContent);
             setUserRolesResponse.EnsureSuccessStatusCode();
+
+            List<string> assignedRoleNames = allRoles!.Where(x => roleIds.Contains(x.Id)).Select(x => x.Name).ToList();
+            logger.LogInformation("{Timestamp}: User {AdminId} set roles to user {UserId}: {Roles}",
+                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), currentUserId, userId, assignedRoleNames);
 
             return LocalRedirect(returnUrl);
         }
@@ -92,10 +102,12 @@ namespace Web.MVC.Controllers
             {
                 if (userResponse.StatusCode == HttpStatusCode.NotFound)
                 {
-                    logger.LogCritical("User, with Id {UserId} that has been extracted from user's claim, is not in Users database", userId);
+                    logger.LogCritical("{Timestamp}: User, with Id {UserId} that has been extracted from user's claim, is not in Users database",
+                        DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId);
                     return StatusCode((int)HttpStatusCode.NotFound);
                 }
-                logger.LogCritical("Something went wrong while trying to get user with Id {UserId}", userId);
+                logger.LogCritical("{Timestamp}: Something went wrong while trying to get user with Id {UserId}",
+                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId);
                 return StatusCode((int)HttpStatusCode.InternalServerError);
             }
 

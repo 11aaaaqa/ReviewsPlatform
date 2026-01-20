@@ -47,7 +47,8 @@ namespace AccountMicroservice.Api.Controllers
             await unitOfWork.UserService.UpdateUserAsync(user);
             await unitOfWork.CompleteAsync();
 
-            logger.LogInformation("User {UserId} updated his name from {UserName} to {NewUserName}", user.Id, userName, model.NewUserName);
+            logger.LogInformation("{Timestamp}: User {UserId} updated his name from {UserName} to {NewUserName}",
+                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), user.Id, userName, model.NewUserName);
 
             return Ok();
         }
@@ -66,7 +67,8 @@ namespace AccountMicroservice.Api.Controllers
             await unitOfWork.UserService.UpdateUserAsync(user);
             await unitOfWork.CompleteAsync();
 
-            logger.LogInformation("User {UserId} updated his password", user.Id);
+            logger.LogInformation("{Timestamp}: User {UserId} updated his password",
+                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), user.Id);
 
             return Ok();
         }

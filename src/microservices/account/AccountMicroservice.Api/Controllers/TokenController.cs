@@ -1,4 +1,5 @@
-﻿using AccountMicroservice.Api.DTOs.Token;
+﻿using AccountMicroservice.Api.Constants;
+using AccountMicroservice.Api.DTOs.Token;
 using AccountMicroservice.Api.Services.TokenServices;
 using AccountMicroservice.Api.Services.UnitOfWork;
 using Microsoft.AspNetCore.Mvc;
@@ -22,7 +23,8 @@ namespace AccountMicroservice.Api.Controllers
             await unitOfWork.UserService.UpdateUserAsync(user);
             await unitOfWork.CompleteAsync();
 
-            logger.LogInformation("User {UserId} logged out", userId);
+            logger.LogInformation("{Timestamp}: User {UserId} logged out",
+                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId);
 
             return Ok();
         }
@@ -47,7 +49,8 @@ namespace AccountMicroservice.Api.Controllers
             await unitOfWork.UserService.UpdateUserAsync(user);
             await unitOfWork.CompleteAsync();
 
-            logger.LogInformation("Token for user {UserId} refreshed", user.Id);
+            logger.LogInformation("{Timestamp}: Token for user {UserId} refreshed",
+                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), user.Id);
 
             return Ok(accessToken);
         }
