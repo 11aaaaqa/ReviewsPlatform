@@ -1,13 +1,65 @@
-﻿.user-profile-email-input {
-    cursor: default;
+﻿.user-profile-input {
+    width: 70%;
     border: 1px solid salmon;
     border-radius: 5px;
-    padding: 5px 12px;
+    padding: 6px 12px;
     background-color: white;
+    outline: none;
+}
+
+.user-profile-readonly-input {
+    cursor: default;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    padding: 5px 12px;
+    color: rgba(0,0,0,0.5);
+    background-color: rgba(0, 0, 0, 0.15);
     outline: none;
 }
 
 .block-underline {
     border-bottom: 2px solid rgba(0,0,0,0.08);
     padding-bottom: 20px;
+}
+
+@media(min-width: 1401px) {
+    .modal-form {
+        width: 30%;
+    }
+}
+
+@media (max-width: 1400px) {
+    .modal-form {
+        width: 40%;
+    }
+}
+
+@media (max-width: 1200px) {
+    .modal-form {
+        width: 50%;
+    }
+}
+
+@media (max-width: 992px) {
+    .modal-form {
+        width: 60%;
+    }
+}
+
+@media (max-width: 768px) {
+    .modal-form {
+        width: 70%;
+    }
+}
+
+@media (max-width: 600px) {
+    .modal-form {
+        width: 80%;
+    }
+}
+
+@media (max-width: 520px) {
+    .modal-form {
+        width: 90%;
+    }
 }
