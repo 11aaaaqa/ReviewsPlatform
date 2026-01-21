@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Web.MVC.Constants;
 using Web.MVC.DTOs.user;
@@ -19,10 +20,12 @@ namespace Web.MVC.Controllers
         private readonly string url;
         private readonly ILogger<UserController> logger;
         private readonly AvatarConverter avatarConverter;
+        private readonly IDataProtector dataProtector;
         private readonly List<string> availableFileExtensions = new() { ".jpg", ".png", ".jpeg"};
         public UserController(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<UserController> logger,
-            AvatarConverter avatarConverter)
+            AvatarConverter avatarConverter, IDataProtectionProvider dataProtectionProvider)
         {
+            dataProtector = dataProtectionProvider.CreateProtector(DataProtectionPurposeConstants.Jwt);
             this.httpClientFactory = httpClientFactory;
             this.logger = logger;
             this.avatarConverter = avatarConverter;
@@ -115,7 +118,11 @@ namespace Web.MVC.Controllers
 
             string avatarSrc = avatarConverter.GetAvatarSrc(user!.AvatarSource);
 
-            return View(new EditUserProfileViewModel {AvatarSrc = avatarSrc, UserEmail = user.Email, UserId = userId, IsAvatarDefault = user.IsAvatarDefault});
+            return View(new EditUserProfileViewModel
+            {
+                AvatarSrc = avatarSrc, UserEmail = user.Email, UserId = userId, IsAvatarDefault = user.IsAvatarDefault,
+                UserName = user.UserName
+            });
         }
 
         [RequestSizeLimit(2 * 1024 * 1024)] // При изменении изменить в EditUserProfile view "Размер файла превышает 2 мб" на актуальное значение
@@ -162,6 +169,45 @@ namespace Web.MVC.Controllers
                 return LocalRedirect(returnUrl);
 
             return RedirectToAction("EditUserProfile", new { userId });
+        }
+
+        [Authorize]
+        [ValidatePassedUserIdActionFilter]
+        [Route("users/{userId}/update-username")]
+        [HttpPost]
+        public async Task<IActionResult> UpdateUserName(Guid userId, UpdateUserNameDto model)
+        {
+            if (ModelState.IsValid)
+            {
+                HttpClient httpClient = httpClientFactory.CreateClient();
+                using StringContent jsonContent = new(JsonSerializer.Serialize(new 
+                    { UserId = userId, model.NewUserName}), Encoding.UTF8, "application/json");
+
+                var userResponse = await httpClient.GetAsync($"{url}/api/User/get-user-by-id/{userId}");
+                userResponse.EnsureSuccessStatusCode();
+                var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
+                string refreshToken = user!.RefreshToken!;
+
+                var updateUserNameResponse = await httpClient.PutAsync($"{url}/api/User/update-user-name", jsonContent);
+                if (updateUserNameResponse.StatusCode == HttpStatusCode.Conflict)
+                    return Conflict("Пользователь с таким именем уже существует");
+                updateUserNameResponse.EnsureSuccessStatusCode();
+
+                string protectedAccessToken = Request.Cookies[CookieNames.AccessToken]!;
+                string accessToken = dataProtector.Unprotect(protectedAccessToken);
+                using StringContent refreshTokenJsonContent = new(JsonSerializer.Serialize(new
+                    { AccessToken = accessToken, RefreshToken = refreshToken }), Encoding.UTF8, "application/json");
+                var refreshTokenResponse = await httpClient.PostAsync($"{url}/api/Token/refresh", refreshTokenJsonContent);
+                refreshTokenResponse.EnsureSuccessStatusCode();
+                string newAccessToken = await refreshTokenResponse.Content.ReadAsStringAsync();
+                string protectedNewAccessToken = dataProtector.Protect(newAccessToken);
+                Response.Cookies.Append(CookieNames.AccessToken, protectedNewAccessToken, new CookieOptions
+                    { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict });
+
+                return Ok();
+            }
+            
+            return BadRequest("Заполните все поля");
         }
     }
 }
