@@ -53,16 +53,16 @@ namespace AccountMicroservice.Api.Controllers
             return Ok();
         }
 
-        [Route("update-user-password")]
+        [Route("update-user-password/{userId}")]
         [HttpPut]
-        public async Task<IActionResult> UpdateUserPasswordAsync([FromBody] UpdateUserPasswordDto model)
+        public async Task<IActionResult> UpdateUserPasswordAsync(Guid userId, [FromBody] UpdateUserPasswordDto model)
         {
-            var user = await unitOfWork.UserService.GetUserByIdAsync(model.UserId);
+            var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
             if (user == null) return NotFound();
             
             var passwordHashFormatResult = passwordService.HashPassword(model.NewPassword);
-            user.PasswordHash = Encoding.UTF8.GetString(passwordHashFormatResult.PasswordHash);
-            user.PasswordSalt = Encoding.UTF8.GetString(passwordHashFormatResult.Salt);
+            user.PasswordHash = Convert.ToBase64String(passwordHashFormatResult.PasswordHash);
+            user.PasswordSalt = Convert.ToBase64String(passwordHashFormatResult.Salt);
 
             await unitOfWork.UserService.UpdateUserAsync(user);
             await unitOfWork.CompleteAsync();
@@ -71,6 +71,19 @@ namespace AccountMicroservice.Api.Controllers
                 DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), user.Id);
 
             return Ok();
+        }
+
+        [Route("check-password/{userId}")]
+        [HttpPost]
+        public async Task<IActionResult> CheckUserPassword([FromRoute] Guid userId, [FromBody] CheckUserPasswordDto model)
+        {
+            var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
+            if(user == null) return NotFound();
+
+            bool checkPasswordResult = passwordService.CheckPassword(Convert.FromBase64String(user.PasswordHash), 
+                Convert.FromBase64String(user.PasswordSalt), model.Password);
+
+            return Ok(checkPasswordResult);
         }
 
         [Route("set-user-roles")]
