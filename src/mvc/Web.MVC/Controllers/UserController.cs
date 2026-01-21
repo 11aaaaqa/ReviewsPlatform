@@ -1,10 +1,10 @@
-﻿using System.Net;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Mvc;
 using Web.MVC.Constants;
 using Web.MVC.DTOs.user;
 using Web.MVC.Filters.ActionFilters;
@@ -208,6 +208,50 @@ namespace Web.MVC.Controllers
             }
             
             return BadRequest("Заполните все поля");
+        }
+
+        [Authorize]
+        [ValidatePassedUserIdActionFilter]
+        [Route("users/{userId}/check-password")]
+        [HttpPost]
+        public async Task<IActionResult> CheckUserPassword(Guid userId, [FromForm] CheckUserPasswordDto model)
+        {
+            if (ModelState.IsValid)
+            {
+                HttpClient httpClient = httpClientFactory.CreateClient();
+                using StringContent jsonContent = new(JsonSerializer.Serialize(new { model.Password }), Encoding.UTF8, "application/json");
+
+                var checkPasswordResponse = await httpClient.PostAsync($"{url}/api/User/check-password/{userId}", jsonContent);
+                checkPasswordResponse.EnsureSuccessStatusCode();
+                bool result = await checkPasswordResponse.Content.ReadFromJsonAsync<bool>();
+
+                return Ok(result);
+            }
+
+            return BadRequest(new
+                { errorMessages = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList() });
+        }
+
+        [Authorize]
+        [ValidatePassedUserIdActionFilter]
+        [Route("users/{userId}/update-password")]
+        [HttpPost]
+        public async Task<IActionResult> UpdateUserPassword(Guid userId, [FromForm] UpdateUserPasswordDto model)
+        {
+            if (ModelState.IsValid)
+            {
+                HttpClient httpClient = httpClientFactory.CreateClient();
+                using StringContent jsonContent = new(JsonSerializer.Serialize(new { model.NewPassword }),
+                    Encoding.UTF8, "application/json");
+
+                var updateUserPasswordResponse = await httpClient.PutAsync($"{url}/api/User/update-user-password/{userId}", jsonContent);
+                updateUserPasswordResponse.EnsureSuccessStatusCode();
+
+                return Ok();
+            }
+
+            return BadRequest(new 
+                { errorMessages = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList() });
         }
     }
 }
