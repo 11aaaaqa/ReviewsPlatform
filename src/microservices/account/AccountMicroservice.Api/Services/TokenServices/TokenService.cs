@@ -1,8 +1,10 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using AccountMicroservice.Api.Constants;
+using AccountMicroservice.Api.Models.Business;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.IdentityModel.Tokens;
 
 namespace AccountMicroservice.Api.Services.TokenServices
 {
@@ -32,7 +34,7 @@ namespace AccountMicroservice.Api.Services.TokenServices
             return Convert.ToBase64String(refreshToken);
         }
 
-        public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
+        public ClaimsPrincipal GetPrincipalFromToken(string token)
         {
             var tokenValidationParameters = new TokenValidationParameters
             {
@@ -53,6 +55,24 @@ namespace AccountMicroservice.Api.Services.TokenServices
             }
 
             return principal;
+        }
+
+        public List<Claim> GetClaims(User user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(AdditionalClaimTypes.IsEmailVerified, user.IsEmailVerified.ToString())
+            };
+            var userRoles = user.Roles;
+            foreach (var userRole in userRoles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, userRole.Name));
+            }
+
+            return claims;
         }
     }
 }
