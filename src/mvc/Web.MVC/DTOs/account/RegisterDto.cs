@@ -1,13 +1,20 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 
 namespace Web.MVC.DTOs.account
 {
     public class RegisterDto
     {
+        private string userName;
+
         [Required(ErrorMessage = "Поле \"Имя пользователя\" обязательно")]
         [Display(Name = "Имя пользователя")]
         [StringLength(30)]
-        public string UserName { get; set; }
+        public string UserName
+        {
+            get => userName;
+            set => userName = value != null ? Regex.Replace(value.Trim(), @"\s+", " ") : null;
+        }
 
         [Required(ErrorMessage = "Поле \"Адрес эл. почты\" обязательно")]
         [Display(Name = "Адрес эл. почты")]
