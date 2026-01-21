@@ -80,19 +80,7 @@ namespace AccountMicroservice.Api.Controllers
             if (!checkPassword)
                 return Unauthorized("Incorrect password");
 
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(AdditionalClaimTypes.IsEmailVerified, user.IsEmailVerified.ToString())
-            };
-            var userRoles = user.Roles;
-            foreach (var userRole in userRoles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, userRole.Name));
-            }
-
+            List<Claim> claims = tokenService.GetClaims(user);
             string token = tokenService.GenerateAccessToken(claims);
 
             user.RefreshToken = tokenService.GenerateRefreshToken();

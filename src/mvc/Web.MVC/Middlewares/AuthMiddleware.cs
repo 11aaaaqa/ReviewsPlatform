@@ -20,7 +20,7 @@ namespace Web.MVC.Middlewares
         {
             this.next = next;
             this.httpClientFactory = httpClientFactory;
-            dataProtector = dataProtectionProvider.CreateProtector("JWT");
+            dataProtector = dataProtectionProvider.CreateProtector(DataProtectionPurposeConstants.Jwt);
             url = $"{configuration["ApiGateway:Protocol"]}://{configuration["ApiGateway:Domain"]}";
         }
 

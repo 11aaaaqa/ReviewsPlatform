@@ -1,4 +1,5 @@
-﻿using AccountMicroservice.Api.Constants;
+﻿using System.Security.Claims;
+using AccountMicroservice.Api.Constants;
 using AccountMicroservice.Api.DTOs.Token;
 using AccountMicroservice.Api.Services.TokenServices;
 using AccountMicroservice.Api.Services.UnitOfWork;
@@ -33,15 +34,17 @@ namespace AccountMicroservice.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> RefreshAsync([FromBody] RefreshTokenDto model)
         {
-            var principal = tokenService.GetPrincipalFromExpiredToken(model.AccessToken);
-            string userName = principal.Identity.Name;
+            var principal = tokenService.GetPrincipalFromToken(model.AccessToken);
+            string userIdStr = principal.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid userId = new Guid(userIdStr);
 
-            var user = await unitOfWork.UserService.GetUserByUserNameAsync(userName);
+            var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
 
             if (user == null || user.RefreshToken != model.RefreshToken || user.RefreshTokenExpiryTime < DateTime.UtcNow)
                 return Unauthorized();
 
-            string accessToken = tokenService.GenerateAccessToken(principal.Claims);
+            List<Claim> claims = tokenService.GetClaims(user);
+            string accessToken = tokenService.GenerateAccessToken(claims);
 
             user.RefreshToken = tokenService.GenerateRefreshToken();
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMonths(1);

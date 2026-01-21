@@ -4,7 +4,6 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Web.MVC.Constants;
 using Web.MVC.DTOs.account;
 
@@ -35,8 +34,6 @@ namespace Web.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
-                model.UserName = Regex.Replace(model.UserName.Trim(), @"\s+", " ");
-
                 HttpClient httpClient = httpClientFactory.CreateClient();
                 using StringContent jsonContent = new(JsonSerializer.Serialize(new
                 {

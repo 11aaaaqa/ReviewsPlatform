@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using AccountMicroservice.Api.Models.Business;
 
 namespace AccountMicroservice.Api.Services.TokenServices
 {
@@ -6,6 +7,7 @@ namespace AccountMicroservice.Api.Services.TokenServices
     {
         string GenerateAccessToken(IEnumerable<Claim> claims);
         string GenerateRefreshToken();
-        ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
+        ClaimsPrincipal GetPrincipalFromToken(string token);
+        List<Claim> GetClaims(User user);
     }
 }
