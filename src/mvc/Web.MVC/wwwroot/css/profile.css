@@ -45,3 +45,24 @@
 .profile-link-svg {
     margin-right: 6px;
 }
+
+@media (max-width: 1200px) {
+    .profile-main-container {
+        width: 75%;
+        margin-right: 20px;
+    }
+
+    .profile-links-container {
+        width: 25%;
+    } 
+}
+
+@media (max-width: 992px) {
+    .profile-main-container {
+        width: 100%;
+    }
+
+    .profile-links-container {
+        display: none;
+    }
+}
