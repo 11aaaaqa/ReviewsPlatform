@@ -8,8 +8,26 @@
         <div class="highlited-block">
             <div class="block-underline">
                 <h4>Данные авторизации</h4>
-                <input class="user-profile-email-input" type="text" value="@Model.UserEmail" readonly/>
-                <div style="margin-top: 25px;">
+                <div style="margin-bottom: 10px;">
+                    <p>Адрес электронной почты</p>
+                    <input class="user-profile-readonly-input" type="text" value="@Model.UserEmail" readonly />
+                </div>
+                <div style="margin-bottom: 25px;">
+                    <p>Имя пользователя</p>
+                    <input class="user-profile-readonly-input" style="margin-bottom: 7px;" type="text" value="@Model.UserName" readonly/>
+                    <button class="btn-wide-stretched" id="openUserNameModalBtn">Изменить имя пользователя</button>
+                    <div class="modal-overlay" id="userNameModalOverlay">
+                        <div class="modal-form">
+                            <div style="display: none; color: red; margin-bottom: 3px;" id="userNameModalErrorBlock"></div>
+                            <form id="updateUserNameForm" method="post" asp-controller="User" asp-action="UpdateUserName" asp-route-userId="@Model.UserId">
+                                <input class="user-profile-input" name="newUserName" maxlength="30" value="@Model.UserName"
+                                       placeholder="Введите новое имя пользователя" required/>
+                                <input id="updateUserNameSubmit" class="btn-green" type="submit" style="margin-top: 7px;" value="Сохранить"/>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div>
                     <button class="btn-wide-stretched">Изменить пароль</button>
                 </div>
             </div>
@@ -61,6 +79,37 @@
 </div>
 
 <script>
+    const userNameModalErrorBlock = document.getElementById('userNameModalErrorBlock');
+    document.getElementById('updateUserNameSubmit').addEventListener('click', async function(e) {
+        e.preventDefault();
+
+        const updateUserNameForm = document.getElementById('updateUserNameForm');
+        const formData = new FormData(updateUserNameForm);
+
+        const response = await fetch(updateUserNameForm.action, { method: 'POST', body: formData});
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            userNameModalErrorBlock.textContent = await response.text();
+            userNameModalErrorBlock.style.display = 'block';
+        }
+    });
+
+    const userNameModalOverlay = document.getElementById('userNameModalOverlay');
+    userNameModalOverlay.addEventListener('click', e => {
+        if(e.target === userNameModalOverlay) {
+            userNameModalOverlay.style.display = 'none';
+        }
+    });
+    document.getElementById('openUserNameModalBtn').addEventListener('click', () => {
+        userNameModalOverlay.style.display = 'flex';
+    });
+
+
+
+
+
     const updateAvatarInput = document.getElementById('updateAvatarInput');
     const errorMessageContainer = document.getElementById('errorMessageContainer');
     const avatarExtensions = ['.jpg', '.jpeg', '.png'];
