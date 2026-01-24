@@ -13,15 +13,11 @@ namespace Web.MVC.Middlewares
         private readonly RequestDelegate next;
         private readonly IDataProtector dataProtector;
         private readonly IHttpClientFactory httpClientFactory;
-        private readonly string url;
-
-        public AuthMiddleware(RequestDelegate next, IDataProtectionProvider dataProtectionProvider, IHttpClientFactory httpClientFactory,
-            IConfiguration configuration)
+        public AuthMiddleware(RequestDelegate next, IDataProtectionProvider dataProtectionProvider, IHttpClientFactory httpClientFactory)
         {
             this.next = next;
             this.httpClientFactory = httpClientFactory;
             dataProtector = dataProtectionProvider.CreateProtector(DataProtectionPurposeConstants.Jwt);
-            url = $"{configuration["ApiGateway:Protocol"]}://{configuration["ApiGateway:Domain"]}";
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -41,9 +37,9 @@ namespace Web.MVC.Middlewares
                     string userIdStr = jwt.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
                     Guid userId = new Guid(userIdStr);
 
-                    HttpClient httpClient = httpClientFactory.CreateClient();
+                    HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.AuthMiddleware);
 
-                    var userResponse = await httpClient.GetAsync($"{url}/api/User/get-user-by-id/{userId}");
+                    var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{userId}");
                     userResponse.EnsureSuccessStatusCode();
                     var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
 
@@ -54,7 +50,7 @@ namespace Web.MVC.Middlewares
                             AccessToken = accessToken,
                             user.RefreshToken
                         }), Encoding.UTF8, "application/json");
-                        var refreshResponse = await httpClient.PostAsync($"{url}/api/Token/refresh", jsonContent);
+                        var refreshResponse = await httpClient.PostAsync("/api/Token/refresh", jsonContent);
                         refreshResponse.EnsureSuccessStatusCode();
 
                         string newAccessToken = await refreshResponse.Content.ReadAsStringAsync();

@@ -17,27 +17,25 @@ namespace Web.MVC.Controllers
     public class UserController : Controller
     {
         private readonly IHttpClientFactory httpClientFactory;
-        private readonly string url;
         private readonly ILogger<UserController> logger;
         private readonly AvatarConverter avatarConverter;
         private readonly IDataProtector dataProtector;
         private readonly List<string> availableFileExtensions = new() { ".jpg", ".png", ".jpeg"};
-        public UserController(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<UserController> logger,
+        public UserController(IHttpClientFactory httpClientFactory, ILogger<UserController> logger,
             AvatarConverter avatarConverter, IDataProtectionProvider dataProtectionProvider)
         {
             dataProtector = dataProtectionProvider.CreateProtector(DataProtectionPurposeConstants.Jwt);
             this.httpClientFactory = httpClientFactory;
             this.logger = logger;
             this.avatarConverter = avatarConverter;
-            url = $"{configuration["ApiGateway:Protocol"]}://{configuration["ApiGateway:Domain"]}";
         }
 
         [Route("users/{userId}")]
         [HttpGet]
         public async Task<IActionResult> GetUserById(Guid userId)
         {
-            HttpClient httpClient = httpClientFactory.CreateClient();
-            var userResponse = await httpClient.GetAsync($"{url}/api/User/get-user-by-id/{userId}");
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+            var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{userId}");
             userResponse.EnsureSuccessStatusCode();
             var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
 
@@ -51,7 +49,7 @@ namespace Web.MVC.Controllers
             };
             if (canUserSetTheRoles)
             {
-                var allRolesResponse = await httpClient.GetAsync($"{url}/api/Role/all");
+                var allRolesResponse = await httpClient.GetAsync("/api/Role/all");
                 allRolesResponse.EnsureSuccessStatusCode();
                 var allRoles = await allRolesResponse.Content.ReadFromJsonAsync<List<RoleResponse>>();
                 model.AllRoles = allRoles;
@@ -74,16 +72,16 @@ namespace Web.MVC.Controllers
                 return BadRequest();
             }
 
-            HttpClient httpClient = httpClientFactory.CreateClient();
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
 
-            var allRolesResponse = await httpClient.GetAsync($"{url}/api/Role/all");
+            var allRolesResponse = await httpClient.GetAsync("/api/Role/all");
             allRolesResponse.EnsureSuccessStatusCode();
             var allRoles = await allRolesResponse.Content.ReadFromJsonAsync<List<RoleResponse>>();
 
             using StringContent jsonContent = new(JsonSerializer.Serialize(new { UserId = userId, RoleIds = roleIds }),
                 Encoding.UTF8, "application/json");
 
-            var setUserRolesResponse = await httpClient.PostAsync($"{url}/api/User/set-user-roles", jsonContent);
+            var setUserRolesResponse = await httpClient.PostAsync("/api/User/set-user-roles", jsonContent);
             setUserRolesResponse.EnsureSuccessStatusCode();
 
             List<string> assignedRoleNames = allRoles!.Where(x => roleIds.Contains(x.Id)).Select(x => x.Name).ToList();
@@ -99,8 +97,8 @@ namespace Web.MVC.Controllers
         [HttpGet]
         public async Task<IActionResult> EditUserProfile(Guid userId)
         {
-            HttpClient httpClient = httpClientFactory.CreateClient();
-            var userResponse = await httpClient.GetAsync($"{url}/api/User/get-user-by-id/{userId}");
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+            var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{userId}");
             if (!userResponse.IsSuccessStatusCode)
             {
                 if (userResponse.StatusCode == HttpStatusCode.NotFound)
@@ -143,9 +141,9 @@ namespace Web.MVC.Controllers
             byte[] avatarSource = memoryStream.ToArray();
             using StringContent jsonContent = new(JsonSerializer.Serialize(new
             { UserId = userId, AvatarSource = avatarSource }), Encoding.UTF8, "application/json");
-            HttpClient httpClient = httpClientFactory.CreateClient();
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
 
-            var response = await httpClient.PutAsync($"{url}/api/User/set-avatar", jsonContent);
+            var response = await httpClient.PutAsync("/api/User/set-avatar", jsonContent);
             response.EnsureSuccessStatusCode();
 
             if (string.IsNullOrEmpty(returnUrl) || !Url.IsLocalUrl(returnUrl))
@@ -160,9 +158,9 @@ namespace Web.MVC.Controllers
         [HttpPost]
         public async Task<IActionResult> SetDefaultUserAvatar(Guid userId, string returnUrl)
         {
-            HttpClient httpClient = httpClientFactory.CreateClient();
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
 
-            var response = await httpClient.GetAsync($"{url}/api/User/reset-avatar/{userId}");
+            var response = await httpClient.GetAsync($"/api/User/reset-avatar/{userId}");
             response.EnsureSuccessStatusCode();
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -179,16 +177,16 @@ namespace Web.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
-                HttpClient httpClient = httpClientFactory.CreateClient();
+                HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
                 using StringContent jsonContent = new(JsonSerializer.Serialize(new 
                     { UserId = userId, model.NewUserName}), Encoding.UTF8, "application/json");
 
-                var userResponse = await httpClient.GetAsync($"{url}/api/User/get-user-by-id/{userId}");
+                var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{userId}");
                 userResponse.EnsureSuccessStatusCode();
                 var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
                 string refreshToken = user!.RefreshToken!;
 
-                var updateUserNameResponse = await httpClient.PutAsync($"{url}/api/User/update-user-name", jsonContent);
+                var updateUserNameResponse = await httpClient.PutAsync("/api/User/update-user-name", jsonContent);
                 if (updateUserNameResponse.StatusCode == HttpStatusCode.Conflict)
                     return Conflict("Пользователь с таким именем уже существует");
                 updateUserNameResponse.EnsureSuccessStatusCode();
@@ -197,7 +195,7 @@ namespace Web.MVC.Controllers
                 string accessToken = dataProtector.Unprotect(protectedAccessToken);
                 using StringContent refreshTokenJsonContent = new(JsonSerializer.Serialize(new
                     { AccessToken = accessToken, RefreshToken = refreshToken }), Encoding.UTF8, "application/json");
-                var refreshTokenResponse = await httpClient.PostAsync($"{url}/api/Token/refresh", refreshTokenJsonContent);
+                var refreshTokenResponse = await httpClient.PostAsync("/api/Token/refresh", refreshTokenJsonContent);
                 refreshTokenResponse.EnsureSuccessStatusCode();
                 string newAccessToken = await refreshTokenResponse.Content.ReadAsStringAsync();
                 string protectedNewAccessToken = dataProtector.Protect(newAccessToken);
@@ -218,10 +216,10 @@ namespace Web.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
-                HttpClient httpClient = httpClientFactory.CreateClient();
+                HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
                 using StringContent jsonContent = new(JsonSerializer.Serialize(new { model.Password }), Encoding.UTF8, "application/json");
 
-                var checkPasswordResponse = await httpClient.PostAsync($"{url}/api/User/check-password/{userId}", jsonContent);
+                var checkPasswordResponse = await httpClient.PostAsync($"/api/User/check-password/{userId}", jsonContent);
                 checkPasswordResponse.EnsureSuccessStatusCode();
                 bool result = await checkPasswordResponse.Content.ReadFromJsonAsync<bool>();
 
@@ -240,11 +238,11 @@ namespace Web.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
-                HttpClient httpClient = httpClientFactory.CreateClient();
+                HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
                 using StringContent jsonContent = new(JsonSerializer.Serialize(new { model.NewPassword }),
                     Encoding.UTF8, "application/json");
 
-                var updateUserPasswordResponse = await httpClient.PutAsync($"{url}/api/User/update-user-password/{userId}", jsonContent);
+                var updateUserPasswordResponse = await httpClient.PutAsync($"/api/User/update-user-password/{userId}", jsonContent);
                 updateUserPasswordResponse.EnsureSuccessStatusCode();
 
                 return Ok();

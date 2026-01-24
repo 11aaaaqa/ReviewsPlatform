@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
+using Web.MVC.Constants;
 using Web.MVC.Middlewares;
 using Web.MVC.Services;
+using Web.MVC.Services.DelegatingHandlers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,9 +34,20 @@ builder.Services.AddDataProtection()
     .PersistKeysToStackExchangeRedis(ConnectionMultiplexer.Connect(builder.Configuration["ConnectionStrings:Redis"]),
         "DataProtection-Keys");
 
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddTransient<AuthHandler>();
 builder.Services.AddSingleton<AvatarConverter>();
 
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient(HttpClientNameConstants.AuthMiddleware, httpClient =>
+{
+    httpClient.BaseAddress = new Uri($"{builder.Configuration["ApiGateway:Protocol"]}://{builder.Configuration["ApiGateway:Domain"]}");
+});
+builder.Services.AddHttpClient(HttpClientNameConstants.Default, httpClient =>
+{
+    httpClient.BaseAddress = new Uri($"{builder.Configuration["ApiGateway:Protocol"]}://{builder.Configuration["ApiGateway:Domain"]}");
+}).AddHttpMessageHandler<AuthHandler>();
+
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
