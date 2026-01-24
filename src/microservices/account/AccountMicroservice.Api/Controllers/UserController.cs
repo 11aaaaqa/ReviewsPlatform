@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using System.Text;
 using AccountMicroservice.Api.Constants;
 using AccountMicroservice.Api.DTOs.User;
 using AccountMicroservice.Api.Models.Business;
@@ -7,15 +6,18 @@ using AccountMicroservice.Api.Services.PasswordServices;
 using AccountMicroservice.Api.Services.RolesServices;
 using AccountMicroservice.Api.Services.UnitOfWork;
 using AccountMicroservice.Api.Services.UserServices.AvatarServices;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AccountMicroservice.Api.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UserController(IPasswordService passwordService, IUnitOfWork unitOfWork, IRoleService roleService, IAvatarService avatarService,
         ILogger<UserController> logger) : ControllerBase
     {
+        [AllowAnonymous]
         [HttpGet]
         [Route("get-user-by-id/{userId}")]
         public async Task<IActionResult> GetUserByIdAsync(Guid userId)
@@ -86,6 +88,7 @@ namespace AccountMicroservice.Api.Controllers
             return Ok(checkPasswordResult);
         }
 
+        [Authorize(Roles = RoleNames.Admin)]
         [Route("set-user-roles")]
         [HttpPost]
         public async Task<IActionResult> SetUserRolesAsync([FromBody] SetUserRolesDto model)
