@@ -10,7 +10,8 @@ namespace AccountMicroservice.Api.Services.UserServices
             => await context.Users.Include(x => x.Roles).SingleOrDefaultAsync(x => x.Id == userId);
 
         public async Task<User?> GetUserByUserNameAsync(string userName)
-            => await context.Users.Include(x => x.Roles).SingleOrDefaultAsync(x => x.UserName == userName);
+            => await context.Users.Include(x => x.Roles)
+                .SingleOrDefaultAsync(x => x.UserName.ToLower() == userName.ToLower());
 
         public async Task<User?> GetUserByEmailAsync(string email)
             => await context.Users.Include(x => x.Roles).SingleOrDefaultAsync(x => x.Email == email);
