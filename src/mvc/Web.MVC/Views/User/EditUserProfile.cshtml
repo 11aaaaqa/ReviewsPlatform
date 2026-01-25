@@ -200,7 +200,7 @@
 
         if (response.ok) {
             window.location.reload();
-        } else if(response.status === 400){
+        } else if(response.status === 400 || response.status === 409){
             userNameModalErrorBlock.textContent = await response.text();
             userNameModalErrorBlock.style.display = 'block';
         } else {

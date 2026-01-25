@@ -42,7 +42,7 @@ namespace AccountMicroservice.Api.Controllers
 
             string userName = user.UserName;
 
-            if (await unitOfWork.UserService.GetUserByUserNameAsync(model.NewUserName) != null)
+            if (await unitOfWork.UserService.GetUserByUserNameAsync(model.NewUserName) != null && model.NewUserName.ToLower() != userName.ToLower())
                 return Conflict("User with current name already exists");
 
             user.UserName = model.NewUserName;
