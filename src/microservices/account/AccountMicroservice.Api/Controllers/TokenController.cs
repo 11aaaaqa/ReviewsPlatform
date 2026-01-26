@@ -22,6 +22,7 @@ namespace AccountMicroservice.Api.Controllers
 
             user.RefreshTokenExpiryTime = new DateTime();
             user.RefreshToken = null;
+            user.TokenVersion++;
 
             await unitOfWork.UserService.UpdateUserAsync(user);
             await unitOfWork.CompleteAsync();
@@ -40,9 +41,11 @@ namespace AccountMicroservice.Api.Controllers
             string userIdStr = principal.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
             Guid userId = new Guid(userIdStr);
 
+            int tokenVersion = int.Parse(principal.Claims.Single(x => x.Type == AdditionalClaimTypes.TokenVersion).Value);
+
             var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
 
-            if (user == null || user.RefreshToken != model.RefreshToken || user.RefreshTokenExpiryTime < DateTime.UtcNow)
+            if (user == null || user.RefreshToken != model.RefreshToken || user.RefreshTokenExpiryTime < DateTime.UtcNow || tokenVersion != user.TokenVersion)
                 return Unauthorized();
 
             List<Claim> claims = tokenService.GetClaims(user);

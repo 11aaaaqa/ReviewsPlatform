@@ -68,7 +68,7 @@ namespace AccountMicroservice.Api.Services.TokenServices
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.UserName),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(AdditionalClaimTypes.IsEmailVerified, user.IsEmailVerified.ToString())
+                new Claim(AdditionalClaimTypes.TokenVersion, user.TokenVersion.ToString())
             };
             var userRoles = user.Roles;
             foreach (var userRole in userRoles)

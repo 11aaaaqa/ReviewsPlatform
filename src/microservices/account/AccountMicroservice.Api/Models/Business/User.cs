@@ -12,6 +12,7 @@
         public bool IsAvatarDefault { get; set; }
         public DateOnly RegistrationDate { get; set; }
         public string? RefreshToken { get; set; }
+        public int TokenVersion { get; set; } = 1;
         public DateTime RefreshTokenExpiryTime { get; set; }
 
         public List<Role> Roles { get; set; } = new();
