@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
-using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using Web.MVC.Constants;
@@ -106,15 +105,8 @@ namespace Web.MVC.Controllers
 
         [HttpPost]
         [Route("account/logout")]
-        public async Task<IActionResult> Logout(string returnUrl)
+        public IActionResult Logout(string returnUrl)
         {
-            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
-            string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
-            Guid userId = new Guid(userIdStr);
-
-            var revokeResponse = await httpClient.GetAsync($"/api/Token/revoke/{userId}");
-            revokeResponse.EnsureSuccessStatusCode();
-
             Response.Cookies.Delete(CookieNames.AccessToken);
 
             return LocalRedirect(returnUrl);
