@@ -15,7 +15,7 @@ namespace AccountMicroservice.Api.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class UserController(IPasswordService passwordService, IUnitOfWork unitOfWork, IRoleService roleService, IAvatarService avatarService,
-        ILogger<UserController> logger) : ControllerBase
+        ILogger<UserController> logger, IConfiguration configuration) : ControllerBase
     {
         [AllowAnonymous]
         [HttpGet]
@@ -28,9 +28,25 @@ namespace AccountMicroservice.Api.Controllers
 
             return Ok(new
             {
-                user.Id, user.UserName, user.Email, user.IsEmailVerified, user.AvatarSource, user.RegistrationDate, 
-                user.RefreshToken, user.RefreshTokenExpiryTime, user.Roles, user.IsAvatarDefault
+                user.Id, user.UserName, user.Email, user.IsEmailVerified, user.AvatarSource,
+                user.RegistrationDate, user.Roles, user.IsAvatarDefault
             });
+        }
+
+        [AllowAnonymous]
+        [HttpGet]
+        [Route("get-refresh-token/{userId}")]
+        public async Task<IActionResult> GetRefreshToken([FromRoute] Guid userId, [FromQuery] string secret)
+        {
+            string actualSecret = configuration["InternalEndpoint:Secret"]!;
+
+            if (secret != actualSecret)
+                return BadRequest();
+
+            var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
+            if (user == null) return NotFound();
+
+            return Ok(new { user.RefreshToken });
         }
 
         [Route("update-user-name")]

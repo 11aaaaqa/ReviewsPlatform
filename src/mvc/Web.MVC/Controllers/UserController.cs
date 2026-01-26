@@ -20,14 +20,16 @@ namespace Web.MVC.Controllers
         private readonly ILogger<UserController> logger;
         private readonly AvatarConverter avatarConverter;
         private readonly IDataProtector dataProtector;
+        private readonly IConfiguration configuration;
         private readonly List<string> availableFileExtensions = new() { ".jpg", ".png", ".jpeg"};
         public UserController(IHttpClientFactory httpClientFactory, ILogger<UserController> logger,
-            AvatarConverter avatarConverter, IDataProtectionProvider dataProtectionProvider)
+            AvatarConverter avatarConverter, IDataProtectionProvider dataProtectionProvider, IConfiguration configuration)
         {
             dataProtector = dataProtectionProvider.CreateProtector(DataProtectionPurposeConstants.Jwt);
             this.httpClientFactory = httpClientFactory;
             this.logger = logger;
             this.avatarConverter = avatarConverter;
+            this.configuration = configuration;
         }
 
         [Route("users/{userId}")]
@@ -181,10 +183,10 @@ namespace Web.MVC.Controllers
                 using StringContent jsonContent = new(JsonSerializer.Serialize(new 
                     { UserId = userId, model.NewUserName}), Encoding.UTF8, "application/json");
 
-                var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{userId}");
-                userResponse.EnsureSuccessStatusCode();
-                var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
-                string refreshToken = user!.RefreshToken!;
+                string secret = configuration["InternalEndpoint:Secret"]!;
+                var getRefreshTokenResponse = await httpClient.GetAsync($"/api/User/get-refresh-token/{userId}?secret={secret}");
+                getRefreshTokenResponse.EnsureSuccessStatusCode();
+                var refreshTokenFormat = await getRefreshTokenResponse.Content.ReadFromJsonAsync<RefreshTokenResponse>();
 
                 var updateUserNameResponse = await httpClient.PutAsync("/api/User/update-user-name", jsonContent);
                 if (updateUserNameResponse.StatusCode == HttpStatusCode.Conflict)
@@ -194,13 +196,11 @@ namespace Web.MVC.Controllers
                 string protectedAccessToken = Request.Cookies[CookieNames.AccessToken]!;
                 string accessToken = dataProtector.Unprotect(protectedAccessToken);
                 using StringContent refreshTokenJsonContent = new(JsonSerializer.Serialize(new
-                    { AccessToken = accessToken, RefreshToken = refreshToken }), Encoding.UTF8, "application/json");
+                    { AccessToken = accessToken, refreshTokenFormat!.RefreshToken }), Encoding.UTF8, "application/json");
                 var refreshTokenResponse = await httpClient.PostAsync("/api/Token/refresh", refreshTokenJsonContent);
                 refreshTokenResponse.EnsureSuccessStatusCode();
                 string newAccessToken = await refreshTokenResponse.Content.ReadAsStringAsync();
-                string protectedNewAccessToken = dataProtector.Protect(newAccessToken);
-                Response.Cookies.Append(CookieNames.AccessToken, protectedNewAccessToken, new CookieOptions
-                    { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict });
+                SaveAccessToken(newAccessToken);
 
                 return Ok();
             }

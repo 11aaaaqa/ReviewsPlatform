@@ -13,11 +13,16 @@ namespace Web.MVC.Middlewares
         private readonly RequestDelegate next;
         private readonly IDataProtector dataProtector;
         private readonly IHttpClientFactory httpClientFactory;
-        public AuthMiddleware(RequestDelegate next, IDataProtectionProvider dataProtectionProvider, IHttpClientFactory httpClientFactory)
+        private readonly IConfiguration configuration;
+        private readonly ILogger<AuthMiddleware> logger;
+        public AuthMiddleware(RequestDelegate next, IDataProtectionProvider dataProtectionProvider, IHttpClientFactory httpClientFactory,
+            IConfiguration configuration, ILogger<AuthMiddleware> logger)
         {
             this.next = next;
             this.httpClientFactory = httpClientFactory;
             dataProtector = dataProtectionProvider.CreateProtector(DataProtectionPurposeConstants.Jwt);
+            this.configuration = configuration;
+            this.logger = logger;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -39,29 +44,36 @@ namespace Web.MVC.Middlewares
 
                     HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.AuthMiddleware);
 
-                    var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{userId}");
-                    userResponse.EnsureSuccessStatusCode();
-                    var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
+                    string secret = configuration["InternalEndpoint:Secret"]!;
 
-                    if (user.RefreshToken != null && user.RefreshTokenExpiryTime > DateTime.UtcNow)
+                    var getRefreshTokenResponse = await httpClient.GetAsync($"/api/User/get-refresh-token/{userId}?secret={secret}");
+                    if (getRefreshTokenResponse.IsSuccessStatusCode)
                     {
-                        using StringContent jsonContent = new(JsonSerializer.Serialize(new
+                        var refreshTokenFormat = await getRefreshTokenResponse.Content.ReadFromJsonAsync<RefreshTokenResponse>();
+                        if (refreshTokenFormat!.RefreshToken != null)
                         {
-                            AccessToken = accessToken,
-                            user.RefreshToken
-                        }), Encoding.UTF8, "application/json");
+                            using StringContent jsonContent = new(JsonSerializer.Serialize(new
+                            {
+                                AccessToken = accessToken,
+                                refreshTokenFormat.RefreshToken
+                            }), Encoding.UTF8, "application/json");
 
-                        var refreshResponse = await httpClient.PostAsync("/api/Token/refresh", jsonContent);
-                        if (refreshResponse.IsSuccessStatusCode)
-                        {
-                            string newAccessToken = await refreshResponse.Content.ReadAsStringAsync();
+                            var refreshResponse = await httpClient.PostAsync("/api/Token/refresh", jsonContent);
+                            if (refreshResponse.IsSuccessStatusCode)
+                            {
+                                string newAccessToken = await refreshResponse.Content.ReadAsStringAsync();
 
-                            string protectedNewAccessToken = dataProtector.Protect(newAccessToken);
-                            context.Response.Cookies.Append(CookieNames.AccessToken, protectedNewAccessToken, new CookieOptions
-                                { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict });
+                                string protectedNewAccessToken = dataProtector.Protect(newAccessToken);
+                                context.Response.Cookies.Append(CookieNames.AccessToken, protectedNewAccessToken, new CookieOptions
+                                    { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict });
 
-                            context.Request.Headers.Append("Authorization", "Bearer " + newAccessToken);
+                                context.Request.Headers.Append("Authorization", "Bearer " + newAccessToken);
+                            }
                         }
+                    }
+                    else
+                    {
+                        logger.LogError("Could not get refresh token for user {UserId}", userId);
                     }
                 }
                 else
