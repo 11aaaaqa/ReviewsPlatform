@@ -28,7 +28,7 @@ namespace AccountMicroservice.Api.Controllers
 
             return Ok(new
             {
-                user.Id, user.UserName, user.Email, user.IsEmailVerified, user.AvatarSource, user.RegistrationDate,
+                user.Id, user.UserName, user.Email, user.IsEmailVerified, user.AvatarSource, user.RegistrationDate, 
                 user.RefreshToken, user.RefreshTokenExpiryTime, user.Roles, user.IsAvatarDefault
             });
         }
@@ -65,6 +65,7 @@ namespace AccountMicroservice.Api.Controllers
             var passwordHashFormatResult = passwordService.HashPassword(model.NewPassword);
             user.PasswordHash = Convert.ToBase64String(passwordHashFormatResult.PasswordHash);
             user.PasswordSalt = Convert.ToBase64String(passwordHashFormatResult.Salt);
+            user.TokenVersion++;
 
             await unitOfWork.UserService.UpdateUserAsync(user);
             await unitOfWork.CompleteAsync();
@@ -124,8 +125,6 @@ namespace AccountMicroservice.Api.Controllers
                 }
 
                 user.IsEmailVerified = model.RoleIds.Any(x => x == new Guid(RoleIds.VerifiedId));
-                user.RefreshToken = null;
-                user.RefreshTokenExpiryTime = new DateTime();
                 await unitOfWork.UserService.UpdateUserAsync(user);
 
                 await unitOfWork.CommitTransactionAsync();

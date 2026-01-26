@@ -239,17 +239,39 @@ namespace Web.MVC.Controllers
             if (ModelState.IsValid)
             {
                 HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+
+                var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{userId}");
+                userResponse.EnsureSuccessStatusCode();
+                var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
+
                 using StringContent jsonContent = new(JsonSerializer.Serialize(new { model.NewPassword }),
                     Encoding.UTF8, "application/json");
 
                 var updateUserPasswordResponse = await httpClient.PutAsync($"/api/User/update-user-password/{userId}", jsonContent);
                 updateUserPasswordResponse.EnsureSuccessStatusCode();
 
+                using StringContent loginJsonContent = new(JsonSerializer.Serialize(new
+                {
+                    UserNameOrEmail = user!.Email, Password = model.NewPassword
+                }), Encoding.UTF8, "application/json");
+                var loginResponse = await httpClient.PostAsync("/api/Auth/login", loginJsonContent);
+                loginResponse.EnsureSuccessStatusCode();
+                string accessToken = await loginResponse.Content.ReadAsStringAsync();
+
+                SaveAccessToken(accessToken);
+
                 return Ok();
             }
 
             return BadRequest(new 
                 { errorMessages = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList() });
+        }
+
+        private void SaveAccessToken(string unprotectedAccessToken)
+        {
+            string protectedAccessToken = dataProtector.Protect(unprotectedAccessToken);
+            Response.Cookies.Append(CookieNames.AccessToken, protectedAccessToken, new CookieOptions
+                { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict });
         }
     }
 }

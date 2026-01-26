@@ -2,6 +2,6 @@
 {
     public class AdditionalClaimTypes
     {
-        public const string IsEmailVerified = "is_email_verified";
+        public const string TokenVersion = "token_version";
     }
 }

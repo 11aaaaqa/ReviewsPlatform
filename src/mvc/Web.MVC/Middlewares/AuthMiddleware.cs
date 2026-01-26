@@ -50,16 +50,18 @@ namespace Web.MVC.Middlewares
                             AccessToken = accessToken,
                             user.RefreshToken
                         }), Encoding.UTF8, "application/json");
+
                         var refreshResponse = await httpClient.PostAsync("/api/Token/refresh", jsonContent);
-                        refreshResponse.EnsureSuccessStatusCode();
+                        if (refreshResponse.IsSuccessStatusCode)
+                        {
+                            string newAccessToken = await refreshResponse.Content.ReadAsStringAsync();
 
-                        string newAccessToken = await refreshResponse.Content.ReadAsStringAsync();
+                            string protectedNewAccessToken = dataProtector.Protect(newAccessToken);
+                            context.Response.Cookies.Append(CookieNames.AccessToken, protectedNewAccessToken, new CookieOptions
+                                { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict });
 
-                        string protectedNewAccessToken = dataProtector.Protect(newAccessToken);
-                        context.Response.Cookies.Append(CookieNames.AccessToken, protectedNewAccessToken, new CookieOptions
-                            { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict });
-
-                        context.Request.Headers.Append("Authorization", "Bearer " + newAccessToken);
+                            context.Request.Headers.Append("Authorization", "Bearer " + newAccessToken);
+                        }
                     }
                 }
                 else
