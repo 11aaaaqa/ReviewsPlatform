@@ -77,7 +77,12 @@ namespace AccountMicroservice.Api.Controllers
         {
             var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
             if (user == null) return NotFound();
-            
+
+            bool checkPasswordResult = passwordService.CheckPassword(Convert.FromBase64String(user.PasswordHash),
+                Convert.FromBase64String(user.PasswordSalt), model.OldPassword);
+            if (!checkPasswordResult)
+                return BadRequest("Password does not match");
+
             var passwordHashFormatResult = passwordService.HashPassword(model.NewPassword);
             user.PasswordHash = Convert.ToBase64String(passwordHashFormatResult.PasswordHash);
             user.PasswordSalt = Convert.ToBase64String(passwordHashFormatResult.Salt);

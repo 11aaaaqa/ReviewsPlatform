@@ -244,7 +244,7 @@ namespace Web.MVC.Controllers
                 userResponse.EnsureSuccessStatusCode();
                 var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
 
-                using StringContent jsonContent = new(JsonSerializer.Serialize(new { model.NewPassword }),
+                using StringContent jsonContent = new(JsonSerializer.Serialize(new { model.NewPassword, model.OldPassword }),
                     Encoding.UTF8, "application/json");
 
                 var updateUserPasswordResponse = await httpClient.PutAsync($"/api/User/update-user-password/{userId}", jsonContent);
@@ -265,6 +265,22 @@ namespace Web.MVC.Controllers
 
             return BadRequest(new 
                 { errorMessages = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList() });
+        }
+
+        [Authorize]
+        [ValidatePassedUserIdActionFilter]
+        [Route("users/{userId}/complete-sign-out")]
+        [HttpPost]
+        public async Task<IActionResult> SignOutFromAllDevices(Guid userId)
+        {
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+
+            var revokeResponse = await httpClient.GetAsync($"/api/Token/revoke/{userId}");
+            revokeResponse.EnsureSuccessStatusCode();
+
+            Response.Cookies.Delete(CookieNames.AccessToken);
+
+            return RedirectToAction("Index", "Home");
         }
 
         private void SaveAccessToken(string unprotectedAccessToken)
