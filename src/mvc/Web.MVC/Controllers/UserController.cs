@@ -244,7 +244,7 @@ namespace Web.MVC.Controllers
                 userResponse.EnsureSuccessStatusCode();
                 var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
 
-                using StringContent jsonContent = new(JsonSerializer.Serialize(new { model.NewPassword }),
+                using StringContent jsonContent = new(JsonSerializer.Serialize(new { model.NewPassword, model.OldPassword }),
                     Encoding.UTF8, "application/json");
 
                 var updateUserPasswordResponse = await httpClient.PutAsync($"/api/User/update-user-password/{userId}", jsonContent);
