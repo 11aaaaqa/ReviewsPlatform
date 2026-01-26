@@ -50,7 +50,7 @@
                 </div>
             </div>
 
-            <div style="padding-top: 20px;">
+            <div class="block-underline" style="margin-top: 20px;">
                 @if (true)
                 {
                     string returnUrl = Context.Request.Path;
@@ -83,6 +83,12 @@
                         }
                     </div>
                 }
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <form method="post" asp-controller="User" asp-action="SignOutFromAllDevices" asp-route-userId="@Model.UserId">
+                    <input class="btn-wide-stretched" type="submit" value="Выйти из аккаунта на всех устройствах"/>
+                </form>
             </div>
         </div>
     </div>

@@ -267,6 +267,22 @@ namespace Web.MVC.Controllers
                 { errorMessages = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList() });
         }
 
+        [Authorize]
+        [ValidatePassedUserIdActionFilter]
+        [Route("users/{userId}/complete-sign-out")]
+        [HttpPost]
+        public async Task<IActionResult> SignOutFromAllDevices(Guid userId)
+        {
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+
+            var revokeResponse = await httpClient.GetAsync($"/api/Token/revoke/{userId}");
+            revokeResponse.EnsureSuccessStatusCode();
+
+            Response.Cookies.Delete(CookieNames.AccessToken);
+
+            return RedirectToAction("Index", "Home");
+        }
+
         private void SaveAccessToken(string unprotectedAccessToken)
         {
             string protectedAccessToken = dataProtector.Protect(unprotectedAccessToken);
