@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace Web.MVC.Filters.ActionFilters
+namespace AccountMicroservice.Api.Filters.ActionFilters
 {
     public class ValidatePassedUserIdActionFilter : TypeFilterAttribute
     {

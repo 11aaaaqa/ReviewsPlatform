@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using AccountMicroservice.Api.Constants;
 using AccountMicroservice.Api.DTOs.Token;
+using AccountMicroservice.Api.Filters.ActionFilters;
 using AccountMicroservice.Api.Services.TokenServices;
 using AccountMicroservice.Api.Services.UnitOfWork;
 using Microsoft.AspNetCore.Authorization;
@@ -13,6 +14,7 @@ namespace AccountMicroservice.Api.Controllers
     public class TokenController(IUnitOfWork unitOfWork, ITokenService tokenService, ILogger<TokenController> logger) : ControllerBase
     {
         [Authorize]
+        [ValidatePassedUserIdActionFilter]
         [Route("revoke/{userId}")]
         [HttpGet]
         public async Task<IActionResult> RevokeAsync(Guid userId)

@@ -5,8 +5,6 @@ namespace AccountMicroservice.Api.DTOs.User
 {
     public class UpdateUserNameDto
     {
-        public Guid UserId { get; set; }
-
         private string newUserName;
         [Required]
         [StringLength(30)]

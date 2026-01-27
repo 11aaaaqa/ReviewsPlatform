@@ -7,7 +7,6 @@ using System.Text;
 using System.Text.Json;
 using Web.MVC.Constants;
 using Web.MVC.DTOs.user;
-using Web.MVC.Filters.ActionFilters;
 using Web.MVC.Models.Api_responses.account;
 using Web.MVC.Models.View_models.User;
 using Web.MVC.Services;
@@ -65,15 +64,6 @@ namespace Web.MVC.Controllers
         [HttpPost]
         public async Task<IActionResult> SetUserRoles(Guid userId, List<Guid> roleIds, string returnUrl)
         {
-            string currentUserIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
-            Guid currentUserId = new Guid(currentUserIdStr);
-            if (currentUserId == userId)
-            {
-                logger.LogWarning("{Timestamp}: User {UserId} tried to set roles to himself",
-                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), currentUserId);
-                return BadRequest();
-            }
-
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
 
             var allRolesResponse = await httpClient.GetAsync("/api/Role/all");
@@ -87,18 +77,19 @@ namespace Web.MVC.Controllers
             setUserRolesResponse.EnsureSuccessStatusCode();
 
             List<string> assignedRoleNames = allRoles!.Where(x => roleIds.Contains(x.Id)).Select(x => x.Name).ToList();
+            string currentUserIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
             logger.LogInformation("{Timestamp}: User {AdminId} set roles to user {UserId}: {Roles}",
-                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), currentUserId, userId, assignedRoleNames);
+                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), currentUserIdStr, userId, assignedRoleNames);
 
             return LocalRedirect(returnUrl);
         }
 
         [Authorize]
-        [ValidatePassedUserIdActionFilter]
-        [Route("users/{userId}/settings")]
+        [Route("settings")]
         [HttpGet]
-        public async Task<IActionResult> EditUserProfile(Guid userId)
+        public async Task<IActionResult> EditUserProfile()
         {
+            Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
             var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{userId}");
             if (!userResponse.IsSuccessStatusCode)
@@ -127,10 +118,9 @@ namespace Web.MVC.Controllers
 
         [RequestSizeLimit(2 * 1024 * 1024)] // При изменении изменить в EditUserProfile view "Размер файла превышает 2 мб" на актуальное значение
         [Authorize]
-        [ValidatePassedUserIdActionFilter]
-        [Route("users/{userId}/update-avatar")]
+        [Route("settings/update-avatar")]
         [HttpPost]
-        public async Task<IActionResult> UpdateUserAvatar(UpdateAvatarDto model, Guid userId, string returnUrl)
+        public async Task<IActionResult> UpdateUserAvatar(UpdateAvatarDto model, string returnUrl)
         {
             using MemoryStream memoryStream = new MemoryStream();
             await model.Image.CopyToAsync(memoryStream);
@@ -141,11 +131,12 @@ namespace Web.MVC.Controllers
                 return StatusCode((int)HttpStatusCode.BadRequest, "Неверный формат");
             
             byte[] avatarSource = memoryStream.ToArray();
+            Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
             using StringContent jsonContent = new(JsonSerializer.Serialize(new
-            { UserId = userId, AvatarSource = avatarSource }), Encoding.UTF8, "application/json");
+            { AvatarSource = avatarSource }), Encoding.UTF8, "application/json");
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
 
-            var response = await httpClient.PutAsync("/api/User/set-avatar", jsonContent);
+            var response = await httpClient.PutAsync($"/api/User/set-avatar/{userId}", jsonContent);
             response.EnsureSuccessStatusCode();
 
             if (string.IsNullOrEmpty(returnUrl) || !Url.IsLocalUrl(returnUrl))
@@ -155,11 +146,11 @@ namespace Web.MVC.Controllers
         }
 
         [Authorize]
-        [ValidatePassedUserIdActionFilter]
-        [Route("user/{userId}/reset-avatar")]
+        [Route("settings/reset-avatar")]
         [HttpPost]
-        public async Task<IActionResult> SetDefaultUserAvatar(Guid userId, string returnUrl)
+        public async Task<IActionResult> SetDefaultUserAvatar(string returnUrl)
         {
+            Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
 
             var response = await httpClient.GetAsync($"/api/User/reset-avatar/{userId}");
@@ -172,23 +163,23 @@ namespace Web.MVC.Controllers
         }
 
         [Authorize]
-        [ValidatePassedUserIdActionFilter]
-        [Route("users/{userId}/update-username")]
+        [Route("settings/update-username")]
         [HttpPost]
-        public async Task<IActionResult> UpdateUserName(Guid userId, UpdateUserNameDto model)
+        public async Task<IActionResult> UpdateUserName(UpdateUserNameDto model)
         {
             if (ModelState.IsValid)
             {
+                Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
                 HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
                 using StringContent jsonContent = new(JsonSerializer.Serialize(new 
-                    { UserId = userId, model.NewUserName}), Encoding.UTF8, "application/json");
+                    { model.NewUserName}), Encoding.UTF8, "application/json");
 
                 string secret = configuration["InternalEndpoint:Secret"]!;
                 var getRefreshTokenResponse = await httpClient.GetAsync($"/api/User/get-refresh-token/{userId}?secret={secret}");
                 getRefreshTokenResponse.EnsureSuccessStatusCode();
                 var refreshTokenFormat = await getRefreshTokenResponse.Content.ReadFromJsonAsync<RefreshTokenResponse>();
 
-                var updateUserNameResponse = await httpClient.PutAsync("/api/User/update-user-name", jsonContent);
+                var updateUserNameResponse = await httpClient.PutAsync($"/api/User/update-user-name/{userId}", jsonContent);
                 if (updateUserNameResponse.StatusCode == HttpStatusCode.Conflict)
                     return Conflict("Пользователь с таким именем уже существует");
                 updateUserNameResponse.EnsureSuccessStatusCode();
@@ -209,13 +200,13 @@ namespace Web.MVC.Controllers
         }
 
         [Authorize]
-        [ValidatePassedUserIdActionFilter]
-        [Route("users/{userId}/check-password")]
+        [Route("settings/check-password")]
         [HttpPost]
-        public async Task<IActionResult> CheckUserPassword(Guid userId, [FromForm] CheckUserPasswordDto model)
+        public async Task<IActionResult> CheckUserPassword([FromForm] CheckUserPasswordDto model)
         {
             if (ModelState.IsValid)
             {
+                Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
                 HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
                 using StringContent jsonContent = new(JsonSerializer.Serialize(new { model.Password }), Encoding.UTF8, "application/json");
 
@@ -231,13 +222,13 @@ namespace Web.MVC.Controllers
         }
 
         [Authorize]
-        [ValidatePassedUserIdActionFilter]
-        [Route("users/{userId}/update-password")]
+        [Route("settings/update-password")]
         [HttpPost]
-        public async Task<IActionResult> UpdateUserPassword(Guid userId, [FromForm] UpdateUserPasswordDto model)
+        public async Task<IActionResult> UpdateUserPassword([FromForm] UpdateUserPasswordDto model)
         {
             if (ModelState.IsValid)
             {
+                Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
                 HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
 
                 var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{userId}");
@@ -268,11 +259,11 @@ namespace Web.MVC.Controllers
         }
 
         [Authorize]
-        [ValidatePassedUserIdActionFilter]
-        [Route("users/{userId}/complete-sign-out")]
+        [Route("settings/complete-sign-out")]
         [HttpPost]
-        public async Task<IActionResult> SignOutFromAllDevices(Guid userId)
+        public async Task<IActionResult> SignOutFromAllDevices()
         {
+            Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
 
             var revokeResponse = await httpClient.GetAsync($"/api/Token/revoke/{userId}");
