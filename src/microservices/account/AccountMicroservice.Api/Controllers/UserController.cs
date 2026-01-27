@@ -1,6 +1,6 @@
-﻿using System.Net;
-using AccountMicroservice.Api.Constants;
+﻿using AccountMicroservice.Api.Constants;
 using AccountMicroservice.Api.DTOs.User;
+using AccountMicroservice.Api.Filters.ActionFilters;
 using AccountMicroservice.Api.Models.Business;
 using AccountMicroservice.Api.Services.PasswordServices;
 using AccountMicroservice.Api.Services.RolesServices;
@@ -8,6 +8,8 @@ using AccountMicroservice.Api.Services.UnitOfWork;
 using AccountMicroservice.Api.Services.UserServices.AvatarServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
+using System.Security.Claims;
 
 namespace AccountMicroservice.Api.Controllers
 {
@@ -49,11 +51,12 @@ namespace AccountMicroservice.Api.Controllers
             return Ok(new { user.RefreshToken });
         }
 
-        [Route("update-user-name")]
+        [ValidatePassedUserIdActionFilter]
+        [Route("update-user-name/{userId}")]
         [HttpPut]
-        public async Task<IActionResult> UpdateUserNameAsync([FromBody] UpdateUserNameDto model)
+        public async Task<IActionResult> UpdateUserNameAsync([FromRoute] Guid userId, [FromBody] UpdateUserNameDto model)
         {
-            var user = await unitOfWork.UserService.GetUserByIdAsync(model.UserId);
+            var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
             if(user == null) return NotFound();
 
             string userName = user.UserName;
@@ -72,6 +75,7 @@ namespace AccountMicroservice.Api.Controllers
         }
 
         [Route("update-user-password/{userId}")]
+        [ValidatePassedUserIdActionFilter]
         [HttpPut]
         public async Task<IActionResult> UpdateUserPasswordAsync(Guid userId, [FromBody] UpdateUserPasswordDto model)
         {
@@ -97,6 +101,7 @@ namespace AccountMicroservice.Api.Controllers
             return Ok();
         }
 
+        [ValidatePassedUserIdActionFilter]
         [Route("check-password/{userId}")]
         [HttpPost]
         public async Task<IActionResult> CheckUserPassword([FromRoute] Guid userId, [FromBody] CheckUserPasswordDto model)
@@ -115,6 +120,15 @@ namespace AccountMicroservice.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> SetUserRolesAsync([FromBody] SetUserRolesDto model)
         {
+            string currentUserIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid currentUserId = new Guid(currentUserIdStr);
+            if (currentUserId == model.UserId)
+            {
+                logger.LogWarning("{Timestamp}: User {UserId} tried to set roles to himself",
+                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), currentUserId);
+                return BadRequest();
+            }
+
             var user = await unitOfWork.UserService.GetUserByIdAsync(model.UserId);
             if (user == null)
                 return NotFound("User not found");
@@ -159,12 +173,13 @@ namespace AccountMicroservice.Api.Controllers
             return Ok();
         }
 
+        [ValidatePassedUserIdActionFilter]
         [RequestSizeLimit(2 * 1024 * 1024)]
-        [Route("set-avatar")]
+        [Route("set-avatar/{userId}")]
         [HttpPut]
-        public async Task<IActionResult> SetUserAvatar([FromBody] SetUserAvatarDto model)
+        public async Task<IActionResult> SetUserAvatar([FromRoute] Guid userId, [FromBody] SetUserAvatarDto model)
         {
-            var user = await unitOfWork.UserService.GetUserByIdAsync(model.UserId);
+            var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
             if (user == null)
                 return NotFound();
 
@@ -180,6 +195,7 @@ namespace AccountMicroservice.Api.Controllers
             return Ok();
         }
 
+        [ValidatePassedUserIdActionFilter]
         [Route("reset-avatar/{userId}")]
         [HttpGet]
         public async Task<IActionResult> SetDefaultUserAvatar(Guid userId)

@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
+﻿using AccountMicroservice.Api.Constants;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using System.Net;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc;
-using Web.MVC.Constants;
 
-namespace Web.MVC.Filters.ActionFilters
+namespace AccountMicroservice.Api.Filters.ActionFilters
 {
     public class ValidatePassedUserIdActionFilterService(ILogger<ValidatePassedUserIdActionFilterService> logger) : IActionFilter
     {
