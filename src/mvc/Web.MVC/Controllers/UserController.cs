@@ -19,16 +19,14 @@ namespace Web.MVC.Controllers
         private readonly ILogger<UserController> logger;
         private readonly AvatarConverter avatarConverter;
         private readonly IDataProtector dataProtector;
-        private readonly IConfiguration configuration;
         private readonly List<string> availableFileExtensions = new() { ".jpg", ".png", ".jpeg"};
         public UserController(IHttpClientFactory httpClientFactory, ILogger<UserController> logger,
-            AvatarConverter avatarConverter, IDataProtectionProvider dataProtectionProvider, IConfiguration configuration)
+            AvatarConverter avatarConverter, IDataProtectionProvider dataProtectionProvider)
         {
             dataProtector = dataProtectionProvider.CreateProtector(DataProtectionPurposeConstants.Jwt);
             this.httpClientFactory = httpClientFactory;
             this.logger = logger;
             this.avatarConverter = avatarConverter;
-            this.configuration = configuration;
         }
 
         [Route("users/{userId}")]
@@ -140,7 +138,7 @@ namespace Web.MVC.Controllers
             response.EnsureSuccessStatusCode();
 
             if (string.IsNullOrEmpty(returnUrl) || !Url.IsLocalUrl(returnUrl))
-                return RedirectToAction("EditUserProfile", routeValues: new { userId });
+                return RedirectToAction("EditUserProfile");
 
             return LocalRedirect(returnUrl);
         }
@@ -159,7 +157,7 @@ namespace Web.MVC.Controllers
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return LocalRedirect(returnUrl);
 
-            return RedirectToAction("EditUserProfile", new { userId });
+            return RedirectToAction("EditUserProfile");
         }
 
         [Authorize]
@@ -174,24 +172,15 @@ namespace Web.MVC.Controllers
                 using StringContent jsonContent = new(JsonSerializer.Serialize(new 
                     { model.NewUserName}), Encoding.UTF8, "application/json");
 
-                string secret = configuration["InternalEndpoint:Secret"]!;
-                var getRefreshTokenResponse = await httpClient.GetAsync($"/api/User/get-refresh-token/{userId}?secret={secret}");
-                getRefreshTokenResponse.EnsureSuccessStatusCode();
-                var refreshTokenFormat = await getRefreshTokenResponse.Content.ReadFromJsonAsync<RefreshTokenResponse>();
-
                 var updateUserNameResponse = await httpClient.PutAsync($"/api/User/update-user-name/{userId}", jsonContent);
+
                 if (updateUserNameResponse.StatusCode == HttpStatusCode.Conflict)
                     return Conflict("Пользователь с таким именем уже существует");
                 updateUserNameResponse.EnsureSuccessStatusCode();
 
-                string protectedAccessToken = Request.Cookies[CookieNames.AccessToken]!;
-                string accessToken = dataProtector.Unprotect(protectedAccessToken);
-                using StringContent refreshTokenJsonContent = new(JsonSerializer.Serialize(new
-                    { AccessToken = accessToken, refreshTokenFormat!.RefreshToken }), Encoding.UTF8, "application/json");
-                var refreshTokenResponse = await httpClient.PostAsync("/api/Token/refresh", refreshTokenJsonContent);
-                refreshTokenResponse.EnsureSuccessStatusCode();
-                string newAccessToken = await refreshTokenResponse.Content.ReadAsStringAsync();
-                SaveAccessToken(newAccessToken);
+                string accessToken = await updateUserNameResponse.Content.ReadAsStringAsync();
+                
+                SaveAccessToken(accessToken);
 
                 return Ok();
             }
@@ -230,24 +219,11 @@ namespace Web.MVC.Controllers
             {
                 Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
                 HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
-
-                var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{userId}");
-                userResponse.EnsureSuccessStatusCode();
-                var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
-
                 using StringContent jsonContent = new(JsonSerializer.Serialize(new { model.NewPassword, model.OldPassword }),
                     Encoding.UTF8, "application/json");
-
                 var updateUserPasswordResponse = await httpClient.PutAsync($"/api/User/update-user-password/{userId}", jsonContent);
                 updateUserPasswordResponse.EnsureSuccessStatusCode();
-
-                using StringContent loginJsonContent = new(JsonSerializer.Serialize(new
-                {
-                    UserNameOrEmail = user!.Email, Password = model.NewPassword
-                }), Encoding.UTF8, "application/json");
-                var loginResponse = await httpClient.PostAsync("/api/Auth/login", loginJsonContent);
-                loginResponse.EnsureSuccessStatusCode();
-                string accessToken = await loginResponse.Content.ReadAsStringAsync();
+                string accessToken = await updateUserPasswordResponse.Content.ReadAsStringAsync();
 
                 SaveAccessToken(accessToken);
 
