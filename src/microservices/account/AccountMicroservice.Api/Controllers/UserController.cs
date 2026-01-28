@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Security.Claims;
+using AccountMicroservice.Api.Services.TokenServices;
 
 namespace AccountMicroservice.Api.Controllers
 {
@@ -17,7 +18,7 @@ namespace AccountMicroservice.Api.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class UserController(IPasswordService passwordService, IUnitOfWork unitOfWork, IRoleService roleService, IAvatarService avatarService,
-        ILogger<UserController> logger, IConfiguration configuration) : ControllerBase
+        ILogger<UserController> logger, IConfiguration configuration, ITokenService tokenService) : ControllerBase
     {
         [AllowAnonymous]
         [HttpGet]
@@ -65,13 +66,18 @@ namespace AccountMicroservice.Api.Controllers
                 return Conflict("User with current name already exists");
 
             user.UserName = model.NewUserName;
+            if(user.IsAvatarDefault)
+                user.AvatarSource = avatarService.GetDefaultUserAvatar(user);
+            user.RefreshToken = tokenService.GenerateRefreshToken();
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMonths(1);
+
             await unitOfWork.UserService.UpdateUserAsync(user);
             await unitOfWork.CompleteAsync();
 
             logger.LogInformation("{Timestamp}: User {UserId} updated his name from {UserName} to {NewUserName}",
                 DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), user.Id, userName, model.NewUserName);
 
-            return Ok();
+            return Ok(tokenService.GenerateAccessToken(tokenService.GetClaims(user)));
         }
 
         [Route("update-user-password/{userId}")]
@@ -91,14 +97,16 @@ namespace AccountMicroservice.Api.Controllers
             user.PasswordHash = Convert.ToBase64String(passwordHashFormatResult.PasswordHash);
             user.PasswordSalt = Convert.ToBase64String(passwordHashFormatResult.Salt);
             user.TokenVersion++;
+            user.RefreshToken = tokenService.GenerateRefreshToken();
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMonths(1);
 
             await unitOfWork.UserService.UpdateUserAsync(user);
             await unitOfWork.CompleteAsync();
 
             logger.LogInformation("{Timestamp}: User {UserId} updated his password",
                 DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), user.Id);
-
-            return Ok();
+            
+            return Ok(tokenService.GenerateAccessToken(tokenService.GetClaims(user)));
         }
 
         [ValidatePassedUserIdActionFilter]
