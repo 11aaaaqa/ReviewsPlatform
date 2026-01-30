@@ -9,8 +9,32 @@
             <div class="block-underline">
                 <h4>Данные авторизации</h4>
                 <div style="margin-bottom: 10px;">
-                    <p>Адрес электронной почты</p>
-                    <input class="user-profile-readonly-input" type="text" value="@Model.UserEmail" readonly />
+                    @if (true)
+                    {
+                        string returnUrl = Context.Request.Path;
+                        if (Context.Request.QueryString.HasValue)
+                            returnUrl += Context.Request.QueryString;
+
+                        @if (Model.IsEmailVerified)
+                        {
+                            <p>
+                                Адрес электронной почты — <span style="color: hsl(120, 100%, 32%); margin-right: 4px;">✓</span>Подтверждена
+                            </p>
+                        }
+                        else
+                        {
+                            <div style="display: flex; align-items: center;">
+                                <p>
+                                    Адрес электронной почты — <span style="color: rgb(255, 0, 0); margin-right: 4px;">❌</span>Не подтверждена,
+                                </p>
+                                <form id="requestEmailConfirmationForm" method="post" asp-controller="User" asp-action="RequestEmailConfirmation"
+                                      asp-route-returnUrl="@returnUrl">
+                                    <input id="requestEmailConfirmationSubmit" type="submit" class="themed-link" value="Подтвердить"/>
+                                </form>
+                            </div>
+                        }
+                    }
+                    <input class="user-profile-readonly-input" type="text" value="@Model.UserEmail" readonly/>
                 </div>
                 <div style="margin-bottom: 25px;">
                     <p>Имя пользователя</p>
@@ -102,6 +126,18 @@
 </div>
 
 <script>
+    
+    const requestEmailConfirmationForm = document.getElementById('requestEmailConfirmationForm');
+    document.getElementById('requestEmailConfirmationSubmit').addEventListener('click', async function(e) {
+
+    });
+
+
+
+
+
+
+
     const passwordErrorBlock = document.getElementById('passwordErrorBlock');
 
     document.getElementById('checkPasswordSubmit').addEventListener('click', async function(e) {
