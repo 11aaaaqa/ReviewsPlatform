@@ -15,24 +15,32 @@
                         if (Context.Request.QueryString.HasValue)
                             returnUrl += Context.Request.QueryString;
 
-                        @if (Model.IsEmailVerified)
-                        {
-                            <p>
-                                Адрес электронной почты — <span style="color: hsl(120, 100%, 32%); margin-right: 4px;">✓</span>Подтверждена
-                            </p>
-                        }
-                        else
-                        {
-                            <div style="display: flex; align-items: center;">
-                                <p>
-                                    Адрес электронной почты — <span style="color: rgb(255, 0, 0); margin-right: 4px;">❌</span>Не подтверждена,
+                        <div style="display: flex; align-items: center;">
+                            <p style="margin-right: 4px;">Адрес электронной почты —</p>
+                            @if (Model.IsEmailVerified)
+                            {
+                                <p style="color: hsl(120, 100%, 32%);">
+                                    <span style="margin-right: 3px;">✅</span>Подтвержден
+                                </p>
+                            }
+                            else
+                            {
+                                <p id="confirmationWaitingP" style="display: none;">
+                                    <span style="margin-right: 3px;">🕓</span>Ожидается
+                                </p>
+                                <p id="errorInfoP" style="display: none; color: rgb(255, 0, 0);"></p>
+                                <p id="confirmationSentP" style="display: none; color: orange;">
+                                    <span style="margin-right: 3px;">🕓</span>Подтверждение отправлено
+                                </p>
+                                <p id="unconfirmedP">
+                                    <span style="color: rgb(255, 0, 0); margin-right: 3px;">❌</span>Не подтвержден,
                                 </p>
                                 <form id="requestEmailConfirmationForm" method="post" asp-controller="User" asp-action="RequestEmailConfirmation"
                                       asp-route-returnUrl="@returnUrl">
                                     <input id="requestEmailConfirmationSubmit" type="submit" class="themed-link" value="Подтвердить"/>
                                 </form>
-                            </div>
-                        }
+                            }
+                        </div>
                     }
                     <input class="user-profile-readonly-input" type="text" value="@Model.UserEmail" readonly/>
                 </div>
@@ -126,11 +134,40 @@
 </div>
 
 <script>
-    
+    const confirmationWaitingP = document.getElementById('confirmationWaitingP');
+    const confirmationSentP = document.getElementById('confirmationSentP');
+    const unconfirmedP = document.getElementById('unconfirmedP');
+    const errorInfoP = document.getElementById('errorInfoP');
     const requestEmailConfirmationForm = document.getElementById('requestEmailConfirmationForm');
     document.getElementById('requestEmailConfirmationSubmit').addEventListener('click', async function(e) {
+        e.preventDefault();
 
+        const requestEmailConfirmationForm = document.getElementById('requestEmailConfirmationForm');
+        const formData = new FormData(requestEmailConfirmationForm);
+
+        requestEmailConfirmationForm.style.display = 'none';
+        unconfirmedP.style.display = 'none';
+        confirmationWaitingP.style.display = 'block';
+
+        const response = await fetch(requestEmailConfirmationForm.action, { method: 'POST', body: formData });
+
+        confirmationWaitingP.style.display = 'none';
+
+        if (response.redirected || response.ok) {
+            errorInfoP.style.display = 'none';
+            confirmationSentP.style.display = 'block';
+        }
+        else if (response.status === 409) {
+            confirmationSentP.style.display = 'none';
+            errorInfoP.textContent = await response.text();
+            errorInfoP.style.display = 'block';
+        } else {
+            confirmationSentP.style.display = 'none';
+            errorInfoP.textContent = 'Что-то пошло не так';
+            errorInfoP.style.display = 'block';
+        }
     });
+
 
 
 
