@@ -11,6 +11,7 @@ namespace AccountMicroservice.Api.Database
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
+        public DbSet<UserEmailToken> UserEmailTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -31,6 +32,8 @@ namespace AccountMicroservice.Api.Database
                 .HasMany(x => x.Roles)
                 .WithMany()
                 .UsingEntity<UserRole>();
+
+            builder.Entity<UserEmailToken>().HasIndex(x => x.Token).IsUnique();
         }
     }
 }
