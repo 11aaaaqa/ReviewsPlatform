@@ -19,14 +19,16 @@ namespace Web.MVC.Controllers
         private readonly ILogger<UserController> logger;
         private readonly AvatarConverter avatarConverter;
         private readonly IDataProtector dataProtector;
+        private readonly IConfiguration configuration;
         private readonly List<string> availableFileExtensions = new() { ".jpg", ".png", ".jpeg"};
         public UserController(IHttpClientFactory httpClientFactory, ILogger<UserController> logger,
-            AvatarConverter avatarConverter, IDataProtectionProvider dataProtectionProvider)
+            AvatarConverter avatarConverter, IDataProtectionProvider dataProtectionProvider, IConfiguration configuration)
         {
             dataProtector = dataProtectionProvider.CreateProtector(DataProtectionPurposeConstants.Jwt);
             this.httpClientFactory = httpClientFactory;
             this.logger = logger;
             this.avatarConverter = avatarConverter;
+            this.configuration = configuration;
         }
 
         [Route("users/{userId}")]
@@ -110,7 +112,7 @@ namespace Web.MVC.Controllers
             return View(new EditUserProfileViewModel
             {
                 AvatarSrc = avatarSrc, UserEmail = user.Email, UserId = userId, IsAvatarDefault = user.IsAvatarDefault,
-                UserName = user.UserName
+                UserName = user.UserName, IsEmailVerified = user.IsEmailVerified
             });
         }
 
@@ -250,11 +252,54 @@ namespace Web.MVC.Controllers
             return RedirectToAction("Index", "Home");
         }
 
+        [Authorize]
+        [Route("settings/email/request-confirmation")]
+        [HttpPost]
+        public async Task<IActionResult> RequestEmailConfirmation(string returnUrl)
+        {
+            Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+            using StringContent jsonContent = new(JsonSerializer.Serialize(new
+            { 
+                Url = $"{configuration["CurrentUrl:Scheme"]}://{configuration["CurrentUrl:Domain"]}/settings/email/confirm?token="
+            }), Encoding.UTF8, "application/json");
+
+            var sendTokenResponse = await httpClient.PostAsync($"/api/User/send-email-confirmation-token/{userId}",
+                jsonContent);
+            if (!sendTokenResponse.IsSuccessStatusCode)
+            {
+                if (sendTokenResponse.StatusCode == HttpStatusCode.Conflict)
+                {
+                    return StatusCode((int)HttpStatusCode.Conflict, "Вы запросили максимальное количество кодов, попробуйте позже");
+                }
+                sendTokenResponse.EnsureSuccessStatusCode();
+            }
+
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return LocalRedirect(returnUrl);
+
+            return RedirectToAction("EditUserProfile");
+        }
+
+        [Authorize]
+        [Route("settings/email/confirm")] //при изменении влияет на работу метода RequestEmailConfirmation
+        [HttpGet]
+        public async Task<IActionResult> ConfirmEmail(string token)
+        {
+            Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+
+            var confirmEmailResponse = await httpClient.GetAsync($"/api/User/confirm-user-email/{userId}?token={token}");
+            confirmEmailResponse.EnsureSuccessStatusCode();
+
+            return RedirectToAction("EditUserProfile");
+        }
+
         private void SaveAccessToken(string unprotectedAccessToken)
         {
             string protectedAccessToken = dataProtector.Protect(unprotectedAccessToken);
             Response.Cookies.Append(CookieNames.AccessToken, protectedAccessToken, new CookieOptions
-                { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict });
+                { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Lax });
         }
     }
 }
