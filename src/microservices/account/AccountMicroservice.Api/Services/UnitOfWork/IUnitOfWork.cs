@@ -1,4 +1,5 @@
 ﻿using AccountMicroservice.Api.Services.UserServices;
+using AccountMicroservice.Api.Services.UserServices.EmailTokenServices;
 using AccountMicroservice.Api.Services.UserServices.RoleServices;
 
 namespace AccountMicroservice.Api.Services.UnitOfWork
@@ -7,6 +8,7 @@ namespace AccountMicroservice.Api.Services.UnitOfWork
     {
         public IUserService UserService { get; }
         public IUserRolesService UserRolesService { get; }
+        public IUserEmailTokenRepository UserEmailTokenRepository { get; }
 
         Task CompleteAsync();
         Task BeginTransactionAsync();

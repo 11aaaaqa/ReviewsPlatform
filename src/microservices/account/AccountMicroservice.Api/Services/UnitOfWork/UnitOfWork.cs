@@ -1,6 +1,7 @@
 ﻿using AccountMicroservice.Api.Database;
 using AccountMicroservice.Api.Exceptions;
 using AccountMicroservice.Api.Services.UserServices;
+using AccountMicroservice.Api.Services.UserServices.EmailTokenServices;
 using AccountMicroservice.Api.Services.UserServices.RoleServices;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -10,14 +11,17 @@ namespace AccountMicroservice.Api.Services.UnitOfWork
     {
         public IUserService UserService { get; }
         public IUserRolesService UserRolesService { get; }
+        public IUserEmailTokenRepository UserEmailTokenRepository { get; }
         private readonly ApplicationDbContext context;
         private IDbContextTransaction? transaction;
 
 
-        public UnitOfWork(IUserService userService, IUserRolesService userRolesService, ApplicationDbContext context)
+        public UnitOfWork(IUserEmailTokenRepository userEmailTokenRepository, IUserService userService,
+            IUserRolesService userRolesService, ApplicationDbContext context)
         {
             UserService = userService;
             UserRolesService = userRolesService;
+            UserEmailTokenRepository = userEmailTokenRepository;
             this.context = context;
         }
 
