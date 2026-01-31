@@ -79,6 +79,17 @@ h1, h2, h3, h4, h5, h6, p {
     position: relative;
 }
 
+.themed-link {
+    border: none;
+    background-color: transparent;
+    text-decoration: underline;
+    color: salmon;
+}
+
+.themed-link:hover {
+    color: #C46256;
+}
+
 .btn {
     display: block;
     border: none;
