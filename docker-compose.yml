@@ -12,6 +12,8 @@ services:
     depends_on:
       - account-microservice-api
       - redis
+    env_file:
+      - "./general.env"
 
   api-gateway:
     container_name: api-gateway
