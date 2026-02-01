@@ -34,6 +34,9 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
       - 32167:8080
+    env_file:
+      - "./src/microservices/account/AccountMicroservice.Api/app.env"
+      - "./general.env"
     depends_on:
       - postgres-account
       - api-gateway

@@ -10,6 +10,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using AccountMicroservice.Api.Services.EmailServices;
+using AccountMicroservice.Api.Services.UserServices.EmailTokenServices;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,11 +42,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(x =>
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRolesService, UserRolesService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IUserEmailTokenRepository, UserEmailTokenRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddSingleton<IPasswordService, PasswordService>();
 builder.Services.AddSingleton<ITokenService, TokenService>();
 builder.Services.AddSingleton<IAvatarService, AvatarService>();
+builder.Services.AddSingleton<IEmailService, EmailService>();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();

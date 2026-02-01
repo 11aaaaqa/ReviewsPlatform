@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/configs/">
+    <File Path="general.env" />
     <File Path="redis.conf" />
   </Folder>
   <Folder Name="/src/" />

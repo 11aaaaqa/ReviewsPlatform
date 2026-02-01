@@ -7,5 +7,6 @@
         public string AvatarSrc { get; set; }
         public string UserEmail { get; set; }
         public string UserName { get; set; }
+        public bool IsEmailVerified { get; set; }
     }
 }

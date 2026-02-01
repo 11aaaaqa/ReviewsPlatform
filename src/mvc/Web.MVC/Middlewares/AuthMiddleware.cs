@@ -65,7 +65,7 @@ namespace Web.MVC.Middlewares
 
                                 string protectedNewAccessToken = dataProtector.Protect(newAccessToken);
                                 context.Response.Cookies.Append(CookieNames.AccessToken, protectedNewAccessToken, new CookieOptions
-                                    { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict });
+                                    { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Lax });
 
                                 context.Request.Headers.Append("Authorization", "Bearer " + newAccessToken);
                             }

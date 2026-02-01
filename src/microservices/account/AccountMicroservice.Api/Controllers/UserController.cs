@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Security.Claims;
+using AccountMicroservice.Api.Enums;
+using AccountMicroservice.Api.Services.EmailServices;
 using AccountMicroservice.Api.Services.TokenServices;
 
 namespace AccountMicroservice.Api.Controllers
@@ -18,7 +20,7 @@ namespace AccountMicroservice.Api.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class UserController(IPasswordService passwordService, IUnitOfWork unitOfWork, IRoleService roleService, IAvatarService avatarService,
-        ILogger<UserController> logger, IConfiguration configuration, ITokenService tokenService) : ControllerBase
+        ILogger<UserController> logger, IConfiguration configuration, ITokenService tokenService, IEmailService emailService) : ControllerBase
     {
         [AllowAnonymous]
         [HttpGet]
@@ -27,7 +29,7 @@ namespace AccountMicroservice.Api.Controllers
         {
             var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
             if (user == null)
-                return NotFound();
+                return NotFound("User not found");
 
             return Ok(new
             {
@@ -47,7 +49,7 @@ namespace AccountMicroservice.Api.Controllers
                 return BadRequest();
 
             var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
-            if (user == null) return NotFound();
+            if (user == null) return NotFound("User not found");
 
             return Ok(new { user.RefreshToken });
         }
@@ -58,7 +60,7 @@ namespace AccountMicroservice.Api.Controllers
         public async Task<IActionResult> UpdateUserNameAsync([FromRoute] Guid userId, [FromBody] UpdateUserNameDto model)
         {
             var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
-            if(user == null) return NotFound();
+            if(user == null) return NotFound("User not found");
 
             string userName = user.UserName;
 
@@ -86,7 +88,7 @@ namespace AccountMicroservice.Api.Controllers
         public async Task<IActionResult> UpdateUserPasswordAsync(Guid userId, [FromBody] UpdateUserPasswordDto model)
         {
             var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
-            if (user == null) return NotFound();
+            if (user == null) return NotFound("User not found");
 
             bool checkPasswordResult = passwordService.CheckPassword(Convert.FromBase64String(user.PasswordHash),
                 Convert.FromBase64String(user.PasswordSalt), model.OldPassword);
@@ -115,7 +117,7 @@ namespace AccountMicroservice.Api.Controllers
         public async Task<IActionResult> CheckUserPassword([FromRoute] Guid userId, [FromBody] CheckUserPasswordDto model)
         {
             var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
-            if(user == null) return NotFound();
+            if(user == null) return NotFound("User not found");
 
             bool checkPasswordResult = passwordService.CheckPassword(Convert.FromBase64String(user.PasswordHash), 
                 Convert.FromBase64String(user.PasswordSalt), model.Password);
@@ -175,6 +177,9 @@ namespace AccountMicroservice.Api.Controllers
             catch (Exception e)
             {
                 await unitOfWork.RollbackTransactionAsync();
+                logger.LogCritical(
+                    "{Timestamp}: An exception was thrown while commiting transaction while setting user roles. Exception message: {ExceptionMessage}",
+                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), e.Message);
                 return StatusCode((int)HttpStatusCode.InternalServerError, new { errorMessage = e.Message });
             }
 
@@ -189,9 +194,9 @@ namespace AccountMicroservice.Api.Controllers
         {
             var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
             if (user == null)
-                return NotFound();
+                return NotFound("User not found");
 
-            if(!avatarService.ValidateAvatar(model.AvatarSource))
+            if (!avatarService.ValidateAvatar(model.AvatarSource))
                 return BadRequest("Incorrect file format");
 
             user.AvatarSource = avatarService.CropCustomUserAvatar(model.AvatarSource);
@@ -210,7 +215,7 @@ namespace AccountMicroservice.Api.Controllers
         {
             var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
             if (user == null)
-                return NotFound();
+                return NotFound("User not found");
 
             if (user.IsAvatarDefault)
                 return BadRequest("Avatar is already default");
@@ -220,6 +225,110 @@ namespace AccountMicroservice.Api.Controllers
             await unitOfWork.UserService.UpdateUserAsync(user);
 
             await unitOfWork.CompleteAsync();
+
+            return Ok();
+        }
+
+        [ValidatePassedUserIdActionFilter]
+        [Route("send-email-confirmation-token/{userId}")]
+        [HttpPost]
+        public async Task<IActionResult> SendEmailConfirmationToken([FromRoute] Guid userId, [FromBody] ConfirmationTokenLink link)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(
+                    new { errorMessages = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList() });
+
+            var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
+            if (user == null)
+                return NotFound("User not found");
+
+            if (user.IsEmailVerified)
+                return BadRequest("Email is already confirmed");
+
+            var emailConfirmationTokens = await unitOfWork.UserEmailTokenRepository
+                .GetEmailTokensByPurposeAsync(userId, EmailTokenPurpose.EmailConfirmation);
+
+            var expiredEmailConfirmationTokens = emailConfirmationTokens
+                .Where(x => x.ExpiryTime < DateTime.UtcNow).ToList();
+            if (expiredEmailConfirmationTokens.Count > 0)
+            {
+                await unitOfWork.UserEmailTokenRepository.RemoveRangeAsync(userId, expiredEmailConfirmationTokens);
+                await unitOfWork.CompleteAsync();
+            }
+
+            if (emailConfirmationTokens.Where(x => x.ExpiryTime > DateTime.UtcNow).ToList().Count >= 3)
+            {
+                return Conflict("3 emails with active tokens have already been sent");
+            }
+
+            try
+            {
+                await unitOfWork.BeginTransactionAsync();
+
+                string token = await unitOfWork.UserEmailTokenRepository.AddAsync(userId, EmailTokenPurpose.EmailConfirmation);
+
+                await unitOfWork.CompleteAsync();
+
+                string emailBody = $"<div><p style=\"margin: 0 0 10px 0;\">Подтвердите Ваш адрес электронной почты, перейдя по <a href=\"{link.Url}{token}\">ссылке</a>.</p><p style=\"margin: 0;\">Если Вы не запрашивали подтверждение, проигнорируйте это письмо.</p></div>";
+                await emailService.SendEmailAsync(user.Email, "Подтверждение почты", emailBody);
+
+                await unitOfWork.CommitTransactionAsync();
+            }
+            catch(Exception e)
+            {
+                await unitOfWork.RollbackTransactionAsync();
+                logger.LogCritical(
+                    "{Timestamp}: User with id {UserId} tried to send an email confirmation link but transaction threw an exception: {ExceptionMessage}",
+                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId, e.Message);
+                return StatusCode((int)HttpStatusCode.InternalServerError, new { errorMessage = e.Message});
+            }
+
+            logger.LogInformation("{Timestamp}: Email confirmation token sent for user {UserId}",
+                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId);
+
+            return Ok();
+        }
+
+        [ValidatePassedUserIdActionFilter]
+        [Route("confirm-user-email/{userId}")]
+        [HttpGet]
+        public async Task<IActionResult> ConfirmUserEmail([FromRoute] Guid userId, [FromQuery] string token)
+        {
+            var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
+            if (user == null)
+                return NotFound("User not found");
+
+            if (user.IsEmailVerified)
+                return Conflict("Email is already verified");
+
+            var emailToken = await unitOfWork.UserEmailTokenRepository.GetAsync(userId, token, EmailTokenPurpose.EmailConfirmation);
+            if (emailToken == null)
+                return NotFound("Token not found");
+
+            if (emailToken.ExpiryTime < DateTime.UtcNow)
+                return BadRequest("Token has expired");
+
+            try
+            {
+                await unitOfWork.BeginTransactionAsync();
+
+                user.IsEmailVerified = true;
+                await unitOfWork.UserService.UpdateUserAsync(user);
+
+                await unitOfWork.UserRolesService.AddUserToRoleAsync(userId, new Guid(RoleIds.VerifiedId));
+
+                await unitOfWork.UserEmailTokenRepository.RemoveAllByPurposeAsync(userId, EmailTokenPurpose.EmailConfirmation);
+
+                await unitOfWork.CommitTransactionAsync();
+            }
+            catch (Exception e)
+            {
+                logger.LogCritical("{Timestamp}: User with id {UserId} tried to confirm his email but transaction threw an exception: {ExceptionMessage}",
+                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId, e.Message);
+                return StatusCode((int)HttpStatusCode.InternalServerError, new { errorMessage = e.Message });
+            }
+
+            logger.LogInformation("{Timestamp}: User {UserId} confirmed his email", DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId);
 
             return Ok();
         }
