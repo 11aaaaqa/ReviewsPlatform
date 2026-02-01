@@ -43,7 +43,7 @@ namespace AccountMicroservice.Api.Controllers
         [Route("get-refresh-token/{userId}")]
         public async Task<IActionResult> GetRefreshToken([FromRoute] Guid userId, [FromQuery] string secret)
         {
-            string actualSecret = configuration["InternalEndpoint:Secret"]!;
+            string actualSecret = configuration["INTERNAL_ENDPOINT_SECRET"]!;
 
             if (secret != actualSecret)
                 return BadRequest();

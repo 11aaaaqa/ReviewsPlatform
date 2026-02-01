@@ -44,7 +44,7 @@ namespace Web.MVC.Middlewares
 
                     HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.AuthMiddleware);
 
-                    string secret = configuration["InternalEndpoint:Secret"]!;
+                    string secret = configuration["INTERNAL_ENDPOINT_SECRET"]!;
 
                     var getRefreshTokenResponse = await httpClient.GetAsync($"/api/User/get-refresh-token/{userId}?secret={secret}");
                     if (getRefreshTokenResponse.IsSuccessStatusCode)

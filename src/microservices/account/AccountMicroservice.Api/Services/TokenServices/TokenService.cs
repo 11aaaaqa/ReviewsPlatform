@@ -12,12 +12,12 @@ namespace AccountMicroservice.Api.Services.TokenServices
     {
         public string GenerateAccessToken(IEnumerable<Claim> claims)
         {
-            var secret = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Secret"]!));
+            var secret = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT_SECRET"]!));
             var signingCredentials = new SigningCredentials(secret, SecurityAlgorithms.HmacSha256);
 
             var tokenOptions = new JwtSecurityToken(
-                issuer: configuration["Jwt:Issuer"],
-                audience: configuration["Jwt:Audience"],
+                issuer: configuration["JWT_ISSUER"],
+                audience: configuration["JWT_AUDIENCE"],
                 claims: claims,
                 signingCredentials: signingCredentials,
                 expires: DateTime.UtcNow.AddMinutes(2)
@@ -44,9 +44,9 @@ namespace AccountMicroservice.Api.Services.TokenServices
                 ValidateAudience = true,
                 ValidateLifetime = false,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Secret"]!)),
-                ValidIssuer = configuration["Jwt:Issuer"],
-                ValidAudience = configuration["Jwt:Audience"]
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT_SECRET"]!)),
+                ValidIssuer = configuration["JWT_ISSUER"],
+                ValidAudience = configuration["JWT_AUDIENCE"]
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();

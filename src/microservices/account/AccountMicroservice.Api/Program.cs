@@ -12,7 +12,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using AccountMicroservice.Api.Services.EmailServices;
 using AccountMicroservice.Api.Services.UserServices.EmailTokenServices;
-using Microsoft.AspNetCore.Identity.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,9 +29,9 @@ builder.Services.AddAuthentication(x =>
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         ClockSkew = TimeSpan.Zero,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!)),
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"]
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT_SECRET"]!)),
+        ValidIssuer = builder.Configuration["JWT_ISSUER"],
+        ValidAudience = builder.Configuration["JWT_AUDIENCE"]
     };
 });
 
