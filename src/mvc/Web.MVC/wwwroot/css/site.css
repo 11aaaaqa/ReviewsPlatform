@@ -84,6 +84,21 @@ h1, h2, h3, h4, h5, h6, p {
     color: red;
 }
 
+.validation-summary {
+    color: red;
+}
+
+.validation-summary ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.validation-summary li {
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
 .themed-link {
     cursor: pointer;
     border: none;
