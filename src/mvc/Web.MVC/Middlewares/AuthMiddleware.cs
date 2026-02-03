@@ -42,7 +42,7 @@ namespace Web.MVC.Middlewares
                     string userIdStr = jwt.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
                     Guid userId = new Guid(userIdStr);
 
-                    HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.AuthMiddleware);
+                    HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
 
                     string secret = configuration["INTERNAL_ENDPOINT_SECRET"]!;
 

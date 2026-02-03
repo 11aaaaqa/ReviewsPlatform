@@ -35,7 +35,7 @@ namespace Web.MVC.Controllers
         [HttpGet]
         public async Task<IActionResult> GetUserById(Guid userId)
         {
-            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
             var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{userId}");
             userResponse.EnsureSuccessStatusCode();
             var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
@@ -64,7 +64,7 @@ namespace Web.MVC.Controllers
         [HttpPost]
         public async Task<IActionResult> SetUserRoles(Guid userId, List<Guid> roleIds, string returnUrl)
         {
-            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
 
             var allRolesResponse = await httpClient.GetAsync("/api/Role/all");
             allRolesResponse.EnsureSuccessStatusCode();
@@ -90,7 +90,7 @@ namespace Web.MVC.Controllers
         public async Task<IActionResult> EditUserProfile()
         {
             Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
-            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.AuthMiddleware);
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
             var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{userId}");
             if (!userResponse.IsSuccessStatusCode)
             {
@@ -134,7 +134,7 @@ namespace Web.MVC.Controllers
             Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
             using StringContent jsonContent = new(JsonSerializer.Serialize(new
             { AvatarSource = avatarSource }), Encoding.UTF8, "application/json");
-            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
 
             var response = await httpClient.PutAsync($"/api/User/set-avatar/{userId}", jsonContent);
             response.EnsureSuccessStatusCode();
@@ -151,7 +151,7 @@ namespace Web.MVC.Controllers
         public async Task<IActionResult> SetDefaultUserAvatar(string returnUrl)
         {
             Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
-            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
 
             var response = await httpClient.GetAsync($"/api/User/reset-avatar/{userId}");
             response.EnsureSuccessStatusCode();
@@ -170,7 +170,7 @@ namespace Web.MVC.Controllers
             if (ModelState.IsValid)
             {
                 Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
-                HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+                HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
                 using StringContent jsonContent = new(JsonSerializer.Serialize(new 
                     { model.NewUserName}), Encoding.UTF8, "application/json");
 
@@ -198,7 +198,7 @@ namespace Web.MVC.Controllers
             if (ModelState.IsValid)
             {
                 Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
-                HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+                HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
 
                 using StringContent checkPasswordJsonContent = new(JsonSerializer.Serialize(new
                 {
@@ -210,7 +210,7 @@ namespace Web.MVC.Controllers
                 if (!checkPasswordResult)
                     return BadRequest(new { errorMessages = new List<string>{ "Неверный пароль" } });
 
-                HttpClient httpClientNoToken = httpClientFactory.CreateClient(HttpClientNameConstants.AuthMiddleware);
+                HttpClient httpClientNoToken = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
                 using StringContent sendResetTokenJsonContent = new(JsonSerializer.Serialize(new
                 {
                     Url = $"{configuration["CurrentUrl:Scheme"]}://{configuration["CurrentUrl:Domain"]}/users/{userId}/update-password?token="
@@ -252,10 +252,10 @@ namespace Web.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
-                HttpClient httpClientNoToken = httpClientFactory.CreateClient(HttpClientNameConstants.AuthMiddleware);
+                HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
                 using StringContent jsonContent = new(JsonSerializer.Serialize(new { model.NewPassword, model.Token }),
                     Encoding.UTF8, "application/json");
-                var updateUserPasswordResponse = await httpClientNoToken.PostAsync($"/api/User/update-user-password/{model.UserId}", jsonContent);
+                var updateUserPasswordResponse = await httpClient.PostAsync($"/api/User/update-user-password/{model.UserId}", jsonContent);
                 if (!updateUserPasswordResponse.IsSuccessStatusCode)
                 {
                     if (updateUserPasswordResponse.StatusCode == HttpStatusCode.BadRequest)
@@ -268,7 +268,6 @@ namespace Web.MVC.Controllers
 
                 if (User.Identity.IsAuthenticated)
                 {
-                    HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
                     var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{model.UserId}");
                     if (!userResponse.IsSuccessStatusCode)
                     {
@@ -308,7 +307,7 @@ namespace Web.MVC.Controllers
         public async Task<IActionResult> SignOutFromAllDevices()
         {
             Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
-            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
 
             var revokeResponse = await httpClient.GetAsync($"/api/Token/revoke/{userId}");
             revokeResponse.EnsureSuccessStatusCode();
@@ -324,7 +323,7 @@ namespace Web.MVC.Controllers
         public async Task<IActionResult> RequestEmailConfirmation(string returnUrl)
         {
             Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
-            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
             using StringContent jsonContent = new(JsonSerializer.Serialize(new
             { 
                 Url = $"{configuration["CurrentUrl:Scheme"]}://{configuration["CurrentUrl:Domain"]}/settings/email/confirm?token="
@@ -353,7 +352,7 @@ namespace Web.MVC.Controllers
         public async Task<IActionResult> ConfirmEmail(string token)
         {
             Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
-            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
 
             var confirmEmailResponse = await httpClient.GetAsync($"/api/User/confirm-user-email/{userId}?token={token}");
             confirmEmailResponse.EnsureSuccessStatusCode();
