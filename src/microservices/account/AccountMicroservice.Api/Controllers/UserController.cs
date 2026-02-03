@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Security.Claims;
 using AccountMicroservice.Api.Enums;
+using AccountMicroservice.Api.Models.ReturnModels;
 using AccountMicroservice.Api.Services.EmailServices;
 using AccountMicroservice.Api.Services.TokenServices;
 
@@ -31,10 +32,27 @@ namespace AccountMicroservice.Api.Controllers
             if (user == null)
                 return NotFound("User not found");
 
-            return Ok(new
+            return Ok(new UserReturnModel
             {
-                user.Id, user.UserName, user.Email, user.IsEmailVerified, user.AvatarSource,
-                user.RegistrationDate, user.Roles, user.IsAvatarDefault
+                Id = user.Id, UserName = user.UserName, Email = user.Email, IsEmailVerified = user.IsEmailVerified,
+                AvatarSource = user.AvatarSource, RegistrationDate = user.RegistrationDate, Roles = user.Roles,
+                IsAvatarDefault = user.IsAvatarDefault
+            });
+        }
+
+        [AllowAnonymous]
+        [HttpGet]
+        [Route("get-user-by-email")]
+        public async Task<IActionResult> GetUserByEmail([FromQuery] string email)
+        {
+            var user = await unitOfWork.UserService.GetUserByEmailAsync(email);
+            if (user == null) return NotFound("User not found");
+
+            return Ok(new UserReturnModel
+            {
+                Id = user.Id, UserName = user.UserName, Email = user.Email, IsEmailVerified = user.IsEmailVerified,
+                AvatarSource = user.AvatarSource, RegistrationDate = user.RegistrationDate, Roles = user.Roles,
+                IsAvatarDefault = user.IsAvatarDefault
             });
         }
 
