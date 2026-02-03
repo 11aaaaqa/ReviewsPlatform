@@ -184,7 +184,7 @@ namespace Web.MVC.Controllers
                 
                 SaveAccessToken(accessToken);
 
-                return Ok();
+                return RedirectToAction("EditUserProfile");
             }
             
             return BadRequest("Заполните все поля");
