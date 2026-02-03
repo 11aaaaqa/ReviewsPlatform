@@ -64,19 +64,14 @@
                     <div class="modal-overlay" id="passwordModalOverlay">
                         <div class="modal-form">
                             <div style="display: none; color: red; margin-bottom: 3px;" id="passwordErrorBlock"></div>
-                            <form id="checkPasswordForm" method="post" asp-controller="User" asp-action="CheckUserPassword">
-                                <input id="checkPasswordInput" class="user-profile-input" name="password" min="8" maxlength="100"
+                            <form id="requestPasswordUpdateForm" method="post" asp-controller="User" asp-action="RequestPasswordUpdate">
+                                <input id="requestPasswordUpdateInput" class="user-profile-input" name="userPassword" min="8" maxlength="100"
                                        placeholder="Введите текущий пароль" type="password" required />
-                                <input id="checkPasswordSubmit" type="submit" class="btn-green" style="margin-top: 7px;" value="Сохранить" />
+                                <input id="requestPasswordUpdateSubmit" type="submit" class="btn-green" style="margin-top: 7px;" value="Сохранить" />
                             </form>
-                            <form class="hidden" id="updatePasswordForm" method="post" asp-controller="User" asp-action="UpdateUserPassword">
-                                <input id="updatePasswordOldPassword" name="oldPassword" type="hidden" required/>
-                                <input id="updatePasswordInput" style="margin-bottom: 5px;" class="user-profile-input" name="newPassword" min="8"
-                                       maxlength="100" placeholder="Введите новый пароль"type="password" required />
-                                <input id="updatePasswordConfirmInput" class="user-profile-input" name="confirmNewPassword" min="8" maxlength="100"
-                                       placeholder="Подтвердите пароль"type="password" required />
-                                <input id="updatePasswordSubmit" type="submit" class="btn-green" style="margin-top: 7px;" value="Сохранить"/>
-                            </form>
+                            <h5 id="requestPasswordUpdateSuccessText" style="display: none;">
+                                На Вашу электронную почту было отправлено письмо со ссылкой для обновления пароля
+                            </h5>
                         </div>
                     </div>
                 </div>
