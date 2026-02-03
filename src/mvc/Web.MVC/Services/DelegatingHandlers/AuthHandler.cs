@@ -1,27 +1,24 @@
 ﻿using System.Net.Http.Headers;
-using Microsoft.AspNetCore.DataProtection;
 using Web.MVC.Constants;
 
 namespace Web.MVC.Services.DelegatingHandlers
 {
     public class AuthHandler : DelegatingHandler
     {
-        private readonly IDataProtector dataProtector;
         private readonly IHttpContextAccessor contextAccessor;
-        public AuthHandler(IDataProtectionProvider dataProtectionProvider, IHttpContextAccessor contextAccessor)
+        public AuthHandler(IHttpContextAccessor contextAccessor)
         {
-            dataProtector = dataProtectionProvider.CreateProtector(DataProtectionPurposeConstants.Jwt);
             this.contextAccessor = contextAccessor;
         }
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var httpContext = contextAccessor.HttpContext;
 
-            if (httpContext?.Request.Cookies.TryGetValue(CookieNames.AccessToken, out string? protectedAccessToken) == true)
+            if (httpContext?.Items.TryGetValue(CookieNames.AccessToken, out var accessTokenObj) == true)
             {
-                if (!string.IsNullOrEmpty(protectedAccessToken))
+                if (accessTokenObj != null)
                 {
-                    string accessToken = dataProtector.Unprotect(protectedAccessToken);
+                    string accessToken = accessTokenObj.ToString()!;
                     request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
                 }
             }

@@ -90,7 +90,7 @@ namespace Web.MVC.Controllers
         public async Task<IActionResult> EditUserProfile()
         {
             Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
-            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.AuthMiddleware);
             var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{userId}");
             if (!userResponse.IsSuccessStatusCode)
             {
@@ -363,6 +363,7 @@ namespace Web.MVC.Controllers
 
         private void SaveAccessToken(string unprotectedAccessToken)
         {
+            HttpContext.Items[CookieNames.AccessToken] = unprotectedAccessToken;
             string protectedAccessToken = dataProtector.Protect(unprotectedAccessToken);
             Response.Cookies.Append(CookieNames.AccessToken, protectedAccessToken, new CookieOptions
                 { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Lax });
