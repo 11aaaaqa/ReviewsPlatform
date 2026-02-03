@@ -79,7 +79,13 @@ h1, h2, h3, h4, h5, h6, p {
     position: relative;
 }
 
+.model-error {
+    display: block;
+    color: red;
+}
+
 .themed-link {
+    cursor: pointer;
     border: none;
     background-color: transparent;
     text-decoration: underline;
@@ -104,6 +110,7 @@ h1, h2, h3, h4, h5, h6, p {
 
 .btn:hover {
     background: #C46256;
+    color: white;
 }
 
 .btn-wide-stretched {

@@ -82,35 +82,6 @@ namespace AccountMicroservice.Api.Controllers
             return Ok(tokenService.GenerateAccessToken(tokenService.GetClaims(user)));
         }
 
-        [Route("update-user-password/{userId}")]
-        [ValidatePassedUserIdActionFilter]
-        [HttpPut]
-        public async Task<IActionResult> UpdateUserPasswordAsync(Guid userId, [FromBody] UpdateUserPasswordDto model)
-        {
-            var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
-            if (user == null) return NotFound("User not found");
-
-            bool checkPasswordResult = passwordService.CheckPassword(Convert.FromBase64String(user.PasswordHash),
-                Convert.FromBase64String(user.PasswordSalt), model.OldPassword);
-            if (!checkPasswordResult)
-                return BadRequest("Password does not match");
-
-            var passwordHashFormatResult = passwordService.HashPassword(model.NewPassword);
-            user.PasswordHash = Convert.ToBase64String(passwordHashFormatResult.PasswordHash);
-            user.PasswordSalt = Convert.ToBase64String(passwordHashFormatResult.Salt);
-            user.TokenVersion++;
-            user.RefreshToken = tokenService.GenerateRefreshToken();
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMonths(1);
-
-            await unitOfWork.UserService.UpdateUserAsync(user);
-            await unitOfWork.CompleteAsync();
-
-            logger.LogInformation("{Timestamp}: User {UserId} updated his password",
-                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), user.Id);
-            
-            return Ok(tokenService.GenerateAccessToken(tokenService.GetClaims(user)));
-        }
-
         [ValidatePassedUserIdActionFilter]
         [Route("check-password/{userId}")]
         [HttpPost]
@@ -234,10 +205,6 @@ namespace AccountMicroservice.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> SendEmailConfirmationToken([FromRoute] Guid userId, [FromBody] ConfirmationTokenLink link)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(
-                    new { errorMessages = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList() });
-
             var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
             if (user == null)
                 return NotFound("User not found");
@@ -329,6 +296,98 @@ namespace AccountMicroservice.Api.Controllers
             }
 
             logger.LogInformation("{Timestamp}: User {UserId} confirmed his email", DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId);
+
+            return Ok();
+        }
+
+        [AllowAnonymous]
+        [HttpPost]
+        [Route("send-password-reset-token/{userId}")]
+        public async Task<IActionResult> SendPasswordResetToken(Guid userId, [FromBody] ConfirmationTokenLink link)
+        {
+            var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
+            if (user == null) return NotFound("User not found");
+
+            if (!user.IsEmailVerified) return BadRequest("Email is not verified");
+
+            var passwordResetEmailTokens = await unitOfWork.UserEmailTokenRepository
+                .GetEmailTokensByPurposeAsync(userId, EmailTokenPurpose.PasswordReset);
+            var expiredPasswordResetEmailTokens =
+                passwordResetEmailTokens.Where(x => x.ExpiryTime < DateTime.UtcNow).ToList();
+            if (expiredPasswordResetEmailTokens.Count > 0)
+            {
+                await unitOfWork.UserEmailTokenRepository.RemoveRangeAsync(userId, expiredPasswordResetEmailTokens);
+                await unitOfWork.CompleteAsync();
+            }
+
+            if (passwordResetEmailTokens.Any(x => x.ExpiryTime > DateTime.UtcNow))
+                return Conflict("Password reset has already been requested");
+
+            try
+            {
+                await unitOfWork.BeginTransactionAsync();
+
+                string token = await unitOfWork.UserEmailTokenRepository.AddAsync(userId, EmailTokenPurpose.PasswordReset);
+                await unitOfWork.CompleteAsync();
+
+                string emailBody = $"<div><p style=\"margin: 0 0 10px 0;\">Для смены Вашего пароля перейдите по <a href=\"{link.Url}{token}\">ссылке</a>.</p><p style=\"margin: 0;\">Если Вы не запрашивали смену пароля, проигнорируйте это письмо.</p></div>";
+                await emailService.SendEmailAsync(user.Email, "Сброс пароля", emailBody);
+
+                await unitOfWork.CommitTransactionAsync();
+            }
+            catch(Exception e)
+            {
+                await unitOfWork.RollbackTransactionAsync();
+                logger.LogCritical("{Timespan}: Password reset was tried to be requested for user {UserId} but transaction threw an exception: {ErrorMessage}",
+                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId, e.Message);
+                return StatusCode((int)HttpStatusCode.InternalServerError, new { errorMessage = e.Message });
+            }
+
+            return Ok();
+        }
+
+        [AllowAnonymous]
+        [Route("update-user-password/{userId}")]
+        [HttpPost]
+        public async Task<IActionResult> UpdateUserPasswordAsync(Guid userId, [FromBody] UpdateUserPasswordDto model)
+        {
+            var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
+            if (user == null) return NotFound("User not found");
+
+            var emailToken = await unitOfWork.UserEmailTokenRepository
+                .GetAsync(userId, model.Token, EmailTokenPurpose.PasswordReset);
+            if (emailToken == null)
+                return NotFound("Token not found");
+
+            if (emailToken.ExpiryTime < DateTime.UtcNow)
+                return BadRequest("Token has expired");
+
+            try
+            {
+                await unitOfWork.BeginTransactionAsync();
+
+                var passwordHashFormatResult = passwordService.HashPassword(model.NewPassword);
+                user.PasswordHash = Convert.ToBase64String(passwordHashFormatResult.PasswordHash);
+                user.PasswordSalt = Convert.ToBase64String(passwordHashFormatResult.Salt);
+                user.TokenVersion++;
+                user.RefreshToken = tokenService.GenerateRefreshToken();
+                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMonths(1);
+                await unitOfWork.UserService.UpdateUserAsync(user);
+
+                await unitOfWork.UserEmailTokenRepository.RemoveAllByPurposeAsync(userId, EmailTokenPurpose.PasswordReset);
+
+                await unitOfWork.CommitTransactionAsync();
+            }
+            catch (Exception e)
+            {
+                await unitOfWork.RollbackTransactionAsync();
+                logger.LogCritical("{Timespan}: User {UserId} tried to update his password but transaction threw an exception: {ErrorMessage}",
+                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId, e.Message);
+                return StatusCode((int)HttpStatusCode.InternalServerError, new { errorMessage = e.Message });
+            }
+
+            logger.LogInformation("{Timestamp}: User {UserId} updated his password",
+                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), user.Id);
 
             return Ok();
         }

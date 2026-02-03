@@ -1,71 +1,36 @@
 ﻿const passwordErrorBlock = document.getElementById('passwordErrorBlock');
-document.getElementById('checkPasswordSubmit').addEventListener('click', async function (e) {
+document.getElementById('requestPasswordUpdateSubmit').addEventListener('click', async function (e) {
     e.preventDefault();
 
-    const checkPasswordForm = document.getElementById('checkPasswordForm');
-    const formData = new FormData(checkPasswordForm);
+    const requestPasswordUpdateForm = document.getElementById('requestPasswordUpdateForm');
+    const formData = new FormData(requestPasswordUpdateForm);
 
-    const response = await fetch(checkPasswordForm.action, { method: 'POST', body: formData });
+    const response = await fetch(requestPasswordUpdateForm.action, { method: 'POST', body: formData });
 
     if (response.ok) {
-        const result = await response.json();
-        if (result) {
-            document.getElementById('updatePasswordOldPassword').value = document.getElementById('checkPasswordInput').value;
-            passwordErrorBlock.style.display = 'none';
-            document.getElementById('checkPasswordForm').style.display = 'none';
-            document.getElementById('updatePasswordForm').style.display = 'block';
-        } else {
-            document.getElementById('checkPasswordInput').value = '';
-            passwordErrorBlock.textContent = 'Неверный пароль';
-            passwordErrorBlock.style.display = 'block';
-        }
+        passwordErrorBlock.style.display = 'none';
+        document.getElementById('requestPasswordUpdateForm').style.display = 'none';
+        document.getElementById('requestPasswordUpdateSuccessText').style.display = 'block';
     }
     else if (response.status === 400) {
-        document.getElementById('checkPasswordInput').value = '';
-
-        const json = await response.json();
+        document.getElementById('requestPasswordUpdateInput').value = '';
         passwordErrorBlock.innerHTML = '';
 
+        const json = await response.json();
         json.errorMessages.forEach(error => {
             const div = document.createElement('div');
             div.textContent = error;
             passwordErrorBlock.appendChild(div);
         });
-        passwordErrorBlock.style.display = 'block';
-    } else {
-        document.getElementById('checkPasswordInput').value = '';
 
-        passwordErrorBlock.textContent = "Что-то пошло не так, попробуйте еще раз";
+        passwordErrorBlock.style.display = 'block';
+    } else if (response.status === 409) {
+        document.getElementById('requestPasswordUpdateInput').value = '';
+        passwordErrorBlock.textContent = await response.text();
         passwordErrorBlock.style.display = 'block';
     }
-});
-
-document.getElementById('updatePasswordSubmit').addEventListener('click', async function (e) {
-    e.preventDefault();
-
-    const updatePasswordForm = document.getElementById('updatePasswordForm');
-    const formData = new FormData(updatePasswordForm);
-
-    const response = await fetch(updatePasswordForm.action, { method: 'POST', body: formData });
-
-    if (response.ok) {
-        window.location.reload();
-    } else if (response.status === 400) {
-        document.getElementById('updatePasswordInput').value = '';
-        document.getElementById('updatePasswordConfirmInput').value = '';
-
-        const json = await response.json();
-        passwordErrorBlock.innerHTML = '';
-
-        json.errorMessages.forEach(error => {
-            const div = document.createElement('div');
-            div.textContent = error;
-            passwordErrorBlock.appendChild(div);
-        });
-        passwordErrorBlock.style.display = 'block';
-    } else {
-        document.getElementById('updatePasswordInput').value = '';
-        document.getElementById('updatePasswordConfirmInput').value = '';
+    else {
+        document.getElementById('requestPasswordUpdateInput').value = '';
 
         passwordErrorBlock.textContent = "Что-то пошло не так, попробуйте еще раз";
         passwordErrorBlock.style.display = 'block';

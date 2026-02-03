@@ -10,8 +10,6 @@ namespace AccountMicroservice.Api.DTOs.User
         public string NewPassword { get; set; }
 
         [Required]
-        [DataType(DataType.Password)]
-        [StringLength(100, MinimumLength = 8)]
-        public string OldPassword { get; set; }
+        public string Token { get; set; }
     }
 }

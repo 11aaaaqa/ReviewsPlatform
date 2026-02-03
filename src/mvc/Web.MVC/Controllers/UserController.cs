@@ -191,49 +191,115 @@ namespace Web.MVC.Controllers
         }
 
         [Authorize]
-        [Route("settings/check-password")]
+        [Route("settings/request-password-update")]
         [HttpPost]
-        public async Task<IActionResult> CheckUserPassword([FromForm] CheckUserPasswordDto model)
+        public async Task<IActionResult> RequestPasswordUpdate([FromForm] RequestPasswordUpdateDto model)
         {
             if (ModelState.IsValid)
             {
                 Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
                 HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
-                using StringContent jsonContent = new(JsonSerializer.Serialize(new { model.Password }), Encoding.UTF8, "application/json");
 
-                var checkPasswordResponse = await httpClient.PostAsync($"/api/User/check-password/{userId}", jsonContent);
+                using StringContent checkPasswordJsonContent = new(JsonSerializer.Serialize(new
+                {
+                    Password = model.UserPassword
+                }), Encoding.UTF8, "application/json");
+                var checkPasswordResponse = await httpClient.PostAsync($"/api/User/check-password/{userId}", checkPasswordJsonContent);
                 checkPasswordResponse.EnsureSuccessStatusCode();
-                bool result = await checkPasswordResponse.Content.ReadFromJsonAsync<bool>();
+                bool checkPasswordResult = await checkPasswordResponse.Content.ReadFromJsonAsync<bool>();
+                if (!checkPasswordResult)
+                    return BadRequest(new { errorMessages = new List<string>{ "Неверный пароль" } });
 
-                return Ok(result);
+                HttpClient httpClientNoToken = httpClientFactory.CreateClient(HttpClientNameConstants.AuthMiddleware);
+                using StringContent sendResetTokenJsonContent = new(JsonSerializer.Serialize(new
+                {
+                    Url = $"{configuration["CurrentUrl:Scheme"]}://{configuration["CurrentUrl:Domain"]}/users/{userId}/update-password?token="
+                }), Encoding.UTF8, "application/json");
+                var sendResetTokenResponse = await httpClientNoToken.PostAsync(
+                    $"/api/User/send-password-reset-token/{userId}", sendResetTokenJsonContent);
+                if (!sendResetTokenResponse.IsSuccessStatusCode)
+                {
+                    if (sendResetTokenResponse.StatusCode == HttpStatusCode.Conflict)
+                    {
+                        return StatusCode((int)HttpStatusCode.Conflict, "Смена пароля уже запрошена");
+                    }
+                    if (sendResetTokenResponse.StatusCode == HttpStatusCode.BadRequest)
+                    {
+                        return BadRequest(new { errorMessages = new List<string>{ "Перед сменой пароля необходимо подтвердить почту" } });
+                    }
+                    sendResetTokenResponse.EnsureSuccessStatusCode();
+                }
+
+                return Ok();
             }
 
             return BadRequest(new
                 { errorMessages = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList() });
         }
 
-        [Authorize]
-        [Route("settings/update-password")]
+        [AllowAnonymous]
+        [Route("users/{userId}/update-password")]
+        [HttpGet]
+        public IActionResult UpdateUserPassword(Guid userId, string token)
+        {
+            return View(new UpdateUserPasswordDto{ UserId = userId, Token = token });
+        }
+
+        [AllowAnonymous]
+        [Route("users/{userId}/update-password")]
         [HttpPost]
         public async Task<IActionResult> UpdateUserPassword([FromForm] UpdateUserPasswordDto model)
         {
             if (ModelState.IsValid)
             {
-                Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
-                HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
-                using StringContent jsonContent = new(JsonSerializer.Serialize(new { model.NewPassword, model.OldPassword }),
+                HttpClient httpClientNoToken = httpClientFactory.CreateClient(HttpClientNameConstants.AuthMiddleware);
+                using StringContent jsonContent = new(JsonSerializer.Serialize(new { model.NewPassword, model.Token }),
                     Encoding.UTF8, "application/json");
-                var updateUserPasswordResponse = await httpClient.PutAsync($"/api/User/update-user-password/{userId}", jsonContent);
-                updateUserPasswordResponse.EnsureSuccessStatusCode();
-                string accessToken = await updateUserPasswordResponse.Content.ReadAsStringAsync();
+                var updateUserPasswordResponse = await httpClientNoToken.PostAsync($"/api/User/update-user-password/{model.UserId}", jsonContent);
+                if (!updateUserPasswordResponse.IsSuccessStatusCode)
+                {
+                    if (updateUserPasswordResponse.StatusCode == HttpStatusCode.BadRequest)
+                    {
+                        ModelState.AddModelError(string.Empty, "Время действия токена истекло");
+                        return View(model);
+                    }
+                    updateUserPasswordResponse.EnsureSuccessStatusCode();
+                }
 
-                SaveAccessToken(accessToken);
+                if (User.Identity.IsAuthenticated)
+                {
+                    HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+                    var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{model.UserId}");
+                    if (!userResponse.IsSuccessStatusCode)
+                    {
+                        Response.Cookies.Delete(CookieNames.AccessToken);
+                        ModelState.AddModelError(string.Empty, "Пароль был успешно изменен, требуется перезайти в аккаунт");
+                        logger.LogCritical("{Timespan}: User {UserId} updated his password but something went wrong during recreating access token for him",
+                            DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), model.UserId);
+                        return View();
+                    }
+                    var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
 
-                return Ok();
+                    using StringContent loginJsonContent = new(JsonSerializer.Serialize(new 
+                        { UserNameOrEmail = user!.Email, Password = model.NewPassword }), Encoding.UTF8, "application/json");
+                    var loginResponse = await httpClient.PostAsync("/api/Auth/login", loginJsonContent);
+                    if (!loginResponse.IsSuccessStatusCode)
+                    {
+                        Response.Cookies.Delete(CookieNames.AccessToken);
+                        ModelState.AddModelError(string.Empty, "Пароль был успешно изменен, требуется перезайти в аккаунт");
+                        logger.LogCritical("{Timespan}: User {UserId} updated his password but something went wrong during recreating access token for him",
+                            DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), model.UserId);
+                        return View();
+                    }
+                    string accessToken = await loginResponse.Content.ReadAsStringAsync();
+                    SaveAccessToken(accessToken);
+                    return RedirectToAction("EditUserProfile");
+                }
+
+                return RedirectToAction("Index","Home");
             }
 
-            return BadRequest(new 
-                { errorMessages = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList() });
+            return View(model);
         }
 
         [Authorize]
