@@ -7,11 +7,13 @@ document.getElementById('updateUserNameSubmit').addEventListener('click', async 
 
     const response = await fetch(updateUserNameForm.action, { method: 'POST', body: formData });
 
-    if (response.ok) {
-        window.location.reload();
+    if (response.redirected) {
+        window.location.href = response.url;
     } else if (response.status === 400 || response.status === 409) {
         userNameModalErrorBlock.textContent = await response.text();
         userNameModalErrorBlock.style.display = 'block';
+    } else if (response.ok) {
+        window.location.reload();
     } else {
         userNameModalErrorBlock.textContent = "Что-то пошло не так, попробуйте еще раз";
         userNameModalErrorBlock.style.display = 'block';
