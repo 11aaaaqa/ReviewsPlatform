@@ -191,7 +191,7 @@ namespace Web.MVC.Controllers
         }
 
         [Authorize]
-        [Route("settings/request-password-update")]
+        [Route("settings/password/request-update")]
         [HttpPost]
         public async Task<IActionResult> RequestPasswordUpdate([FromForm] RequestPasswordUpdateDto model)
         {
@@ -213,7 +213,7 @@ namespace Web.MVC.Controllers
                 HttpClient httpClientNoToken = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
                 using StringContent sendResetTokenJsonContent = new(JsonSerializer.Serialize(new
                 {
-                    Url = $"{configuration["CurrentUrl:Scheme"]}://{configuration["CurrentUrl:Domain"]}/users/{userId}/update-password?token="
+                    Url = $"{configuration["CurrentUrl:Scheme"]}://{configuration["CurrentUrl:Domain"]}/users/{userId}/password/update?token="
                 }), Encoding.UTF8, "application/json");
                 var sendResetTokenResponse = await httpClientNoToken.PostAsync(
                     $"/api/User/send-password-reset-token/{userId}", sendResetTokenJsonContent);
@@ -238,7 +238,7 @@ namespace Web.MVC.Controllers
         }
 
         [AllowAnonymous]
-        [Route("users/{userId}/update-password")]
+        [Route("users/{userId}/password/update")] //изменение маршрута влияет на методы RequestPasswordUpdate и ForgetPassword
         [HttpGet]
         public IActionResult UpdateUserPassword(Guid userId, string token)
         {
@@ -246,7 +246,7 @@ namespace Web.MVC.Controllers
         }
 
         [AllowAnonymous]
-        [Route("users/{userId}/update-password")]
+        [Route("users/{userId}/password/update")]
         [HttpPost]
         public async Task<IActionResult> UpdateUserPassword([FromForm] UpdateUserPasswordDto model)
         {
@@ -359,6 +359,66 @@ namespace Web.MVC.Controllers
 
             return RedirectToAction("EditUserProfile");
         }
+
+        [AllowAnonymous]
+        [Route("password/reset")]
+        [HttpGet]
+        public IActionResult ForgetPassword()
+        {
+            if (User.Identity.IsAuthenticated) return Forbid();
+
+            return View(new ForgetPasswordDto{ IsRequested = false });
+        }
+
+        [AllowAnonymous]
+        [Route("password/reset")]
+        [HttpPost]
+        public async Task<IActionResult> ForgetPassword(ForgetPasswordDto model)
+        {
+            if (User.Identity.IsAuthenticated) return Forbid();
+
+            if (ModelState.IsValid)
+            {
+                HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+
+                var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-email?email={model.Email}");
+                if (!userResponse.IsSuccessStatusCode)
+                {
+                    if (userResponse.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        ModelState.AddModelError(string.Empty, "Пользователь не найден");
+                        return View(model);
+                    }
+                    userResponse.EnsureSuccessStatusCode();
+                }
+                var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
+
+                using StringContent sendResetTokenJsonContent = new(JsonSerializer.Serialize(new
+                {
+                    Url = $"{configuration["CurrentUrl:Scheme"]}://{configuration["CurrentUrl:Domain"]}/users/{user!.Id}/password/update?token="
+                }), Encoding.UTF8, "application/json");
+                var sendResetTokenResponse = await httpClient.PostAsync(
+                    $"/api/User/send-password-reset-token/{user.Id}", sendResetTokenJsonContent);
+                if (!sendResetTokenResponse.IsSuccessStatusCode)
+                {
+                    if (sendResetTokenResponse.StatusCode == HttpStatusCode.Conflict)
+                    {
+                        ModelState.AddModelError(string.Empty, "Смена пароля уже запрошена");
+                        return View(model);
+                    }
+                    if (sendResetTokenResponse.StatusCode == HttpStatusCode.BadRequest)
+                    {
+                        ModelState.AddModelError(string.Empty, "Перед сменой пароля необходимо подтвердить почту");
+                        return View(model);
+                    }
+                    sendResetTokenResponse.EnsureSuccessStatusCode();
+                }
+
+                return View(new ForgetPasswordDto{ IsRequested = true });
+            }
+            return View(model);
+        }
+
 
         private void SaveAccessToken(string unprotectedAccessToken)
         {

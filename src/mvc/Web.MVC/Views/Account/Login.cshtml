@@ -20,8 +20,9 @@
     <div>
         <input asp-for="Password" placeholder="Пароль" required/>
     </div>
-    
+
     <div>
+        <a asp-controller="User" asp-action="ForgetPassword">Забыли пароль?</a><br/>
         <a asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Ещё нет аккаунта? Зарегистрироваться</a>
     </div>
 
