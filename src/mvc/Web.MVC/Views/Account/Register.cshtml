@@ -2,20 +2,12 @@
 
 <h3>Зарегистрироваться</h3>
 <form method="post">
-    <div asp-validation-summary="ModelOnly"></div>
     <div>
-        <div>
-            <span asp-validation-for="Email"></span>
-        </div>
-        <div>
-            <span asp-validation-for="UserName"></span>
-        </div>
-        <div>
-            <span asp-validation-for="Password"></span>
-        </div>
-        <div>
-            <span asp-validation-for="ConfirmPassword"></span>
-        </div>
+        <div class="validation-summary" asp-validation-summary="ModelOnly"></div>
+        <span class="model-error" asp-validation-for="Email"></span>
+        <span class="model-error" asp-validation-for="UserName"></span>
+        <span class="model-error" asp-validation-for="Password"></span>
+        <span class="model-error" asp-validation-for="ConfirmPassword"></span>
     </div>
 
     <input type="hidden" asp-for="ReturnUrl" />
