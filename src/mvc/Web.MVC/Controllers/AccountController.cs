@@ -114,6 +114,7 @@ namespace Web.MVC.Controllers
 
         private void SaveAccessToken(string accessToken)
         {
+            HttpContext.Items[CookieNames.AccessToken] = accessToken;
             string protectedAccessToken = dataProtector.Protect(accessToken);
 
             Response.Cookies.Append(CookieNames.AccessToken, protectedAccessToken, new CookieOptions

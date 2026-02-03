@@ -41,11 +41,11 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<AuthHandler>();
 builder.Services.AddSingleton<AvatarConverter>();
 
-builder.Services.AddHttpClient(HttpClientNameConstants.AuthMiddleware, httpClient =>
+builder.Services.AddHttpClient(HttpClientNameConstants.Default, httpClient =>
 {
     httpClient.BaseAddress = new Uri($"{builder.Configuration["ApiGateway:Protocol"]}://{builder.Configuration["ApiGateway:Domain"]}");
 });
-builder.Services.AddHttpClient(HttpClientNameConstants.Default, httpClient =>
+builder.Services.AddHttpClient(HttpClientNameConstants.DefaultWithToken, httpClient =>
 {
     httpClient.BaseAddress = new Uri($"{builder.Configuration["ApiGateway:Protocol"]}://{builder.Configuration["ApiGateway:Domain"]}");
 }).AddHttpMessageHandler<AuthHandler>();

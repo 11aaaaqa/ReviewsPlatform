@@ -42,7 +42,7 @@ namespace Web.MVC.Middlewares
                     string userIdStr = jwt.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
                     Guid userId = new Guid(userIdStr);
 
-                    HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.AuthMiddleware);
+                    HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
 
                     string secret = configuration["INTERNAL_ENDPOINT_SECRET"]!;
 
@@ -67,6 +67,7 @@ namespace Web.MVC.Middlewares
                                 context.Response.Cookies.Append(CookieNames.AccessToken, protectedNewAccessToken, new CookieOptions
                                     { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Lax });
 
+                                context.Items[CookieNames.AccessToken] = newAccessToken;
                                 context.Request.Headers.Append("Authorization", "Bearer " + newAccessToken);
                             }
                         }
@@ -78,10 +79,11 @@ namespace Web.MVC.Middlewares
                 }
                 else
                 {
+                    context.Items[CookieNames.AccessToken] = accessToken;
                     context.Request.Headers.Append("Authorization", "Bearer " + accessToken);
                 }
             }
-
+            
             await next.Invoke(context);
         }
     }

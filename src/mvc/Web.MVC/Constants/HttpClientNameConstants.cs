@@ -2,7 +2,7 @@
 {
     public class HttpClientNameConstants
     {
-        public const string Default = "Default";
-        public const string AuthMiddleware = "AuthMiddleware";
+        public const string DefaultWithToken = "DefaultWithToken";
+        public const string Default = "AuthMiddleware";
     }
 }
