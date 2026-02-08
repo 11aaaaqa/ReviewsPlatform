@@ -8,7 +8,7 @@ namespace AccountMicroservice.Api.Services.Hangfire
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             recurringJobManager.AddOrUpdate<RecurringJobs>("RemoveExpiredEmailTokens", 
-                x => x.RemoveExpiredEmailTokensRecurringJob(), Cron.Daily);
+                x => x.RemoveExpiredEmailTokensRecurringJob(), Cron.Daily(9));
 
             logger.LogInformation("Jobs has been successfully prepared");
             return Task.CompletedTask;
