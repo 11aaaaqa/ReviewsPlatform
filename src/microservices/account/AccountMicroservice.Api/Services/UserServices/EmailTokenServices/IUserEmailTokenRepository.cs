@@ -12,5 +12,6 @@ namespace AccountMicroservice.Api.Services.UserServices.EmailTokenServices
         Task RemoveAsync(Guid userId, string token);
         Task RemoveRangeAsync(Guid userId, List<UserEmailToken> emailTokens);
         Task RemoveAllByPurposeAsync(Guid userId, EmailTokenPurpose purpose);
+        Task RemoveAllExpiredEmailTokensAsync();
     }
 }

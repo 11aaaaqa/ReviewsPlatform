@@ -69,5 +69,12 @@ namespace AccountMicroservice.Api.Services.UserServices.EmailTokenServices
                 context.UserEmailTokens.RemoveRange(emailTokensToRemove);
             }
         }
+
+        public async Task RemoveAllExpiredEmailTokensAsync()
+        {
+            var emailTokensToDelete = await context.UserEmailTokens
+                .Where(x => x.ExpiryTime < DateTime.UtcNow).ToListAsync();
+            context.UserEmailTokens.RemoveRange(emailTokensToDelete);
+        }
     }
 }

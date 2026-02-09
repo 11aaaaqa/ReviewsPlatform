@@ -12,6 +12,10 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using AccountMicroservice.Api.Services.EmailServices;
 using AccountMicroservice.Api.Services.UserServices.EmailTokenServices;
+using Hangfire;
+using Hangfire.MemoryStorage;
+using AccountMicroservice.Api.Services.Hangfire;
+using AccountMicroservice.Api.Services.Hangfire.DashboardAuthorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +42,11 @@ builder.Services.AddAuthentication(x =>
 builder.Services.AddDbContext<ApplicationDbContext>(x => 
     x.UseNpgsql(builder.Configuration["Database:ConnectionString"]));
 
+builder.Services.AddHangfire(x => x.UseMemoryStorage());
+builder.Services.AddHangfireServer();
+
+builder.Services.AddHostedService<PrepareJobsHostedService>();
+
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRolesService, UserRolesService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
@@ -58,6 +67,10 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+    {
+        Authorization = [new AllowAllDashboardAuthorization()]
+    });
 }
 
 app.UseAuthentication();

@@ -233,19 +233,9 @@ namespace AccountMicroservice.Api.Controllers
             var emailConfirmationTokens = await unitOfWork.UserEmailTokenRepository
                 .GetEmailTokensByPurposeAsync(userId, EmailTokenPurpose.EmailConfirmation);
 
-            var expiredEmailConfirmationTokens = emailConfirmationTokens
-                .Where(x => x.ExpiryTime < DateTime.UtcNow).ToList();
-            if (expiredEmailConfirmationTokens.Count > 0)
-            {
-                await unitOfWork.UserEmailTokenRepository.RemoveRangeAsync(userId, expiredEmailConfirmationTokens);
-                await unitOfWork.CompleteAsync();
-            }
-
             if (emailConfirmationTokens.Where(x => x.ExpiryTime > DateTime.UtcNow).ToList().Count >= 3)
-            {
                 return Conflict("3 emails with active tokens have already been sent");
-            }
-
+            
             try
             {
                 await unitOfWork.BeginTransactionAsync();
@@ -330,14 +320,7 @@ namespace AccountMicroservice.Api.Controllers
 
             var passwordResetEmailTokens = await unitOfWork.UserEmailTokenRepository
                 .GetEmailTokensByPurposeAsync(userId, EmailTokenPurpose.PasswordReset);
-            var expiredPasswordResetEmailTokens =
-                passwordResetEmailTokens.Where(x => x.ExpiryTime < DateTime.UtcNow).ToList();
-            if (expiredPasswordResetEmailTokens.Count > 0)
-            {
-                await unitOfWork.UserEmailTokenRepository.RemoveRangeAsync(userId, expiredPasswordResetEmailTokens);
-                await unitOfWork.CompleteAsync();
-            }
-
+            
             if (passwordResetEmailTokens.Any(x => x.ExpiryTime > DateTime.UtcNow))
                 return Conflict("Password reset has already been requested");
 
