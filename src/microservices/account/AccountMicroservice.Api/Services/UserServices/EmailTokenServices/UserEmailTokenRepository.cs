@@ -1,12 +1,9 @@
 ﻿using System.Buffers.Text;
 using System.Security.Cryptography;
-using System.Web;
 using AccountMicroservice.Api.Database;
 using AccountMicroservice.Api.Enums;
 using AccountMicroservice.Api.Models.Business;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Utilities.Encoders;
 
 namespace AccountMicroservice.Api.Services.UserServices.EmailTokenServices
 {
