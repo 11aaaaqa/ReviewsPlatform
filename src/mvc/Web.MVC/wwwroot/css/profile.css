@@ -15,7 +15,7 @@
 .highlited-block {
     background-color: white;
     border: 1px solid rgba(0,0,0, 0.08);
-    box-shadow: 5px 5px 6px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0 20px 7px rgba(0, 0, 0, 0.08);
     border-radius: 6px;
     padding: 20px;
 }
