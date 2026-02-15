@@ -11,10 +11,12 @@
   <Folder Name="/src/microservices/account/">
     <Project Path="src/microservices/account/AccountMicroservice.Api/AccountMicroservice.Api.csproj" />
   </Folder>
+  <Folder Name="/src/microservices/account/tests/">
+    <Project Path="src/microservices/account/tests/AccountMicroservice.UnitTests/AccountMicroservice.UnitTests.csproj" Id="03156396-cec7-4c5b-9a15-21b5857311c7" />
+  </Folder>
   <Folder Name="/src/mvc/">
     <Project Path="src/mvc/Web.MVC/Web.MVC.csproj" Id="39c39cf2-87e0-45c4-9151-21646c326053" />
   </Folder>
-  <Folder Name="/tests/" />
   <Project Path="docker-compose.dcproj">
     <Build />
   </Project>
