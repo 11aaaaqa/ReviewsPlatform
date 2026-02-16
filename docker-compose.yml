@@ -43,6 +43,34 @@ services:
       - postgres-account
       - api-gateway
 
+  category-microservice-api:
+    container_name: category-microservice-api
+    image: ${DOCKER_REGISTRY-}categorymicroservice-api
+    build:
+      context: src/microservices/category/CategoryMicroservice.Api
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - 32166:8080
+    env_file:
+      - "./general.env"
+    depends_on:
+      - postgres-category
+      - api-gateway
+
+  postgres-category:
+    container_name: postgres-category
+    image: postgres:latest
+    expose:
+      - 5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ReviewsPlatformCategoryMicroservice
+    volumes:
+      - postgres-category-data:/var/lib/postgresql
+
   postgres-account:
     container_name: postgres-account
     image: postgres:latest
@@ -55,7 +83,6 @@ services:
     volumes:
       - postgres-account-data:/var/lib/postgresql
 
-
   redis:
     container_name: redis
     image: redis:latest
@@ -67,4 +94,5 @@ services:
 
 volumes:
   postgres-account-data: {}
+  postgres-category-data: {}
   redis_data: {}

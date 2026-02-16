@@ -14,8 +14,8 @@
   <Folder Name="/src/microservices/account/tests/">
     <Project Path="src/microservices/account/tests/AccountMicroservice.UnitTests/AccountMicroservice.UnitTests.csproj" Id="03156396-cec7-4c5b-9a15-21b5857311c7" />
   </Folder>
-  <Folder Name="/src/microservices/topic/">
-    <Project Path="src/microservices/topic/TopicMicroservice.Api/TopicMicroservice.Api.csproj" Id="58829f59-c2ef-4afb-990c-9efe2a8be560" />
+  <Folder Name="/src/microservices/category/">
+    <Project Path="src/microservices/category/CategoryMicroservice.Api/CategoryMicroservice.Api.csproj" Id="40e1ba80-2049-4b50-973b-b034333a84cd" />
   </Folder>
   <Folder Name="/src/mvc/">
     <Project Path="src/mvc/Web.MVC/Web.MVC.csproj" Id="39c39cf2-87e0-45c4-9151-21646c326053" />
