@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Security.Claims;
 using AccountMicroservice.Api.Controllers;
 using AccountMicroservice.Api.DTOs.Auth;
 using AccountMicroservice.Api.Models.Business;
@@ -10,7 +10,6 @@ using AccountMicroservice.Api.Services.UserServices.AvatarServices;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.Threading;
 using AccountMicroservice.Api.Constants;
 using AccountMicroservice.Api.Models.General;
 
@@ -88,6 +87,9 @@ namespace AccountMicroservice.UnitTests
             Assert.Equal(500, methodResult.StatusCode);
             unitOfWorkMock.Verify(x => x.RollbackTransactionAsync());
             unitOfWorkMock.VerifyAll();
+            passwordMock.VerifyAll();
+            avatarMock.VerifyAll();
+            roleMock.VerifyAll();
         }
 
         [Fact]
@@ -121,6 +123,74 @@ namespace AccountMicroservice.UnitTests
 
             Assert.IsType<OkObjectResult>(result);
             unitOfWorkMock.VerifyAll();
+            passwordMock.VerifyAll();
+            avatarMock.VerifyAll();
+            roleMock.VerifyAll();
+        }
+
+        [Fact]
+        public async Task LoginAsync_ReturnsUnauthorizedUserNotFound()
+        {
+            var model = new LoginDto { Password = "Password", UserNameOrEmail = "UserNameOrEmail" };
+            var mock = new Mock<IUnitOfWork>();
+            mock.Setup(x => x.UserService.GetUserByEmailAsync(model.UserNameOrEmail)).ReturnsAsync((User?)null);
+            mock.Setup(x => x.UserService.GetUserByUserNameAsync(model.UserNameOrEmail)).ReturnsAsync((User?)null);
+            var controller = new AuthController(new Mock<IPasswordService>().Object, new Mock<ITokenService>().Object,
+                mock.Object, new Mock<IRoleService>().Object, new Mock<IAvatarService>().Object,
+                new Mock<ILogger<AuthController>>().Object);
+
+            var result = await controller.LoginAsync(model);
+
+            Assert.IsType<UnauthorizedObjectResult>(result);
+            mock.VerifyAll();
+        }
+
+        [Fact]
+        public async Task LoginAsync_ReturnsUnauthorizedIncorrectPassword()
+        {
+            var model = new LoginDto { Password = "Password", UserNameOrEmail = "UserNameOrEmail" };
+            var userModel = new User { Email = model.UserNameOrEmail, PasswordSalt = "salt", PasswordHash = "hash" };
+            var mock = new Mock<IUnitOfWork>();
+            var passwordMock = new Mock<IPasswordService>();
+            mock.Setup(x => x.UserService.GetUserByEmailAsync(model.UserNameOrEmail)).ReturnsAsync(userModel);
+            passwordMock.Setup(x => x.CheckPassword(It.IsAny<byte[]>(), It.IsAny<byte[]>(), model.Password)).Returns(false);
+            var controller = new AuthController(passwordMock.Object, new Mock<ITokenService>().Object,
+                mock.Object, new Mock<IRoleService>().Object, new Mock<IAvatarService>().Object,
+                new Mock<ILogger<AuthController>>().Object);
+
+            var result = await controller.LoginAsync(model);
+
+            Assert.IsType<UnauthorizedObjectResult>(result);
+            mock.VerifyAll();
+            passwordMock.VerifyAll();
+        }
+
+        [Fact]
+        public async Task LoginAsync_ReturnsOk()
+        {
+            var model = new LoginDto { Password = "Password", UserNameOrEmail = "UserNameOrEmail" };
+            var userModel = new User { Email = model.UserNameOrEmail, PasswordSalt = "salt", PasswordHash = "hash" };
+            string tokenModel = "token";
+            var uowMock = new Mock<IUnitOfWork>();
+            var passwordMock = new Mock<IPasswordService>();
+            var tokenMock = new Mock<ITokenService>();
+            uowMock.Setup(x => x.UserService.GetUserByEmailAsync(model.UserNameOrEmail)).ReturnsAsync(userModel);
+            passwordMock.Setup(x => x.CheckPassword(It.IsAny<byte[]>(), It.IsAny<byte[]>(), model.Password)).Returns(true);
+            tokenMock.Setup(x => x.GenerateAccessToken(It.IsAny<List<Claim>>())).Returns(tokenModel);
+            uowMock.Setup(x => x.UserService.UpdateUserAsync(It.IsAny<User>()));
+            uowMock.Setup(x => x.CompleteAsync());
+            var controller = new AuthController(passwordMock.Object, tokenMock.Object,
+                uowMock.Object, new Mock<IRoleService>().Object, new Mock<IAvatarService>().Object,
+                new Mock<ILogger<AuthController>>().Object);
+
+            var result = await controller.LoginAsync(model);
+
+            var methodResult = Assert.IsType<OkObjectResult>(result);
+            Assert.IsType<string>(methodResult.Value);
+            Assert.Equal(tokenModel, methodResult.Value);
+            uowMock.VerifyAll();
+            passwordMock.VerifyAll();
+            tokenMock.VerifyAll();
         }
     }
 }
