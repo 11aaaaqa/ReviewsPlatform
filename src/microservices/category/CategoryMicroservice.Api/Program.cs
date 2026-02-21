@@ -1,6 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using CategoryMicroservice.Api.Database;
+using CategoryMicroservice.Api.Models.Business;
+using CategoryMicroservice.Api.Services.CategoryServices;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +27,12 @@ builder.Services.AddAuthentication(x =>
         ValidAudience = builder.Configuration["JWT_AUDIENCE"]
     };
 });
+
+builder.Services.AddDbContext<ApplicationDbContext>(x => 
+    x.UseNpgsql(builder.Configuration["Database:ConnectionString"]!));
+
+builder.Services.AddScoped<ICategoryRepository<Category>, CategoryRepository>();
+builder.Services.AddScoped<ICategoryRepository<Subcategory>, SubcategoryRepository>();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
