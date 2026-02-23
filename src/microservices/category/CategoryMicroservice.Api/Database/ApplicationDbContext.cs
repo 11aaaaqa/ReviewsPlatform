@@ -54,10 +54,10 @@ namespace CategoryMicroservice.Api.Database
                 new (){ Id = new Guid("181ddb8a-f92c-4518-abe2-b514e354df81"), CategoryId = new Guid("15c2d4a7-9dac-44b7-acb9-f493ccdfc99d"), Name = "Детские игрушки", ReviewsCount = 0 },
                 new (){ Id = new Guid("adea119a-4d4b-4358-b4e7-25c4146a7a24"), CategoryId = new Guid("15c2d4a7-9dac-44b7-acb9-f493ccdfc99d"), Name = "Детское - разное", ReviewsCount = 0 },
                 new (){ Id = new Guid("9470f494-f597-4f6f-b1ec-0391afeff754"), CategoryId = new Guid("a4953008-2fc2-4ed2-9ab8-302bdd2f9e69"), Name = "Одежда", ReviewsCount = 0 },
-                new (){ Id = new Guid("9470f494-f597-4f6f-b1ec-0391afeff754"), CategoryId = new Guid("a4953008-2fc2-4ed2-9ab8-302bdd2f9e69"), Name = "Обувь", ReviewsCount = 0 },
-                new (){ Id = new Guid("9470f494-f597-4f6f-b1ec-0391afeff754"), CategoryId = new Guid("a4953008-2fc2-4ed2-9ab8-302bdd2f9e69"), Name = "Ремонт", ReviewsCount = 0 },
-                new (){ Id = new Guid("9470f494-f597-4f6f-b1ec-0391afeff754"), CategoryId = new Guid("a4953008-2fc2-4ed2-9ab8-302bdd2f9e69"), Name = "Компьютерные игры", ReviewsCount = 0 },
-                new (){ Id = new Guid("9470f494-f597-4f6f-b1ec-0391afeff754"), CategoryId = new Guid("a4953008-2fc2-4ed2-9ab8-302bdd2f9e69"), Name = "Другое", ReviewsCount = 0 }
+                new (){ Id = new Guid("6dcad3c5-0b4e-4c56-b603-a9c1544798b7"), CategoryId = new Guid("a4953008-2fc2-4ed2-9ab8-302bdd2f9e69"), Name = "Обувь", ReviewsCount = 0 },
+                new (){ Id = new Guid("2aabcf86-3ccf-4382-ad2a-dc996353f3a8"), CategoryId = new Guid("a4953008-2fc2-4ed2-9ab8-302bdd2f9e69"), Name = "Ремонт", ReviewsCount = 0 },
+                new (){ Id = new Guid("cb45da5e-bc7b-4687-bba8-8ea0f637210c"), CategoryId = new Guid("a4953008-2fc2-4ed2-9ab8-302bdd2f9e69"), Name = "Компьютерные игры", ReviewsCount = 0 },
+                new (){ Id = new Guid("d6453ea4-5f00-4df3-9eb0-2baafe26aaf8"), CategoryId = new Guid("a4953008-2fc2-4ed2-9ab8-302bdd2f9e69"), Name = "Другое", ReviewsCount = 0 }
             });
         }
     }
