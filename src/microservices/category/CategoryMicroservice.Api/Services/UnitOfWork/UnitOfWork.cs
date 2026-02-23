@@ -14,10 +14,9 @@ namespace CategoryMicroservice.Api.Services.UnitOfWork
         private IDbContextTransaction? transaction;
 
         public UnitOfWork(ICategoryRepository<Category> categoryRepository, ICategoryRepository<Subcategory> subcategoryRepository,
-            ApplicationDbContext context, IDbContextTransaction transaction)
+            ApplicationDbContext context)
         {
             this.context = context;
-            this.transaction = transaction;
             CategoryRepository = categoryRepository;
             SubcategoryRepository = subcategoryRepository;
         }
