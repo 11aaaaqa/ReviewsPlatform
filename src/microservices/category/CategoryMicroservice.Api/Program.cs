@@ -4,6 +4,7 @@ using System.Text;
 using CategoryMicroservice.Api.Database;
 using CategoryMicroservice.Api.Models.Business;
 using CategoryMicroservice.Api.Services.CategoryServices;
+using CategoryMicroservice.Api.Services.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,6 +34,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(x =>
 
 builder.Services.AddScoped<ICategoryRepository<Category>, CategoryRepository>();
 builder.Services.AddScoped<ICategoryRepository<Subcategory>, SubcategoryRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();

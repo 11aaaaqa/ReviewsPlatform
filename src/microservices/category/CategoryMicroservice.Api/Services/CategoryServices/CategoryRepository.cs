@@ -21,13 +21,11 @@ namespace CategoryMicroservice.Api.Services.CategoryServices
         public async Task AddAsync(Category model)
         {
             await context.Categories.AddAsync(model);
-            await context.SaveChangesAsync();
         }
 
         public async Task UpdateAsync(Category model)
         {
             context.Categories.Update(model);
-            await context.SaveChangesAsync();
         }
 
         public async Task RemoveAsync(Guid id)
@@ -37,7 +35,6 @@ namespace CategoryMicroservice.Api.Services.CategoryServices
                 throw new ArgumentException("Category with current identifier does not exist");
 
             context.Categories.Remove(category);
-            await context.SaveChangesAsync();
         }
     }
 }
