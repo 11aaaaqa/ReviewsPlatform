@@ -13,10 +13,12 @@ namespace CategoryMicroservice.Api.Services.CategoryServices
             => await context.Categories.Include(x => x.Subcategories).ToListAsync();
 
         public async Task<Category?> FindByNameAsync(string name)
-            => await context.Categories.SingleOrDefaultAsync(x => x.Name.ToLower() == name.ToLower());
+            => await context.Categories.Include(x => x.Subcategories)
+                .SingleOrDefaultAsync(x => x.Name.ToLower() == name.ToLower());
 
         public async Task<List<Category>> FindByContainedCharactersInNameAsync(string name)
-            => await context.Categories.Where(x => x.Name.ToLower().Contains(name.ToLower())).ToListAsync();
+            => await context.Categories.Include(x => x.Subcategories)
+                .Where(x => x.Name.ToLower().Contains(name.ToLower())).ToListAsync();
 
         public async Task AddAsync(Category model)
         {
