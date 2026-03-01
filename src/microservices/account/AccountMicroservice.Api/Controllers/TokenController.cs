@@ -29,8 +29,7 @@ namespace AccountMicroservice.Api.Controllers
             await unitOfWork.UserService.UpdateUserAsync(user);
             await unitOfWork.CompleteAsync();
 
-            logger.LogInformation("{Timestamp}: User {UserId} logged out",
-                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId);
+            logger.LogInformation("User {UserId} logged out", userId);
 
             return Ok();
         }
@@ -59,8 +58,7 @@ namespace AccountMicroservice.Api.Controllers
             await unitOfWork.UserService.UpdateUserAsync(user);
             await unitOfWork.CompleteAsync();
 
-            logger.LogInformation("{Timestamp}: Token for user {UserId} refreshed",
-                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), user.Id);
+            logger.LogInformation("Token for user {UserId} refreshed", user.Id);
 
             return Ok(accessToken);
         }

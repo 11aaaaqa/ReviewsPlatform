@@ -52,14 +52,12 @@ namespace AccountMicroservice.Api.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogCritical("{Timestamp}: User have not been registered due to server error: {Exception}",
-                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), ex);
+                logger.LogCritical("User have not been registered due to server error: {Exception}", ex);
                 await unitOfWork.RollbackTransactionAsync();
                 return StatusCode((int)HttpStatusCode.InternalServerError, new {errorMessage = ex.Message});
             }
 
-            logger.LogInformation("{Timestamp}: User {UserId} with {Email} email successfully registered",
-                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userToAdd.Id, userToAdd.Email);
+            logger.LogInformation("User {UserId} with {Email} email successfully registered", userToAdd.Id, userToAdd.Email);
 
             return Ok(userToAdd.Id);
         }
@@ -89,8 +87,7 @@ namespace AccountMicroservice.Api.Controllers
             await unitOfWork.UserService.UpdateUserAsync(user);
             await unitOfWork.CompleteAsync();
 
-            logger.LogInformation("{Timestamp}: User {UserId} logged in", 
-                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), user.Id);
+            logger.LogInformation("User {UserId} logged in", user.Id);
 
             return Ok(token);
         }

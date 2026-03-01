@@ -94,8 +94,7 @@ namespace AccountMicroservice.Api.Controllers
             await unitOfWork.UserService.UpdateUserAsync(user);
             await unitOfWork.CompleteAsync();
 
-            logger.LogInformation("{Timestamp}: User {UserId} updated his name from {UserName} to {NewUserName}",
-                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), user.Id, userName, model.NewUserName);
+            logger.LogInformation("User {UserId} updated his name from {UserName} to {NewUserName}", user.Id, userName, model.NewUserName);
 
             return Ok(tokenService.GenerateAccessToken(tokenService.GetClaims(user)));
         }
@@ -123,8 +122,7 @@ namespace AccountMicroservice.Api.Controllers
             Guid currentUserId = new Guid(currentUserIdStr);
             if (currentUserId == model.UserId)
             {
-                logger.LogWarning("{Timestamp}: User {UserId} tried to set roles to himself",
-                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), currentUserId);
+                logger.LogWarning("User {UserId} tried to set roles to himself", currentUserId);
                 return BadRequest();
             }
 
@@ -167,8 +165,7 @@ namespace AccountMicroservice.Api.Controllers
             {
                 await unitOfWork.RollbackTransactionAsync();
                 logger.LogCritical(
-                    "{Timestamp}: An exception was thrown while commiting transaction while setting user roles. Exception message: {ExceptionMessage}",
-                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), e.Message);
+                    "An exception was thrown while commiting transaction while setting user roles. Exception message: {ExceptionMessage}", e.Message);
                 return StatusCode((int)HttpStatusCode.InternalServerError, new { errorMessage = e.Message });
             }
 
@@ -253,13 +250,12 @@ namespace AccountMicroservice.Api.Controllers
             {
                 await unitOfWork.RollbackTransactionAsync();
                 logger.LogCritical(
-                    "{Timestamp}: User with id {UserId} tried to send an email confirmation link but transaction threw an exception: {ExceptionMessage}",
-                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId, e.Message);
+                    "User with id {UserId} tried to send an email confirmation link but transaction threw an exception: {ExceptionMessage}", 
+                    userId, e.Message);
                 return StatusCode((int)HttpStatusCode.InternalServerError, new { errorMessage = e.Message});
             }
 
-            logger.LogInformation("{Timestamp}: Email confirmation token sent for user {UserId}",
-                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId);
+            logger.LogInformation("Email confirmation token sent for user {UserId}", userId);
 
             return Ok();
         }
@@ -298,12 +294,12 @@ namespace AccountMicroservice.Api.Controllers
             }
             catch (Exception e)
             {
-                logger.LogCritical("{Timestamp}: User with id {UserId} tried to confirm his email but transaction threw an exception: {ExceptionMessage}",
-                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId, e.Message);
+                logger.LogCritical("User with id {UserId} tried to confirm his email but transaction threw an exception: {ExceptionMessage}", 
+                    userId, e.Message);
                 return StatusCode((int)HttpStatusCode.InternalServerError, new { errorMessage = e.Message });
             }
 
-            logger.LogInformation("{Timestamp}: User {UserId} confirmed his email", DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId);
+            logger.LogInformation("User {UserId} confirmed his email", userId);
 
             return Ok();
         }
@@ -339,8 +335,8 @@ namespace AccountMicroservice.Api.Controllers
             catch(Exception e)
             {
                 await unitOfWork.RollbackTransactionAsync();
-                logger.LogCritical("{Timespan}: Password reset was tried to be requested for user {UserId} but transaction threw an exception: {ErrorMessage}",
-                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId, e.Message);
+                logger.LogCritical("Password reset was tried to be requested for user {UserId} but transaction threw an exception: {ErrorMessage}",
+                    userId, e.Message);
                 return StatusCode((int)HttpStatusCode.InternalServerError, new { errorMessage = e.Message });
             }
 
@@ -382,13 +378,11 @@ namespace AccountMicroservice.Api.Controllers
             catch (Exception e)
             {
                 await unitOfWork.RollbackTransactionAsync();
-                logger.LogCritical("{Timespan}: User {UserId} tried to update his password but transaction threw an exception: {ErrorMessage}",
-                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId, e.Message);
+                logger.LogCritical("User {UserId} tried to update his password but transaction threw an exception: {ErrorMessage}", userId, e.Message);
                 return StatusCode((int)HttpStatusCode.InternalServerError, new { errorMessage = e.Message });
             }
 
-            logger.LogInformation("{Timestamp}: User {UserId} updated his password",
-                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), user.Id);
+            logger.LogInformation("User {UserId} updated his password", user.Id);
 
             return Ok();
         }

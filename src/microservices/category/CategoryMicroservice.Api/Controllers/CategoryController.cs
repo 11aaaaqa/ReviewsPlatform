@@ -56,8 +56,8 @@ namespace CategoryMicroservice.Api.Controllers
             await unitOfWork.CompleteAsync();
 
             string currentUserIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
-            logger.LogInformation("{Timestamp}: User {UserId} created new category with Identifier {CategoryId} and Name {CategoryName}",
-                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), currentUserIdStr, categoryToAdd.Id, categoryToAdd.Name);
+            logger.LogInformation("User {UserId} created new category with Identifier {CategoryId} and Name {CategoryName}",
+                currentUserIdStr, categoryToAdd.Id, categoryToAdd.Name);
 
             return Ok();
         }
@@ -77,8 +77,8 @@ namespace CategoryMicroservice.Api.Controllers
             await unitOfWork.CompleteAsync();
 
             string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
-            logger.LogInformation("{Timestamp}: User {UserId} updated category {CategoryId} name from {OldCategoryName} to {NewCategoryName}",
-                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userIdStr, category.Id, oldCategoryName, model.Name);
+            logger.LogInformation("User {UserId} updated category {CategoryId} name from {OldCategoryName} to {NewCategoryName}",
+                userIdStr, category.Id, oldCategoryName, model.Name);
 
             return Ok();
         }
@@ -107,13 +107,12 @@ namespace CategoryMicroservice.Api.Controllers
             catch (Exception exc)
             {
                 await unitOfWork.RollbackTransactionAsync();
-                logger.LogCritical("{Timestamp}: Admin {UserId} tried to remove category {CategoryId} but transaction threw an error: {ErrorMessage}",
-                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userIdStr, categoryId, exc.Message);
+                logger.LogCritical("Admin {UserId} tried to remove category {CategoryId} but transaction threw an error: {ErrorMessage}",
+                    userIdStr, categoryId, exc.Message);
                 return StatusCode((int)HttpStatusCode.InternalServerError);
             }
 
-            logger.LogInformation("{Timestamp}: User {UserId} removed Category {CategoryId}",
-                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userIdStr, categoryId);
+            logger.LogInformation("User {UserId} removed Category {CategoryId}", userIdStr, categoryId);
 
             return Ok();
         }

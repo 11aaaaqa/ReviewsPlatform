@@ -78,8 +78,7 @@ namespace Web.MVC.Controllers
 
             List<string> assignedRoleNames = allRoles!.Where(x => roleIds.Contains(x.Id)).Select(x => x.Name).ToList();
             string currentUserIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
-            logger.LogInformation("{Timestamp}: User {AdminId} set roles to user {UserId}: {Roles}",
-                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), currentUserIdStr, userId, assignedRoleNames);
+            logger.LogInformation("User {AdminId} set roles to user {UserId}: {Roles}", currentUserIdStr, userId, assignedRoleNames);
 
             return LocalRedirect(returnUrl);
         }
@@ -96,12 +95,10 @@ namespace Web.MVC.Controllers
             {
                 if (userResponse.StatusCode == HttpStatusCode.NotFound)
                 {
-                    logger.LogCritical("{Timestamp}: User, with Id {UserId} that has been extracted from user's claim, is not in Users database",
-                        DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId);
+                    logger.LogCritical("User, with Id {UserId} that has been extracted from user's claim, is not in Users database", userId);
                     return StatusCode((int)HttpStatusCode.NotFound);
                 }
-                logger.LogCritical("{Timestamp}: Something went wrong while trying to get user with Id {UserId}",
-                    DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId);
+                logger.LogCritical("Something went wrong while trying to get user with Id {UserId}", userId);
                 return StatusCode((int)HttpStatusCode.InternalServerError);
             }
 
@@ -273,8 +270,7 @@ namespace Web.MVC.Controllers
                     {
                         Response.Cookies.Delete(CookieNames.AccessToken);
                         ModelState.AddModelError(string.Empty, "Пароль был успешно изменен, требуется перезайти в аккаунт");
-                        logger.LogCritical("{Timespan}: User {UserId} updated his password but something went wrong during recreating access token for him",
-                            DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), model.UserId);
+                        logger.LogCritical("User {UserId} updated his password but something went wrong during recreating access token for him", model.UserId);
                         return View();
                     }
                     var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
@@ -286,8 +282,7 @@ namespace Web.MVC.Controllers
                     {
                         Response.Cookies.Delete(CookieNames.AccessToken);
                         ModelState.AddModelError(string.Empty, "Пароль был успешно изменен, требуется перезайти в аккаунт");
-                        logger.LogCritical("{Timespan}: User {UserId} updated his password but something went wrong during recreating access token for him",
-                            DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), model.UserId);
+                        logger.LogCritical("User {UserId} updated his password but something went wrong during recreating access token for him", model.UserId);
                         return View();
                     }
                     string accessToken = await loginResponse.Content.ReadAsStringAsync();
