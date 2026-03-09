@@ -1,4 +1,6 @@
-﻿using AccountMicroservice.Api.Controllers;
+﻿using System.Security.Claims;
+using AccountMicroservice.Api.Controllers;
+using AccountMicroservice.Api.DTOs.User;
 using AccountMicroservice.Api.Models.Business;
 using AccountMicroservice.Api.Services.EmailServices;
 using AccountMicroservice.Api.Services.PasswordServices;
@@ -51,6 +53,119 @@ namespace AccountMicroservice.UnitTests
             Assert.IsType<NotFoundObjectResult>(result);
             configurationMock.Verify(x => x["INTERNAL_ENDPOINT_SECRET"]);
             uowMock.Verify(x => x.UserService.GetUserByIdAsync(userId));
+        }
+
+        [Fact]
+        public async Task UpdateUserNameAsync_ReturnsNotFound()
+        {
+            Guid userId = Guid.NewGuid();
+            string newUserName = "newUserName";
+            UpdateUserNameDto model = new UpdateUserNameDto { NewUserName = newUserName };
+            var mock = new Mock<IUnitOfWork>();
+            mock.Setup(x => x.UserService.GetUserByIdAsync(userId)).ReturnsAsync((User?)null);
+            var controller = new UserController(new Mock<IPasswordService>().Object, mock.Object,
+                new Mock<IRoleService>().Object, new Mock<IAvatarService>().Object, new Mock<ILogger<UserController>>().Object,
+                new Mock<IConfiguration>().Object, new Mock<ITokenService>().Object, new Mock<IEmailService>().Object);
+
+            var result = await controller.UpdateUserNameAsync(userId, model);
+
+            Assert.IsType<NotFoundObjectResult>(result);
+            mock.Verify(x => x.UserService.GetUserByIdAsync(userId));
+        }
+
+        [Fact]
+        public async Task UpdateUserNameAsync_ReturnsConflict()
+        {
+            Guid userId = Guid.NewGuid();
+            string newUserName = "newUserName";
+            string oldUserName = "oldUserName";
+            UpdateUserNameDto model = new UpdateUserNameDto { NewUserName = newUserName };
+            var mock = new Mock<IUnitOfWork>();
+            mock.Setup(x => x.UserService.GetUserByIdAsync(userId)).ReturnsAsync(new User { Id = userId, UserName = oldUserName });
+            mock.Setup(x => x.UserService.GetUserByUserNameAsync(newUserName))
+                .ReturnsAsync(new User { Id = Guid.NewGuid(), UserName = newUserName });
+            var controller = new UserController(new Mock<IPasswordService>().Object, mock.Object,
+                new Mock<IRoleService>().Object, new Mock<IAvatarService>().Object, new Mock<ILogger<UserController>>().Object,
+                new Mock<IConfiguration>().Object, new Mock<ITokenService>().Object, new Mock<IEmailService>().Object);
+
+            var result = await controller.UpdateUserNameAsync(userId, model);
+
+            Assert.IsType<ConflictObjectResult>(result);
+            mock.Verify(x => x.UserService.GetUserByIdAsync(userId));
+            mock.Verify(x => x.UserService.GetUserByUserNameAsync(newUserName));
+        }
+
+        [Fact]
+        public async Task UpdateUserNameAsync_ReturnsOkAvatarDefault()
+        {
+            Guid userId = Guid.NewGuid();
+            string newUserName = "newUserName";
+            string oldUserName = "oldUserName";
+            string returnedAccessToken = "accessToken";
+            UpdateUserNameDto model = new UpdateUserNameDto { NewUserName = newUserName };
+            User user = new User { Id = userId, UserName = oldUserName, IsAvatarDefault = true};
+            var uowMock = new Mock<IUnitOfWork>();
+            var avatarMock = new Mock<IAvatarService>();
+            var tokenMock = new Mock<ITokenService>();
+            uowMock.Setup(x => x.UserService.GetUserByIdAsync(userId)).ReturnsAsync(user);
+            uowMock.Setup(x => x.UserService.GetUserByUserNameAsync(newUserName)).ReturnsAsync((User?)null);
+            avatarMock.Setup(x => x.GetDefaultUserAvatar(user, It.IsAny<int>())).Returns(It.IsAny<byte[]>());
+            tokenMock.Setup(x => x.GenerateRefreshToken()).Returns(It.IsAny<string>());
+            uowMock.Setup(x => x.UserService.UpdateUser(user));
+            uowMock.Setup(x => x.CompleteAsync());
+            tokenMock.Setup(x => x.GetClaims(user)).Returns(It.IsAny<List<Claim>>());
+            tokenMock.Setup(x => x.GenerateAccessToken(It.IsAny<List<Claim>>())).Returns(returnedAccessToken);
+            var controller = new UserController(new Mock<IPasswordService>().Object, uowMock.Object,
+                new Mock<IRoleService>().Object, avatarMock.Object, new Mock<ILogger<UserController>>().Object,
+                new Mock<IConfiguration>().Object, tokenMock.Object, new Mock<IEmailService>().Object);
+
+            var result = await controller.UpdateUserNameAsync(userId, model);
+
+            var methodResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(returnedAccessToken, methodResult.Value);
+            uowMock.Verify(x => x.UserService.GetUserByIdAsync(userId));
+            uowMock.Verify(x => x.UserService.GetUserByUserNameAsync(newUserName));
+            avatarMock.Verify(x => x.GetDefaultUserAvatar(user, It.IsAny<int>()));
+            tokenMock.Verify(x => x.GenerateRefreshToken());
+            uowMock.Verify(x => x.UserService.UpdateUser(user));
+            uowMock.Verify(x => x.CompleteAsync());
+            tokenMock.Verify(x => x.GetClaims(user));
+            tokenMock.Verify(x => x.GenerateAccessToken(It.IsAny<List<Claim>>()));
+        }
+
+        [Fact]
+        public async Task UpdateUserNameAsync_ReturnsOkEqualUserNames()
+        {
+            Guid userId = Guid.NewGuid();
+            string newUserName = "newUserName";
+            string returnedAccessToken = "accessToken";
+            UpdateUserNameDto model = new UpdateUserNameDto { NewUserName = newUserName };
+            User user = new User { Id = userId, UserName = newUserName, IsAvatarDefault = false };
+            var uowMock = new Mock<IUnitOfWork>();
+            var tokenMock = new Mock<ITokenService>();
+            uowMock.Setup(x => x.UserService.GetUserByIdAsync(userId)).ReturnsAsync(user);
+            uowMock.Setup(x => x.UserService.GetUserByUserNameAsync(newUserName))
+                .ReturnsAsync(new User { Id = Guid.NewGuid(), UserName = newUserName });
+            tokenMock.Setup(x => x.GenerateRefreshToken()).Returns(It.IsAny<string>());
+            uowMock.Setup(x => x.UserService.UpdateUser(user));
+            uowMock.Setup(x => x.CompleteAsync());
+            tokenMock.Setup(x => x.GetClaims(user)).Returns(It.IsAny<List<Claim>>());
+            tokenMock.Setup(x => x.GenerateAccessToken(It.IsAny<List<Claim>>())).Returns(returnedAccessToken);
+            var controller = new UserController(new Mock<IPasswordService>().Object, uowMock.Object,
+                new Mock<IRoleService>().Object, new Mock<IAvatarService>().Object, new Mock<ILogger<UserController>>().Object,
+                new Mock<IConfiguration>().Object, tokenMock.Object, new Mock<IEmailService>().Object);
+
+            var result = await controller.UpdateUserNameAsync(userId, model);
+
+            var methodResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(returnedAccessToken, methodResult.Value);
+            uowMock.Verify(x => x.UserService.GetUserByIdAsync(userId));
+            uowMock.Verify(x => x.UserService.GetUserByUserNameAsync(newUserName));
+            tokenMock.Verify(x => x.GenerateRefreshToken());
+            uowMock.Verify(x => x.UserService.UpdateUser(user));
+            uowMock.Verify(x => x.CompleteAsync());
+            tokenMock.Verify(x => x.GetClaims(user));
+            tokenMock.Verify(x => x.GenerateAccessToken(It.IsAny<List<Claim>>()));
         }
     }
 }
