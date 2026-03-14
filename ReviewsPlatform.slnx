@@ -3,9 +3,15 @@
     <File Path="general.env" />
     <File Path="redis.conf" />
   </Folder>
-  <Folder Name="/src/" />
+  <Folder Name="/src/">
+    <Project Path="src/MessageBus/MessageBus.csproj" Id="cb1ea8bc-4a0a-443e-a52e-9a33c0adcb1b" />
+  </Folder>
   <Folder Name="/src/gateway/">
     <Project Path="src/gateway/ApiGateway/ApiGateway.csproj" Id="3e799f2e-6e86-4576-9420-71302faa391f" />
+  </Folder>
+  <Folder Name="/src/message-bus/">
+    <Project Path="src/message-bus/MessageBus/MessageBus.csproj" Id="82c77df0-2aeb-4ce5-a1d1-a5523fae158d" />
+    <Project Path="src/message-bus/RabbitMqMessageBus/RabbitMqMessageBus.csproj" Id="5a4a274e-e82c-492a-8ca1-5bcd277bc134" />
   </Folder>
   <Folder Name="/src/microservices/" />
   <Folder Name="/src/microservices/account/">
