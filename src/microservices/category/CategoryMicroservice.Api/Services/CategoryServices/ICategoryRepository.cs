@@ -7,7 +7,7 @@
         Task<T?> FindByNameAsync(string name);
         Task<List<T>> FindByContainedCharactersInNameAsync(string name);
         Task AddAsync(T model);
-        Task UpdateAsync(T model);
+        void Update(T model);
         Task RemoveAsync(Guid id);
     }
 }

@@ -73,7 +73,7 @@ namespace CategoryMicroservice.Api.Controllers
             string oldCategoryName = category.Name;
 
             category.Name = model.Name;
-            await unitOfWork.CategoryRepository.UpdateAsync(category);
+            unitOfWork.CategoryRepository.Update(category);
             await unitOfWork.CompleteAsync();
 
             string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;

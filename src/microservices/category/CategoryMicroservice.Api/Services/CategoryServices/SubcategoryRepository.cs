@@ -23,7 +23,7 @@ namespace CategoryMicroservice.Api.Services.CategoryServices
             await context.Subcategories.AddAsync(model);
         }
 
-        public async Task UpdateAsync(Subcategory model)
+        public void Update(Subcategory model)
         {
             context.Subcategories.Update(model);
         }
