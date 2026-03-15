@@ -92,6 +92,16 @@ services:
       - redis_data:/data
       - ./redis.conf:/usr/local/etc/redis/redis.conf
 
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:4.2.4-management
+    ports:
+      - 15672:15672
+      - 5672:5672
+    volumes:
+      - ./rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+
 volumes:
   postgres-account-data: {}
   postgres-category-data: {}
