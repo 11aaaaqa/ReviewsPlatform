@@ -91,7 +91,7 @@ namespace AccountMicroservice.Api.Controllers
             user.RefreshToken = tokenService.GenerateRefreshToken();
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMonths(1);
 
-            await unitOfWork.UserService.UpdateUserAsync(user);
+            unitOfWork.UserService.UpdateUser(user);
             await unitOfWork.CompleteAsync();
 
             logger.LogInformation("User {UserId} updated his name from {UserName} to {NewUserName}", user.Id, userName, model.NewUserName);
@@ -157,7 +157,7 @@ namespace AccountMicroservice.Api.Controllers
                 }
 
                 user.IsEmailVerified = model.RoleIds.Any(x => x == new Guid(RoleIds.VerifiedId));
-                await unitOfWork.UserService.UpdateUserAsync(user);
+                unitOfWork.UserService.UpdateUser(user);
 
                 await unitOfWork.CommitTransactionAsync();
             }
@@ -187,7 +187,7 @@ namespace AccountMicroservice.Api.Controllers
 
             user.AvatarSource = avatarService.CropCustomUserAvatar(model.AvatarSource);
             user.IsAvatarDefault = false;
-            await unitOfWork.UserService.UpdateUserAsync(user);
+            unitOfWork.UserService.UpdateUser(user);
 
             await unitOfWork.CompleteAsync();
 
@@ -208,7 +208,7 @@ namespace AccountMicroservice.Api.Controllers
 
             user.AvatarSource = avatarService.GetDefaultUserAvatar(user);
             user.IsAvatarDefault = true;
-            await unitOfWork.UserService.UpdateUserAsync(user);
+            unitOfWork.UserService.UpdateUser(user);
 
             await unitOfWork.CompleteAsync();
 
@@ -284,7 +284,7 @@ namespace AccountMicroservice.Api.Controllers
                 await unitOfWork.BeginTransactionAsync();
 
                 user.IsEmailVerified = true;
-                await unitOfWork.UserService.UpdateUserAsync(user);
+                unitOfWork.UserService.UpdateUser(user);
 
                 await unitOfWork.UserRolesService.AddUserToRoleAsync(userId, new Guid(RoleIds.VerifiedId));
 
@@ -369,7 +369,7 @@ namespace AccountMicroservice.Api.Controllers
                 user.TokenVersion++;
                 user.RefreshToken = tokenService.GenerateRefreshToken();
                 user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMonths(1);
-                await unitOfWork.UserService.UpdateUserAsync(user);
+                unitOfWork.UserService.UpdateUser(user);
 
                 await unitOfWork.UserEmailTokenRepository.RemoveAllByPurposeAsync(userId, EmailTokenPurpose.PasswordReset);
 

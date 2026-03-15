@@ -177,7 +177,7 @@ namespace AccountMicroservice.UnitTests
             uowMock.Setup(x => x.UserService.GetUserByEmailAsync(model.UserNameOrEmail)).ReturnsAsync(userModel);
             passwordMock.Setup(x => x.CheckPassword(It.IsAny<byte[]>(), It.IsAny<byte[]>(), model.Password)).Returns(true);
             tokenMock.Setup(x => x.GenerateAccessToken(It.IsAny<List<Claim>>())).Returns(tokenModel);
-            uowMock.Setup(x => x.UserService.UpdateUserAsync(It.IsAny<User>()));
+            uowMock.Setup(x => x.UserService.UpdateUser(It.IsAny<User>()));
             uowMock.Setup(x => x.CompleteAsync());
             var controller = new AuthController(passwordMock.Object, tokenMock.Object,
                 uowMock.Object, new Mock<IRoleService>().Object, new Mock<IAvatarService>().Object,

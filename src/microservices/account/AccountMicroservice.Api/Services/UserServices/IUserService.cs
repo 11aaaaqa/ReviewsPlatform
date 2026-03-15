@@ -8,6 +8,6 @@ namespace AccountMicroservice.Api.Services.UserServices
         Task<User?> GetUserByUserNameAsync(string userName);
         Task<User?> GetUserByEmailAsync(string email);
         Task AddUserAsync(User user);
-        Task UpdateUserAsync(User user);
+        void UpdateUser(User user);
     }
 }

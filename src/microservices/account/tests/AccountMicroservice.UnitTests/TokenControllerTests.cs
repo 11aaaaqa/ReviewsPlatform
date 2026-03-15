@@ -39,7 +39,7 @@ namespace AccountMicroservice.UnitTests
                 RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(1)
             };
             mock.Setup(x => x.UserService.GetUserByIdAsync(userId)).ReturnsAsync(userModel);
-            mock.Setup(x => x.UserService.UpdateUserAsync(userModel));
+            mock.Setup(x => x.UserService.UpdateUser(userModel));
             mock.Setup(x => x.CompleteAsync());
             var controller = new TokenController(mock.Object, new Mock<ITokenService>().Object,
                 new Mock<ILogger<TokenController>>().Object);
@@ -208,7 +208,7 @@ namespace AccountMicroservice.UnitTests
             uowMock.Setup(x => x.UserService.GetUserByIdAsync(userId)).ReturnsAsync(user);
             tokenMock.Setup(x => x.GetClaims(user)).Returns(It.IsAny<List<Claim>>());
             tokenMock.Setup(x => x.GenerateAccessToken(It.IsAny<List<Claim>>())).Returns(renewedAccessToken);
-            uowMock.Setup(x => x.UserService.UpdateUserAsync(user));
+            uowMock.Setup(x => x.UserService.UpdateUser(user));
             uowMock.Setup(x => x.CompleteAsync());
             var controller = new TokenController(uowMock.Object, tokenMock.Object,
                 new Mock<ILogger<TokenController>>().Object);
@@ -223,7 +223,7 @@ namespace AccountMicroservice.UnitTests
             tokenMock.Verify(x => x.GenerateAccessToken(It.IsAny<List<Claim>>()));
             tokenMock.VerifyAll();
             uowMock.Verify(x => x.UserService.GetUserByIdAsync(userId));
-            uowMock.Verify(x => x.UserService.UpdateUserAsync(user));
+            uowMock.Verify(x => x.UserService.UpdateUser(user));
             uowMock.Verify(x => x.CompleteAsync());
             uowMock.VerifyAll();
         }
