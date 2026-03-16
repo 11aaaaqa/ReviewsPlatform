@@ -1,13 +1,12 @@
 ﻿using MessageBus.Abstractions;
 using MessageBus.Handler;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 namespace MessageBus.Extensions
 {
     public static class MessageBusBuilderExtensions
     {
-        public static void AddMessageBusHandler<TMessage, THandler>(this IHostApplicationBuilder builder)
+        public static IMessageBusBuilder AddMessageBusHandler<TMessage, THandler>(this IMessageBusBuilder builder)
             where TMessage : MessageBase
             where THandler : class, IMessageHandler<TMessage>
         {
@@ -17,6 +16,8 @@ namespace MessageBus.Extensions
             });
 
             builder.Services.AddKeyedTransient<IMessageHandler, THandler>(typeof(TMessage));
+
+            return builder;
         }
     }
 }

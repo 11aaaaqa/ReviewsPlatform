@@ -1,4 +1,5 @@
-﻿using MessageBus.Extensions;
+﻿using MessageBus.Abstractions;
+using MessageBus.Extensions;
 using MessageBus.Publisher;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -9,16 +10,23 @@ namespace RabbitMqMessageBus.Extensions
 {
     public static class RabbitMqDependencyInjectionExtensions
     {
-        public static void AddRabbitMqMessageBus(this IHostApplicationBuilder builder, RabbitMqOptions rabbitMqOptions)
+        public static IMessageBusBuilder AddRabbitMqMessageBus(this IServiceCollection services, RabbitMqOptions rabbitMqOptions)
         {
-            builder.Services.AddSingleton<IMessagePublisher>(sp => new RabbitMqMessageBus(
+            services.AddSingleton<IMessagePublisher>(sp => new RabbitMqMessageBus(
                 sp.GetRequiredService<ILogger<RabbitMqMessageBus>>(),
                 sp.GetRequiredService<IHostApplicationLifetime>(),
                 sp.GetRequiredService<IOptions<MessageBusHandlerInfo>>(),
                 sp.GetRequiredService<IServiceProvider>(),
                 rabbitMqOptions));
 
-            builder.Services.AddHostedService<IHostedService>(sp => (RabbitMqMessageBus)sp.GetRequiredService<IMessagePublisher>());
+            services.AddSingleton<IHostedService>(sp => (RabbitMqMessageBus)sp.GetRequiredService<IMessagePublisher>());
+
+            return new MessageBusBuilder(services);
+        }
+
+        private class MessageBusBuilder(IServiceCollection services) : IMessageBusBuilder
+        {
+            public IServiceCollection Services => services;
         }
     }
 }
