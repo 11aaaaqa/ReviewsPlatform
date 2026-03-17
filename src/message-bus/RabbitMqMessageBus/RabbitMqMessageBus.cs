@@ -8,8 +8,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Polly;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using RabbitMqMessageBus.Exceptions;
 using RabbitMqMessageBus.Extensions;
 
 namespace RabbitMqMessageBus
@@ -38,6 +40,9 @@ namespace RabbitMqMessageBus
 
         public async Task PublishAsync(MessageBase messageBusEvent)
         {
+            if (connection == null || !connection.IsOpen)
+                throw new RabbitMqConnectionIsNotOpenedException();
+
             string routingKey = messageBusEvent.GetType().Name;
 
             await using var channel = await connection!.CreateChannelAsync();
@@ -48,7 +53,7 @@ namespace RabbitMqMessageBus
             await channel.BasicPublishAsync(exchange: ExchangeName, routingKey: routingKey, body: encodedMessage,
                 mandatory: true, basicProperties: basicProperties);
 
-            logger.LogInformation("{MessageId} ({MessageName}) was successfully published", messageBusEvent.Id, routingKey);
+            logger.LogInformation("Message {MessageId} ({MessageName}) was successfully published", messageBusEvent.MessageId, routingKey);
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -65,37 +70,45 @@ namespace RabbitMqMessageBus
                         HostName = rabbitMqOptions.HostName
                     };
 
-                    connection = await factory.CreateConnectionAsync(CancellationToken.None);
+                    await Policy.Handle<Exception>().WaitAndRetryAsync(10, _ => TimeSpan.FromSeconds(3),
+                        (_, _) => logger.LogError("Error connecting to RabbitMQ. Retrying in 3 seconds")).ExecuteAsync(async () =>
+                    {
+                        connection = await factory.CreateConnectionAsync(CancellationToken.None);
+                    });
 
-                    if (!connection.IsOpen)
+                    if (connection == null || !connection.IsOpen)
                     {
                         logger.LogCritical("RabbitMQ connection is not opened");
                         applicationLifetime.StopApplication();
                         return;
                     }
 
-                    consumerChannel = await connection.CreateChannelAsync(cancellationToken: CancellationToken.None);
-
-                    await consumerChannel.ExchangeDeclareAsync(exchange: ExchangeName, type: ExchangeType.Direct, cancellationToken: CancellationToken.None);
-
-                    var queueDeclareResult = await consumerChannel.QueueDeclareAsync(queue: rabbitMqOptions.QueueName, durable: true, exclusive: false,
-                        autoDelete: false, arguments: null, cancellationToken: CancellationToken.None); //return value is for debugging purpose
-
-                    var consumer = new AsyncEventingBasicConsumer(consumerChannel);
-                    consumer.ReceivedAsync += OnMessageReceived;
-
-                    await consumerChannel.BasicConsumeAsync(queue: rabbitMqOptions.QueueName, autoAck: false, consumer: consumer,
-                        cancellationToken: CancellationToken.None);
-
-                    foreach (var (messageName, _) in handlerInfo.Value.MessageTypes)
+                    if (handlerInfo.Value.MessageTypes.Count > 0)
                     {
-                        await consumerChannel.QueueBindAsync(queue: rabbitMqOptions.QueueName, exchange: ExchangeName,
-                            routingKey: messageName, cancellationToken: CancellationToken.None);
+                        consumerChannel = await connection.CreateChannelAsync(cancellationToken: CancellationToken.None);
+
+                        await consumerChannel.ExchangeDeclareAsync(exchange: ExchangeName, type: ExchangeType.Direct, cancellationToken: CancellationToken.None);
+
+                        await consumerChannel.QueueDeclareAsync(queue: rabbitMqOptions.QueueName, durable: true, exclusive: false,
+                            autoDelete: false, arguments: null, cancellationToken: CancellationToken.None);
+
+                        foreach (var (messageName, _) in handlerInfo.Value.MessageTypes)
+                        {
+                            await consumerChannel.QueueBindAsync(queue: rabbitMqOptions.QueueName, exchange: ExchangeName,
+                                routingKey: messageName, cancellationToken: CancellationToken.None);
+                        }
+
+                        var consumer = new AsyncEventingBasicConsumer(consumerChannel);
+                        consumer.ReceivedAsync += OnMessageReceived;
+
+                        await consumerChannel.BasicConsumeAsync(queue: rabbitMqOptions.QueueName, autoAck: false, consumer: consumer,
+                            cancellationToken: CancellationToken.None);
                     }
+                    logger.LogInformation("RabbitMQ is successfully started");
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
-                    logger.LogCritical("RabbitMQ could not started. Exception message: {ExceptionMessage}", e.Message);
+                    logger.LogCritical(ex,"RabbitMQ could not started");
                     applicationLifetime.StopApplication();
                 }
             }, cancellationToken);
@@ -119,18 +132,28 @@ namespace RabbitMqMessageBus
 
             using var scope = serviceProvider.CreateScope();
 
-            foreach (var handler in scope.ServiceProvider.GetKeyedServices<IMessageHandler>(messageType))
+            try
             {
-                await handler.HandleAsync(message!);
+                foreach (var handler in scope.ServiceProvider.GetKeyedServices<IMessageHandler>(messageType))
+                {
+                    await handler.HandleAsync(message!);
+                }
             }
+            catch (Exception ex)
+            {
+                logger.LogCritical(ex, "Exception was thrown while handling message {RoutingKey}", eventArgs.RoutingKey);
+                await consumerChannel!.BasicNackAsync(deliveryTag: eventArgs.DeliveryTag, multiple: false, requeue: false, CancellationToken.None);
 
+                throw;
+            }
+            
             await consumerChannel!.BasicAckAsync(deliveryTag: eventArgs.DeliveryTag, multiple: false);
         }
 
         public void Dispose()
         {
-            connection?.Dispose();
             consumerChannel?.Dispose();
+            connection?.Dispose();
         }
     }
 }
