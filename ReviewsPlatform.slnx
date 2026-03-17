@@ -1,11 +1,10 @@
 <Solution>
   <Folder Name="/configs/">
     <File Path="general.env" />
+    <File Path="rabbitmq-env.conf" />
     <File Path="redis.conf" />
   </Folder>
-  <Folder Name="/src/">
-    <Project Path="src/MessageBus/MessageBus.csproj" Id="cb1ea8bc-4a0a-443e-a52e-9a33c0adcb1b" />
-  </Folder>
+  <Folder Name="/src/" />
   <Folder Name="/src/gateway/">
     <Project Path="src/gateway/ApiGateway/ApiGateway.csproj" Id="3e799f2e-6e86-4576-9420-71302faa391f" />
   </Folder>
