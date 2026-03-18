@@ -5,6 +5,8 @@ using CategoryMicroservice.Api.DTOs.Category;
 using CategoryMicroservice.Api.Models.Business;
 using CategoryMicroservice.Api.Services.CategoryServices;
 using CategoryMicroservice.Api.Services.UnitOfWork;
+using MessageBus.Messages.Category;
+using MessageBus.Publisher;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,7 +15,7 @@ namespace CategoryMicroservice.Api.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class CategoryController(ICategoryRepository<Category> categoryRepository, IUnitOfWork unitOfWork, 
-        ILogger<CategoryController> logger) : ControllerBase
+        ILogger<CategoryController> logger, IMessagePublisher messagePublisher) : ControllerBase
     {
         [HttpGet]
         [Route("all")]
@@ -96,7 +98,7 @@ namespace CategoryMicroservice.Api.Controllers
                 await unitOfWork.CategoryRepository.RemoveAsync(categoryId);
                 await unitOfWork.CompleteAsync();
 
-                //rabbitmq publish
+                await messagePublisher.PublishAsync(new CategoryRemovedEvent { CategoryId = categoryId });
 
                 await unitOfWork.CommitTransactionAsync();
             }

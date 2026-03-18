@@ -6,6 +6,7 @@ using CategoryMicroservice.Api.Models.Business;
 using CategoryMicroservice.Api.Services.CategoryServices;
 using CategoryMicroservice.Api.Services.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
+using RabbitMqMessageBus.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +36,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(x =>
 builder.Services.AddScoped<ICategoryRepository<Category>, CategoryRepository>();
 builder.Services.AddScoped<ICategoryRepository<Subcategory>, SubcategoryRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+builder.Services.AddRabbitMqMessageBus(new RabbitMqOptions
+{
+    UserName = builder.Configuration["RABBITMQ_DEFAULT_USER"]!,
+    Password = builder.Configuration["RABBITMQ_DEFAULT_PASS"]!,
+    HostName = builder.Configuration["RABBITMQ_HOSTNAME"]!,
+    VirtualHost = builder.Configuration["RABBITMQ_DEFAULT_VHOST"]!,
+    QueueName = "CategoryMicroservice"
+});
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();

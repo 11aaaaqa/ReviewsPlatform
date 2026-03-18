@@ -55,6 +55,7 @@ services:
       - 32166:8080
     env_file:
       - "./general.env"
+      - ./rabbitmq-env.conf
     depends_on:
       - postgres-category
       - api-gateway
