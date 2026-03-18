@@ -102,14 +102,14 @@ namespace CategoryMicroservice.Api.Controllers
 
                 await unitOfWork.CommitTransactionAsync();
             }
-            catch (ArgumentException)
-            {
-                return NotFound("Category with current identifier does not exist");
-            }
             catch (Exception exc)
             {
                 await unitOfWork.RollbackTransactionAsync();
-                logger.LogCritical("Admin {UserId} tried to remove category {CategoryId} but transaction threw an error: {ErrorMessage}",
+
+                if (exc is ArgumentException)
+                    return NotFound("Category with current identifier does not exist");
+
+                logger.LogCritical("Admin {AdminUid} tried to remove category {CategoryId} but transaction threw an error: {ErrorMessage}",
                     userIdStr, categoryId, exc.Message);
                 return StatusCode((int)HttpStatusCode.InternalServerError);
             }
