@@ -21,7 +21,7 @@ namespace AccountMicroservice.Api.Services.UserServices
             await context.Users.AddAsync(user);
         }
 
-        public async Task UpdateUserAsync(User user)
+        public void UpdateUser(User user)
         {
             context.Users.Update(user);
         }

@@ -26,11 +26,10 @@ namespace AccountMicroservice.Api.Controllers
             user.RefreshToken = null;
             user.TokenVersion++;
 
-            await unitOfWork.UserService.UpdateUserAsync(user);
+            unitOfWork.UserService.UpdateUser(user);
             await unitOfWork.CompleteAsync();
 
-            logger.LogInformation("{Timestamp}: User {UserId} logged out",
-                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), userId);
+            logger.LogInformation("User {UserId} logged out", userId);
 
             return Ok();
         }
@@ -56,11 +55,10 @@ namespace AccountMicroservice.Api.Controllers
             user.RefreshToken = tokenService.GenerateRefreshToken();
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMonths(1);
 
-            await unitOfWork.UserService.UpdateUserAsync(user);
+            unitOfWork.UserService.UpdateUser(user);
             await unitOfWork.CompleteAsync();
 
-            logger.LogInformation("{Timestamp}: Token for user {UserId} refreshed",
-                DateTime.UtcNow.ToString(TimeFormatConstants.DefaultFormat), user.Id);
+            logger.LogInformation("Token for user {UserId} refreshed", user.Id);
 
             return Ok(accessToken);
         }

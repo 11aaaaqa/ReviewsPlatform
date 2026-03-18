@@ -6,7 +6,9 @@
       "serviceActions": {
         "accountmicroservice.api": "StartDebugging",
         "apigateway": "StartDebugging",
-        "web.mvc": "StartDebugging"
+        "web.mvc": "StartDebugging",
+        "topicmicroservice.api": "StartDebugging",
+        "categorymicroservice.api": "StartDebugging"
       }
     }
   }
