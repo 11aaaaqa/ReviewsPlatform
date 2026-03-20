@@ -36,13 +36,7 @@ namespace CategoryMicroservice.Api.Controllers
         [HttpGet]
         [Route("find-by-contained-characters")]
         public async Task<IActionResult> GetCategoriesByContainedCharactersAsync(string name)
-        {
-            var categories = await categoryRepository.FindByContainedCharactersInNameAsync(name);
-            if (categories.Count == 0)
-                return NotFound();
-
-            return Ok(categories);
-        }
+            => Ok(await categoryRepository.FindByContainedCharactersInNameAsync(name));
 
         [Authorize(Roles = RoleNames.Admin)]
         [HttpPost]
@@ -58,7 +52,7 @@ namespace CategoryMicroservice.Api.Controllers
             await unitOfWork.CompleteAsync();
 
             string currentUserIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
-            logger.LogInformation("User {UserId} created new category with Identifier {CategoryId} and Name {CategoryName}",
+            logger.LogInformation("User {UserId} created new category with identifier {CategoryId} and Name {CategoryName}",
                 currentUserIdStr, categoryToAdd.Id, categoryToAdd.Name);
 
             return Ok();
@@ -90,6 +84,11 @@ namespace CategoryMicroservice.Api.Controllers
         [Route("{categoryId}/remove")]
         public async Task<IActionResult> RemoveCategoryAsync([FromRoute] Guid categoryId)
         {
+            var category = await unitOfWork.CategoryRepository.GetByIdAsync(categoryId);
+            if(category == null)
+                return NotFound("Category with current identifier does not exist");
+
+            string categoryName = category.Name;
             string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
             try
             {
@@ -106,15 +105,12 @@ namespace CategoryMicroservice.Api.Controllers
             {
                 await unitOfWork.RollbackTransactionAsync();
 
-                if (exc is ArgumentException)
-                    return NotFound("Category with current identifier does not exist");
-
-                logger.LogCritical("Admin {AdminUid} tried to remove category {CategoryId} but transaction threw an error: {ErrorMessage}",
-                    userIdStr, categoryId, exc.Message);
+                logger.LogCritical(exc, "User {UserId} tried to remove category {CategoryName} but transaction threw an exception", 
+                    userIdStr, categoryName);
                 return StatusCode((int)HttpStatusCode.InternalServerError);
             }
 
-            logger.LogInformation("User {UserId} removed Category {CategoryId}", userIdStr, categoryId);
+            logger.LogInformation("User {UserId} removed category {CategoryName}", userIdStr, categoryName);
 
             return Ok();
         }

@@ -17,23 +17,16 @@ namespace CategoryMicroservice.UnitTests
         [Fact]
         public async Task RemoveCategoryAsync_ReturnsNotFound()
         {
-            Guid userId = Guid.NewGuid();
-            var user = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim> 
-                { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }));
             Guid categoryId = Guid.NewGuid();
             var uowMock = new Mock<IUnitOfWork>();
-            uowMock.Setup(x => x.BeginTransactionAsync());
-            uowMock.Setup(x => x.CategoryRepository.RemoveAsync(categoryId)).Throws<ArgumentException>();
+            uowMock.Setup(x => x.CategoryRepository.GetByIdAsync(categoryId)).ReturnsAsync((Category?)null);
             var controller = new CategoryController(new Mock<ICategoryRepository<Category>>().Object, uowMock.Object,
                 new Mock<ILogger<CategoryController>>().Object, new Mock<IMessagePublisher>().Object);
-            controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = user } };
 
             var result = await controller.RemoveCategoryAsync(categoryId);
 
             Assert.IsType<NotFoundObjectResult>(result);
-            uowMock.Verify(x => x.BeginTransactionAsync());
-            uowMock.Verify(x => x.CategoryRepository.RemoveAsync(categoryId));
-            uowMock.Verify(x => x.RollbackTransactionAsync());
+            uowMock.Verify(x => x.CategoryRepository.GetByIdAsync(categoryId));
         }
 
         [Fact]
@@ -43,7 +36,9 @@ namespace CategoryMicroservice.UnitTests
             var user = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
                 { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }));
             Guid categoryId = Guid.NewGuid();
+            Category category = new Category { Id = categoryId };
             var uowMock = new Mock<IUnitOfWork>();
+            uowMock.Setup(x => x.CategoryRepository.GetByIdAsync(categoryId)).ReturnsAsync(category);
             uowMock.Setup(x => x.BeginTransactionAsync());
             uowMock.Setup(x => x.CategoryRepository.RemoveAsync(categoryId));
             uowMock.Setup(x => x.CompleteAsync()).Throws<Exception>();
@@ -55,6 +50,7 @@ namespace CategoryMicroservice.UnitTests
 
              var methodResult = Assert.IsType<StatusCodeResult>(result);
              Assert.Equal(500, methodResult.StatusCode);
+             uowMock.Verify(x => x.CategoryRepository.GetByIdAsync(categoryId));
              uowMock.Verify(x => x.BeginTransactionAsync());
              uowMock.Verify(x => x.CategoryRepository.RemoveAsync(categoryId));
              uowMock.Verify(x => x.CompleteAsync());
@@ -68,8 +64,10 @@ namespace CategoryMicroservice.UnitTests
             var user = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
                 { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }));
             Guid categoryId = Guid.NewGuid();
+            Category category = new Category { Id = categoryId };
             var uowMock = new Mock<IUnitOfWork>();
             var messagePublisherMock = new Mock<IMessagePublisher>();
+            uowMock.Setup(x => x.CategoryRepository.GetByIdAsync(categoryId)).ReturnsAsync(category);
             uowMock.Setup(x => x.BeginTransactionAsync());
             uowMock.Setup(x => x.CategoryRepository.RemoveAsync(categoryId));
             uowMock.Setup(x => x.CompleteAsync());
@@ -82,6 +80,7 @@ namespace CategoryMicroservice.UnitTests
 
             var methodResult = Assert.IsType<StatusCodeResult>(result);
             Assert.Equal(500, methodResult.StatusCode);
+            uowMock.Verify(x => x.CategoryRepository.GetByIdAsync(categoryId));
             uowMock.Verify(x => x.BeginTransactionAsync());
             uowMock.Verify(x => x.CategoryRepository.RemoveAsync(categoryId));
             uowMock.Verify(x => x.CompleteAsync());
@@ -93,11 +92,13 @@ namespace CategoryMicroservice.UnitTests
         public async Task RemoveCategoryAsync_ReturnsOk()
         {
             Guid categoryId = Guid.NewGuid();
+            Category category = new Category { Id = categoryId };
             Guid userId = Guid.NewGuid();
             var user = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
                 { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }));
             var uowMock = new Mock<IUnitOfWork>();
             var messagePublisherMock = new Mock<IMessagePublisher>();
+            uowMock.Setup(x => x.CategoryRepository.GetByIdAsync(categoryId)).ReturnsAsync(category);
             uowMock.Setup(x => x.BeginTransactionAsync());
             uowMock.Setup(x => x.CategoryRepository.RemoveAsync(categoryId));
             uowMock.Setup(x => x.CompleteAsync());
@@ -110,6 +111,7 @@ namespace CategoryMicroservice.UnitTests
             var result = await controller.RemoveCategoryAsync(categoryId);
 
             Assert.IsType<OkResult>(result);
+            uowMock.Verify(x => x.CategoryRepository.GetByIdAsync(categoryId));
             uowMock.Verify(x => x.BeginTransactionAsync());
             uowMock.Verify(x => x.CategoryRepository.RemoveAsync(categoryId));
             uowMock.Verify(x => x.CompleteAsync());
