@@ -66,6 +66,9 @@ namespace CategoryMicroservice.Api.Controllers
             var category = await categoryRepository.GetByIdAsync(model.Id);
             if(category == null) return NotFound("Category with current identifier does not exist");
 
+            if (await unitOfWork.CategoryRepository.FindByNameAsync(model.Name) != null)
+                return Conflict("Category with current name already exists");
+
             string oldCategoryName = category.Name;
 
             category.Name = model.Name;
