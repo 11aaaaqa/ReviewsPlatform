@@ -137,7 +137,7 @@ namespace CategoryMicroservice.UnitTests
         }
 
         [Fact]
-        public async Task UpdateCategoryNameAsync_ReturnsConflict() //не проверено
+        public async Task UpdateCategoryNameAsync_ReturnsConflict()
         {
             Guid categoryId = Guid.NewGuid();
             string newCategoryName = "New";
