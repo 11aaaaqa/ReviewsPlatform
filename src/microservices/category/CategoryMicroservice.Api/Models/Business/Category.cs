@@ -5,6 +5,6 @@
         public Guid Id { get; set; }
         public string Name { get; set; }
         public int ReviewsCount { get; set; } = 0;
-        public List<Subcategory> Subcategories { get; set; }
+        public List<Subcategory> Subcategories { get; set; } = new();
     }
 }
