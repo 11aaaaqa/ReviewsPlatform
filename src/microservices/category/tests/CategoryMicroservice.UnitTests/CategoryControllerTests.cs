@@ -186,5 +186,46 @@ namespace CategoryMicroservice.UnitTests
             uowMock.Verify(x => x.CategoryRepository.Update(category));
             uowMock.Verify(x => x.CompleteAsync());
         }
+
+        [Fact]
+        public async Task AddCategoryAsync_ReturnsConflict()
+        {
+            string categoryName = "Category";
+            var model = new AddCategoryDto { Name = categoryName };
+            var mock = new Mock<ICategoryRepository<Category>>();
+            mock.Setup(x => x.FindByNameAsync(model.Name)).ReturnsAsync(new Category { Name = model.Name });
+            var controller = new CategoryController(mock.Object, new Mock<IUnitOfWork>().Object,
+                new Mock<ILogger<CategoryController>>().Object, new Mock<IMessagePublisher>().Object);
+
+            var result = await controller.AddCategoryAsync(model);
+
+            Assert.IsType<ConflictObjectResult>(result);
+            mock.Verify(x => x.FindByNameAsync(model.Name));
+        }
+
+        [Fact]
+        public async Task AddCategoryAsync_ReturnsOk()
+        {
+            Guid userId = Guid.NewGuid();
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+                { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }));
+            string categoryName = "Category";
+            var model = new AddCategoryDto { Name = categoryName };
+            var categoryMock = new Mock<ICategoryRepository<Category>>();
+            var uowMock = new Mock<IUnitOfWork>();
+            categoryMock.Setup(x => x.FindByNameAsync(model.Name)).ReturnsAsync((Category?)null);
+            uowMock.Setup(x => x.CategoryRepository.AddAsync(It.IsAny<Category>()));
+            uowMock.Setup(x => x.CompleteAsync());
+            var controller = new CategoryController(categoryMock.Object, uowMock.Object,
+                new Mock<ILogger<CategoryController>>().Object, new Mock<IMessagePublisher>().Object);
+            controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = user } };
+
+            var result = await controller.AddCategoryAsync(model);
+
+            Assert.IsType<OkResult>(result);
+            categoryMock.Verify(x => x.FindByNameAsync(model.Name));
+            uowMock.Verify(x => x.CategoryRepository.AddAsync(It.IsAny<Category>()));
+            uowMock.Verify(x => x.CompleteAsync());
+        }
     }
 }

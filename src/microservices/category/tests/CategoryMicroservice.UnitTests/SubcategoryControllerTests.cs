@@ -207,5 +207,72 @@ namespace CategoryMicroservice.UnitTests
             messagePublisherMock.Verify(x => x.PublishAsync(It.IsAny<MessageBase>()));
             uowMock.Verify(x => x.CommitTransactionAsync());
         }
+
+        [Fact]
+        public async Task UpdateSubcategoryNameAsync_ReturnsNotFound()
+        {
+            string newSubcategoryName = "New";
+            Guid subcategoryId = Guid.NewGuid();
+            var model = new UpdateSubcategoryNameDto { NewName = newSubcategoryName, SubcategoryId = subcategoryId };
+            var uowMock = new Mock<IUnitOfWork>();
+            uowMock.Setup(x => x.SubcategoryRepository.GetByIdAsync(model.SubcategoryId)).ReturnsAsync((Subcategory?)null);
+            var controller = new SubcategoryController(uowMock.Object,
+                new Mock<ILogger<SubcategoryController>>().Object, new Mock<IMessagePublisher>().Object);
+
+            var result = await controller.UpdateSubcategoryNameAsync(model);
+
+            Assert.IsType<NotFoundObjectResult>(result);
+            uowMock.Verify(x => x.SubcategoryRepository.GetByIdAsync(model.SubcategoryId));
+        }
+
+        [Fact]
+        public async Task UpdateSubcategoryNameAsync_ReturnsConflict()
+        {
+            string newSubcategoryName = "New";
+            Guid subcategoryId = Guid.NewGuid();
+            var model = new UpdateSubcategoryNameDto { NewName = newSubcategoryName, SubcategoryId = subcategoryId };
+            var uowMock = new Mock<IUnitOfWork>();
+            uowMock.Setup(x => x.SubcategoryRepository.GetByIdAsync(model.SubcategoryId))
+                .ReturnsAsync(new Subcategory { Id = subcategoryId });
+            uowMock.Setup(x => x.SubcategoryRepository.FindByNameAsync(model.NewName))
+                .ReturnsAsync(new Subcategory { Name = model.NewName });
+            var controller = new SubcategoryController(uowMock.Object,
+                new Mock<ILogger<SubcategoryController>>().Object, new Mock<IMessagePublisher>().Object);
+
+            var result = await controller.UpdateSubcategoryNameAsync(model);
+
+            Assert.IsType<ConflictObjectResult>(result);
+            uowMock.Verify(x => x.SubcategoryRepository.GetByIdAsync(model.SubcategoryId));
+            uowMock.Verify(x => x.SubcategoryRepository.FindByNameAsync(model.NewName));
+        }
+
+        [Fact]
+        public async Task UpdateSubcategoryNameAsync_ReturnsOk()
+        {
+            Guid userId = Guid.NewGuid();
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+                { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }));
+            string newSubcategoryName = "New";
+            string oldSubcategoryName = "Old";
+            Guid subcategoryId = Guid.NewGuid();
+            var subcategory = new Subcategory { Name = oldSubcategoryName, Id = subcategoryId };
+            var model = new UpdateSubcategoryNameDto { NewName = newSubcategoryName, SubcategoryId = subcategoryId };
+            var uowMock = new Mock<IUnitOfWork>();
+            uowMock.Setup(x => x.SubcategoryRepository.GetByIdAsync(model.SubcategoryId)).ReturnsAsync(subcategory);
+            uowMock.Setup(x => x.SubcategoryRepository.FindByNameAsync(model.NewName)).ReturnsAsync((Subcategory?)null);
+            uowMock.Setup(x => x.SubcategoryRepository.Update(It.IsAny<Subcategory>()));
+            uowMock.Setup(x => x.CompleteAsync());
+            var controller = new SubcategoryController(uowMock.Object,
+                new Mock<ILogger<SubcategoryController>>().Object, new Mock<IMessagePublisher>().Object);
+            controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = user } };
+
+            var result = await controller.UpdateSubcategoryNameAsync(model);
+
+            Assert.IsType<OkResult>(result);
+            uowMock.Verify(x => x.SubcategoryRepository.GetByIdAsync(model.SubcategoryId));
+            uowMock.Verify(x => x.SubcategoryRepository.FindByNameAsync(model.NewName));
+            uowMock.Verify(x => x.SubcategoryRepository.Update(It.IsAny<Subcategory>()));
+            uowMock.Verify(x => x.CompleteAsync());
+        }
     }
 }
