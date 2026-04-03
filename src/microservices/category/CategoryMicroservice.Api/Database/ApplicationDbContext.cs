@@ -9,10 +9,13 @@ namespace CategoryMicroservice.Api.Database
 
         public DbSet<Category> Categories { get; set; }
         public DbSet<Subcategory> Subcategories { get; set; }
+        public DbSet<Item> Items { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            builder.Entity<Item>().HasIndex(x => x.Name).IsUnique();
 
             builder.Entity<Category>().HasIndex(x => x.Name).IsUnique();
             builder.Entity<Category>()
