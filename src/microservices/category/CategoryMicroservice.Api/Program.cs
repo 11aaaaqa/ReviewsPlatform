@@ -4,6 +4,7 @@ using System.Text;
 using CategoryMicroservice.Api.Database;
 using CategoryMicroservice.Api.Models.Business;
 using CategoryMicroservice.Api.Services.CategoryServices;
+using CategoryMicroservice.Api.Services.ItemServices;
 using CategoryMicroservice.Api.Services.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using RabbitMqMessageBus.Extensions;
@@ -35,6 +36,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(x =>
 
 builder.Services.AddScoped<ICategoryRepository<Category>, CategoryRepository>();
 builder.Services.AddScoped<ICategoryRepository<Subcategory>, SubcategoryRepository>();
+builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddRabbitMqMessageBus(new RabbitMqOptions
