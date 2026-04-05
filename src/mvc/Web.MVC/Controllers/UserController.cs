@@ -113,12 +113,15 @@ namespace Web.MVC.Controllers
             });
         }
 
-        [RequestSizeLimit(2 * 1024 * 1024)] // При изменении изменить в EditUserProfile view "Размер файла превышает 2 мб" на актуальное значение
+        [RequestSizeLimit(2 * 1024 * 1024)]
         [Authorize]
         [Route("settings/update-avatar")]
         [HttpPost]
         public async Task<IActionResult> UpdateUserAvatar(UpdateAvatarDto model, string returnUrl)
         {
+            if(model == null)
+                return StatusCode((int)HttpStatusCode.BadRequest, "Размер файла превышает 2 мб");
+
             using MemoryStream memoryStream = new MemoryStream();
             await model.Image.CopyToAsync(memoryStream);
             if (memoryStream.Length > 2 * 1024 * 1024)
