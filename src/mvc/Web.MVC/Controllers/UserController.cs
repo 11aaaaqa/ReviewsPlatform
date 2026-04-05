@@ -127,7 +127,7 @@ namespace Web.MVC.Controllers
             if (memoryStream.Length > 2 * 1024 * 1024)
                 return StatusCode((int)HttpStatusCode.BadRequest, "Размер файла превышает 2 мб");
             
-            if (!availableFileExtensions.Any(x => x == Path.GetExtension(model.Image.FileName)))
+            if (!availableFileExtensions.Any(x => x == Path.GetExtension(model.Image.FileName).ToLower()))
                 return StatusCode((int)HttpStatusCode.BadRequest, "Неверный формат");
             
             byte[] avatarSource = memoryStream.ToArray();
