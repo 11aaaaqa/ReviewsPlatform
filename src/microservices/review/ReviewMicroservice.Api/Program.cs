@@ -2,6 +2,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using RabbitMqMessageBus.Extensions;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
+using ReviewMicroservice.Api.Database;
+using ReviewMicroservice.Api.Services.ReviewServices;
+using ReviewMicroservice.Api.Services.UnitOfWork;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +29,9 @@ builder.Services.AddAuthentication(x =>
     };
 });
 
+builder.Services.AddDbContext<ApplicationDbContext>(x =>
+    x.UseNpgsql(builder.Configuration["Database:ConnectionString"]));
+
 builder.Services.AddRabbitMqMessageBus(new RabbitMqOptions
 {
     UserName = builder.Configuration["RABBITMQ_DEFAULT_USER"]!,
@@ -33,6 +40,9 @@ builder.Services.AddRabbitMqMessageBus(new RabbitMqOptions
     VirtualHost = builder.Configuration["RABBITMQ_DEFAULT_VHOST"]!,
     QueueName = "ReviewMicroservice"
 });
+
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
