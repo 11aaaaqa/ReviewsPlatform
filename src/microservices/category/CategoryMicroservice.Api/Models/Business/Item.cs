@@ -12,10 +12,6 @@ namespace CategoryMicroservice.Api.Models.Business
         public byte[] Picture { get; set; }
         public Guid SubcategoryId { get; set; }
 
-        public Guid CreatedByUserId { get; set; }
         public ItemStatus Status { get; set; }
-        public string? RejectionReason { get; set; }
-
-        public SagaStatus SagaStatus { get; set; }
     }
 }

@@ -2,6 +2,7 @@
 {
     public enum ItemStatus
     {
+        Pending,
         UnderConsideration,
         Verified,
         Rejected
