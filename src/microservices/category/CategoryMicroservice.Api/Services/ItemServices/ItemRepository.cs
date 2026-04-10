@@ -1,4 +1,5 @@
 ﻿using CategoryMicroservice.Api.Database;
+using CategoryMicroservice.Api.Enums;
 using CategoryMicroservice.Api.Models.Business;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,11 +11,12 @@ namespace CategoryMicroservice.Api.Services.ItemServices
             => await context.Items.SingleOrDefaultAsync(x => x.Id == itemId);
 
         public async Task<Item?> GetByNameAsync(string name)
-            => await context.Items.SingleOrDefaultAsync(x => x.Name == name);
+            => await context.Items.SingleOrDefaultAsync(x => x.Name.ToLower() == name.ToLower());
 
         public async Task<List<Item>> GetAllBySubcategoryIdAsync(Guid subcategoryId, int pageNumber, int pageSize)
         {
             var items = await context.Items
+                .Where(x => x.Status == ItemStatus.Verified)
                 .Where(x => x.SubcategoryId == subcategoryId)
                 .Skip(pageSize * (pageNumber - 1))
                 .Take(pageSize)
@@ -26,6 +28,7 @@ namespace CategoryMicroservice.Api.Services.ItemServices
         public async Task<List<Item>> FindByContainedCharactersAsync(string name, int pageNumber, int pageSize)
         {
             var items = await context.Items
+                .Where(x => x.Status == ItemStatus.Verified)
                 .Where(x => x.Name.ToLower().Contains(name.ToLower()))
                 .Skip(pageSize * (pageNumber - 1))
                 .Take(pageSize)
@@ -37,6 +40,7 @@ namespace CategoryMicroservice.Api.Services.ItemServices
         public async Task<List<Item>> FindByContainedCharactersAsync(Guid subcategoryId, string name, int pageNumber, int pageSize)
         {
             var items = await context.Items
+                .Where(x => x.Status == ItemStatus.Verified)
                 .Where(x => x.SubcategoryId == subcategoryId)
                 .Where(x => x.Name.ToLower().Contains(name.ToLower()))
                 .Skip(pageSize * (pageNumber - 1))
