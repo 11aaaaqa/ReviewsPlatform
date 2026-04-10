@@ -12,9 +12,12 @@ namespace ReviewMicroservice.Api.Models.Business
         public int LikesCount { get; set; }
         public int DislikesCount { get; set; }
         public List<byte[]> Pictures { get; set; } = new();
-        public ReviewStatus ReviewStatus { get; set; }
+
+        public Guid ItemId { get; set; }
 
         public Guid UserId { get; set; }
-        public Guid ItemId { get; set; }
+        public ReviewStatus ReviewStatus { get; set; }
+        public string? RejectionReason { get; set; }
+        public bool CreatedWithItem { get; set; }
     }
 }
