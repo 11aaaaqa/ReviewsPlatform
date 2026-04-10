@@ -10,6 +10,22 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
         public async Task<Review?> GetByIdAsync(Guid id)
             => await context.Reviews.SingleOrDefaultAsync(x => x.Id == id);
 
+        public async Task<List<Review>> GetAllByStatusAsync(ReviewStatus status, OrderByDate orderByDate, int pageNumber, int pageSize)
+        {
+            var reviews = context.Reviews.Where(x => x.ReviewStatus == status);
+            switch (orderByDate)
+            {
+                case OrderByDate.Descending:
+                    reviews = reviews.OrderByDescending(x => x.CreatedAt);
+                    break;
+                case OrderByDate.Ascending:
+                    reviews = reviews.OrderBy(x => x.CreatedAt);
+                    break;
+            }
+
+            return await reviews.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+        }
+
         public async Task<List<Review>> GetByUserIdAsync(Guid userId, ReviewStatus reviewStatus,
             OrderByDate orderByDate, int pageNumber, int pageSize)
         {
