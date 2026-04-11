@@ -168,11 +168,6 @@ namespace CategoryMicroservice.Api.Controllers
 
                 await unitOfWork.CommitTransactionAsync();
             }
-            catch (ArgumentException)
-            {
-                await unitOfWork.RollbackTransactionAsync();
-                return NotFound("Item with current identifier does not found");
-            }
             catch (Exception e)
             {
                 logger.LogCritical(e, "An exception was thrown while processing item removing method");
