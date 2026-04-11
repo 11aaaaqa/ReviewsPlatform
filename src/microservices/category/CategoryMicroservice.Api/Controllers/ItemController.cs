@@ -143,11 +143,25 @@ namespace CategoryMicroservice.Api.Controllers
         [Route("remove/{itemId}")]
         public async Task<IActionResult> RemoveItemAsync([FromRoute] Guid itemId)
         {
+            var item = await unitOfWork.ItemRepository.GetByIdAsync(itemId);
+            if (item == null)
+                return NotFound("Item with current identifier does not exist");
+
+            var subcategory = await unitOfWork.SubcategoryRepository.GetByIdAsync(item.SubcategoryId);
+            var category = await unitOfWork.CategoryRepository.GetByIdAsync(subcategory!.CategoryId);
+
             try
             {
                 await unitOfWork.BeginTransactionAsync();
 
                 await unitOfWork.ItemRepository.RemoveAsync(itemId);
+
+                subcategory.ReviewsCount -= item.ReviewsCount;
+                unitOfWork.SubcategoryRepository.Update(subcategory);
+
+                category!.ReviewsCount -= item.ReviewsCount;
+                unitOfWork.CategoryRepository.Update(category);
+
                 await unitOfWork.CompleteAsync();
 
                 await messagePublisher.PublishAsync(new ItemRemovedEvent { ItemId = itemId });
