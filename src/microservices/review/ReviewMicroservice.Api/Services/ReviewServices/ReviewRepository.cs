@@ -61,7 +61,10 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
             return await reviews.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
         }
 
-        public async Task<List<Review>> GetByItemIdByEstimationAsync(Guid itemId, OrderByEstimation orderByEstimation, int pageNumber, int pageSize)
+        public async Task<List<Review>> GetByItemIdAsync(Guid itemId)
+            => await context.Reviews.Where(x => x.ItemId == itemId).ToListAsync();
+
+        public async Task<List<Review>> GetByItemIdAsync(Guid itemId, OrderByEstimation orderByEstimation, int pageNumber, int pageSize)
         {
             var reviews = context.Reviews.Where(x => x.ItemId == itemId);
             switch (orderByEstimation)
@@ -94,6 +97,11 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
                 throw new ArgumentException("Review with current identifier does not exist");
 
             context.Reviews.Remove(review);
+        }
+
+        public void RemoveRange(List<Review> reviews)
+        {
+            context.Reviews.RemoveRange(reviews);
         }
     }
 }
