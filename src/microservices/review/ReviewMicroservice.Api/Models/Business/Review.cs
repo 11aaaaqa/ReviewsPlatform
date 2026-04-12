@@ -18,6 +18,6 @@ namespace ReviewMicroservice.Api.Models.Business
         public Guid UserId { get; set; }
         public ReviewStatus ReviewStatus { get; set; }
         public string? RejectionReason { get; set; }
-        public bool CreatedWithItem { get; set; }
+        public bool IsCreatedWithItem { get; set; }
     }
 }
