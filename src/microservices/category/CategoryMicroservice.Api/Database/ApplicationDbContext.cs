@@ -15,8 +15,6 @@ namespace CategoryMicroservice.Api.Database
         {
             base.OnModelCreating(builder);
 
-            builder.Entity<Item>().HasIndex(x => x.Name).IsUnique();
-
             builder.Entity<Category>().HasIndex(x => x.Name).IsUnique();
             builder.Entity<Category>()
                 .HasMany(x => x.Subcategories)
