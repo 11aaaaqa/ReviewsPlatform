@@ -73,11 +73,12 @@ namespace CategoryMicroservice.Api.Controllers
             if (model.ReviewPictures.Count > 5) 
                 return BadRequest("Review's pictures count exceeds the count of 5");
 
-            if (await unitOfWork.ItemRepository.GetByNameAsync(model.ItemName) != null)
-                return Conflict("Item with current name already exists");
-
             if (await unitOfWork.SubcategoryRepository.GetByIdAsync(model.SubcategoryId) == null)
                 return NotFound("Subcategory with current identifier does not exist");
+
+            var items = await unitOfWork.ItemRepository.GetByNameAsync(model.ItemName);
+            if (items.Any(x => x.Status == ItemStatus.Verified && x.SubcategoryId == model.SubcategoryId))
+                return Conflict("Item with current name already exists");
 
             //gRPC to check if user allowed to add
 
@@ -93,10 +94,13 @@ namespace CategoryMicroservice.Api.Controllers
             byte[] itemPicture = memoryStream.ToArray();
 
             List<byte[]> reviewsPictures = new();
-            foreach (var reviewPicture in model.ReviewPictures)
+            if (model.ReviewPictures.Count > 0)
             {
-                await reviewPicture.CopyToAsync(memoryStream);
-                reviewsPictures.Add(memoryStream.ToArray());
+                foreach (var reviewPicture in model.ReviewPictures)
+                {
+                    await reviewPicture.CopyToAsync(memoryStream);
+                    reviewsPictures.Add(memoryStream.ToArray());
+                }
             }
 
             model.ShortReview = Regex.Replace(model.ShortReview.Trim(), @"\s+", " ");
