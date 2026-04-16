@@ -10,8 +10,8 @@ namespace CategoryMicroservice.Api.Services.ItemServices
         public async Task<Item?> GetByIdAsync(Guid itemId)
             => await context.Items.SingleOrDefaultAsync(x => x.Id == itemId);
 
-        public async Task<Item?> GetByNameAsync(string name)
-            => await context.Items.SingleOrDefaultAsync(x => x.Name.ToLower() == name.ToLower());
+        public async Task<List<Item>> GetByNameAsync(string name)
+            => await context.Items.Where(x => x.Name.ToLower() == name.ToLower()).ToListAsync();
 
         public async Task<List<Item>> GetAllBySubcategoryIdAsync(Guid subcategoryId, int pageNumber, int pageSize)
         {
