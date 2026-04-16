@@ -33,7 +33,6 @@ namespace CategoryMicroservice.Api.DTOs.Items
         [Required]
         public int ReviewItemEstimation { get; set; }
 
-        [Required]
         public List<IFormFile> ReviewPictures { get; set; } = new();
     }
 }
