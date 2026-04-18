@@ -1,6 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
+using RestrictionMicroservice.Api.Database;
+using RestrictionMicroservice.Api.Services.ReportRepository;
+using RestrictionMicroservice.Api.Services.RestrictionRepository;
+using RestrictionMicroservice.Api.Services.UnitOfWork;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +28,13 @@ builder.Services.AddAuthentication(x =>
         ValidAudience = builder.Configuration["JWT_AUDIENCE"]
     };
 });
+
+builder.Services.AddDbContext<ApplicationDbContext>(x => 
+    x.UseNpgsql(builder.Configuration["Database:ConnectionString"]));
+
+builder.Services.AddScoped<IReportRepository, ReportRepository>();
+builder.Services.AddScoped<IRestrictionRepository, RestrictionRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
