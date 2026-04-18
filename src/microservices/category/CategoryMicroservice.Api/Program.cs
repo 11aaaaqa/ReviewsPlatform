@@ -2,10 +2,14 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using CategoryMicroservice.Api.Database;
+using CategoryMicroservice.Api.MessageBus.Consumers;
 using CategoryMicroservice.Api.Models.Business;
 using CategoryMicroservice.Api.Services.CategoryServices;
 using CategoryMicroservice.Api.Services.ItemServices;
 using CategoryMicroservice.Api.Services.UnitOfWork;
+using MessageBus.Extensions;
+using MessageBus.Messages.Review;
+using MessageBus.Messages.Saga.CreateItemWIthReview;
 using Microsoft.EntityFrameworkCore;
 using RabbitMqMessageBus.Extensions;
 
@@ -40,13 +44,17 @@ builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddRabbitMqMessageBus(new RabbitMqOptions
-{
-    UserName = builder.Configuration["RABBITMQ_DEFAULT_USER"]!,
-    Password = builder.Configuration["RABBITMQ_DEFAULT_PASS"]!,
-    HostName = builder.Configuration["RABBITMQ_HOSTNAME"]!,
-    VirtualHost = builder.Configuration["RABBITMQ_DEFAULT_VHOST"]!,
-    QueueName = "CategoryMicroservice"
-});
+    {
+        UserName = builder.Configuration["RABBITMQ_DEFAULT_USER"]!,
+        Password = builder.Configuration["RABBITMQ_DEFAULT_PASS"]!,
+        HostName = builder.Configuration["RABBITMQ_HOSTNAME"]!,
+        VirtualHost = builder.Configuration["RABBITMQ_DEFAULT_VHOST"]!,
+        QueueName = "CategoryMicroservice"
+    }).AddMessageBusHandler<ReviewFailedToCreateSagaEvent, ReviewFailedToCreateSagaEventConsumer>()
+    .AddMessageBusHandler<ReviewCreatedSagaEvent, ReviewCreatedSagaEventConsumer>()
+    .AddMessageBusHandler<ReviewRemovedEvent, ReviewRemovedEventConsumer>()
+    .AddMessageBusHandler<ReviewAcceptedEvent, ReviewAcceptedEventConsumer>()
+    .AddMessageBusHandler<ReviewCreatedWithItemRejectedEvent, ReviewCreatedWithItemRejectedEventConsumer>();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();

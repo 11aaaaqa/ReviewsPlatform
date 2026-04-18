@@ -2,8 +2,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using RabbitMqMessageBus.Extensions;
 using System.Text;
+using MessageBus.Extensions;
+using MessageBus.Messages.Item;
+using MessageBus.Messages.Saga.CreateItemWIthReview;
 using Microsoft.EntityFrameworkCore;
 using ReviewMicroservice.Api.Database;
+using ReviewMicroservice.Api.MessageBus.Consumers;
 using ReviewMicroservice.Api.Services.ReviewServices;
 using ReviewMicroservice.Api.Services.UnitOfWork;
 
@@ -33,13 +37,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(x =>
     x.UseNpgsql(builder.Configuration["Database:ConnectionString"]));
 
 builder.Services.AddRabbitMqMessageBus(new RabbitMqOptions
-{
-    UserName = builder.Configuration["RABBITMQ_DEFAULT_USER"]!,
-    Password = builder.Configuration["RABBITMQ_DEFAULT_PASS"]!,
-    HostName = builder.Configuration["RABBITMQ_HOSTNAME"]!,
-    VirtualHost = builder.Configuration["RABBITMQ_DEFAULT_VHOST"]!,
-    QueueName = "ReviewMicroservice"
-});
+    {
+        UserName = builder.Configuration["RABBITMQ_DEFAULT_USER"]!,
+        Password = builder.Configuration["RABBITMQ_DEFAULT_PASS"]!,
+        HostName = builder.Configuration["RABBITMQ_HOSTNAME"]!,
+        VirtualHost = builder.Configuration["RABBITMQ_DEFAULT_VHOST"]!,
+        QueueName = "ReviewMicroservice"
+    }).AddMessageBusHandler<ItemCreatedSagaEvent, ItemCreatedSagaEventConsumer>()
+    .AddMessageBusHandler<ItemRemovedEvent, ItemRemovedEventConsumer>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
