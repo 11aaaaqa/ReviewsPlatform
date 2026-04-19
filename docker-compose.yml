@@ -60,6 +60,64 @@ services:
       - postgres-category
       - api-gateway
 
+  restriction-microservice-api:
+    container_name: restriction-microservice-api
+    image: ${DOCKER_REGISTRY-}restrictionmicroservice-api
+    build:
+      context: .
+      dockerfile: src/microservices/restriction/RestrictionMicroservice.Api/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - 32165:8080
+    env_file:
+      - "./general.env"
+      - ./rabbitmq-env.conf
+    depends_on:
+      - postgres-restriction
+      - api-gateway
+      
+  review-microservice-api:
+    container_name: review-microservice-api
+    image: ${DOCKER_REGISTRY-}reviewmicroservice-api
+    build:
+      context: .
+      dockerfile: src/microservices/review/ReviewMicroservice.Api/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - 32164:8080
+    env_file:
+      - "./general.env"
+      - ./rabbitmq-env.conf
+    depends_on:
+      - postgres-review
+      - api-gateway
+
+  postgres-review:
+    container_name: postgres-review
+    image: postgres:latest
+    expose:
+      - 5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ReviewsPlatformReviewMicroservice
+    volumes:
+      - postgres-review-data:/var/lib/postgresql
+
+  postgres-restriction:
+    container_name: postgres-restriction
+    image: postgres:latest
+    expose:
+      - 5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ReviewsPlatformRestrictionMicroservice
+    volumes:
+      - postgres-restriction-data:/var/lib/postgresql
+
   postgres-category:
     container_name: postgres-category
     image: postgres:latest
@@ -107,4 +165,6 @@ services:
 volumes:
   postgres-account-data: {}
   postgres-category-data: {}
+  postgres-restriction-data: {}
+  postgres-review-data: {}
   redis_data: {}
