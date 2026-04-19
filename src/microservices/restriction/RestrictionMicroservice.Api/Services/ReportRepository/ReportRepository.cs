@@ -35,5 +35,12 @@ namespace RestrictionMicroservice.Api.Services.ReportRepository
             var reportToRemove = await context.Reports.Where(x => x.ReportOnEntityId == reportOnEntityId).ToListAsync();
             context.Reports.RemoveRange(reportToRemove);
         }
+
+        public async Task RemoveAllByReportingUserIdAsync(Guid userId)
+        {
+            var reports = await context.Reports.Where(x => x.ReportingUserId == userId).ToListAsync();
+            if(reports.Count > 0)
+                context.Reports.RemoveRange(reports);
+        }
     }
 }

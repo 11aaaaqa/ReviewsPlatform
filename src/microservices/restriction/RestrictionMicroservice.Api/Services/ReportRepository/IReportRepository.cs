@@ -10,5 +10,6 @@ namespace RestrictionMicroservice.Api.Services.ReportRepository
         Task AddAsync(Report model);
         Task RemoveAsync(Guid reportId);
         Task RemoveAllByReportOnEntityIdAsync(Guid reportOnEntityId);
+        Task RemoveAllByReportingUserIdAsync(Guid userId);
     }
 }

@@ -12,6 +12,6 @@ namespace RestrictionMicroservice.Api.Services.RestrictionRepository
         Task<List<Restriction>> GetAllAsync(int pageNumber, int pageSize);
         Task<List<Restriction>> GetAllAsync(string query, int pageNumber, int pageSize);
         Task AddAsync(Restriction restriction);
-        Task RemoveAsync(Guid restrictionId);
+        void Update(Restriction restriction);
     }
 }

@@ -10,7 +10,7 @@ namespace RestrictionMicroservice.Api.Services.RestrictionRepository
             => await context.Restrictions.SingleOrDefaultAsync(x => x.Id == id);
 
         public async Task<Restriction?> GetActiveRestrictionByRestrictedUserIdAsync(Guid restrictedUserId)
-            => await context.Restrictions.Where(x => x.RestrictedUserId == restrictedUserId)
+            => await context.Restrictions.Where(x => x.RestrictedUserId == restrictedUserId && !x.IsDisabled)
                 .FirstOrDefaultAsync(x => x.ExpiryTime > DateTime.UtcNow);
 
         public async Task<List<Restriction>> GetAllByRestrictedUserIdAsync(Guid restrictedUserId, int pageNumber,
@@ -40,13 +40,9 @@ namespace RestrictionMicroservice.Api.Services.RestrictionRepository
             await context.Restrictions.AddAsync(restriction);
         }
 
-        public async Task RemoveAsync(Guid restrictionId)
+        public void Update(Restriction restriction)
         {
-            var restriction = await context.Restrictions.SingleOrDefaultAsync(x => x.Id == restrictionId);
-            if (restriction == null)
-                throw new ArgumentException("Restriction with current identifier does not exist");
-
-            context.Restrictions.Remove(restriction);
+            context.Restrictions.Update(restriction);
         }
     }
 }
