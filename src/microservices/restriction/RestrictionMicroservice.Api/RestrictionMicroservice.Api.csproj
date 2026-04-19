@@ -22,4 +22,9 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\message-bus\MessageBus\MessageBus.csproj" />
+    <ProjectReference Include="..\..\..\message-bus\RabbitMqMessageBus\RabbitMqMessageBus.csproj" />
+  </ItemGroup>
+
 </Project>
