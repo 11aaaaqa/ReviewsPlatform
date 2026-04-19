@@ -1,11 +1,15 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using RabbitMqMessageBus.Extensions;
 using RestrictionMicroservice.Api.Database;
 using RestrictionMicroservice.Api.Services.ReportRepository;
 using RestrictionMicroservice.Api.Services.RestrictionRepository;
 using RestrictionMicroservice.Api.Services.UnitOfWork;
+using System.Text;
+using MessageBus.Extensions;
+using MessageBus.Messages.Review;
+using RestrictionMicroservice.Api.MessageBus.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +39,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(x =>
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
 builder.Services.AddScoped<IRestrictionRepository, RestrictionRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+builder.Services.AddRabbitMqMessageBus(new RabbitMqOptions
+{
+    UserName = builder.Configuration["RABBITMQ_DEFAULT_USER"]!,
+    Password = builder.Configuration["RABBITMQ_DEFAULT_PASS"]!,
+    HostName = builder.Configuration["RABBITMQ_HOSTNAME"]!,
+    VirtualHost = builder.Configuration["RABBITMQ_DEFAULT_VHOST"]!,
+    QueueName = "RestrictionMicroservice"
+}).AddMessageBusHandler<ReviewRemovedEvent, ReviewRemovedEventConsumer>();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
