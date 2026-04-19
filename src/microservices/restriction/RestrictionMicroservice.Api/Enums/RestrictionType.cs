@@ -4,6 +4,7 @@
     {
         All,
         ReviewPosting,
-        Commenting
+        Commenting,
+        Reporting
     }
 }
