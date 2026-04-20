@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RestrictionMicroservice.Api.Constants;
 using RestrictionMicroservice.Api.DTOs.report;
+using RestrictionMicroservice.Api.Enums;
 using RestrictionMicroservice.Api.Models.Business;
 using RestrictionMicroservice.Api.Services.UnitOfWork;
 
@@ -55,6 +56,11 @@ namespace RestrictionMicroservice.Api.Controllers
         {
             string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
             Guid userId = new Guid(userIdStr);
+
+            var activeRestriction = await unitOfWork.RestrictionRepository.GetActiveRestrictionByRestrictedUserIdAsync(userId);
+            if (activeRestriction != null && (activeRestriction.RestrictionType == RestrictionType.All ||
+                                              activeRestriction.RestrictionType == RestrictionType.Reporting))
+                return BadRequest("User has a restriction that does not allow to add a report");
 
             var report = new Report
             {
