@@ -48,7 +48,7 @@ namespace CategoryMicroservice.Api.Controllers
             if (await unitOfWork.CategoryRepository.GetByIdAsync(model.CategoryId) == null)
                 return BadRequest("Category with current identifier does not exist");
 
-            var subcategoryToAdd = new Subcategory { Id = Guid.NewGuid(), Name = model.Name, CategoryId = model.CategoryId };
+            var subcategoryToAdd = new Subcategory { Id = Guid.NewGuid(), Name = model.Name, CategoryId = model.CategoryId, ReviewsCount = 0};
             await unitOfWork.SubcategoryRepository.AddAsync(subcategoryToAdd);
             await unitOfWork.CompleteAsync();
 
