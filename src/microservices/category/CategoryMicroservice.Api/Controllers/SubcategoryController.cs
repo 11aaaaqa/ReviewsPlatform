@@ -1,5 +1,4 @@
-﻿using System.Security.Claims;
-using CategoryMicroservice.Api.Constants;
+﻿using CategoryMicroservice.Api.Constants;
 using CategoryMicroservice.Api.DTOs.Subcategory;
 using CategoryMicroservice.Api.Models.Business;
 using CategoryMicroservice.Api.Services.UnitOfWork;
@@ -7,6 +6,8 @@ using MessageBus.Messages.Category;
 using MessageBus.Publisher;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using System.Text.RegularExpressions;
 
 namespace CategoryMicroservice.Api.Controllers
 {
@@ -41,6 +42,8 @@ namespace CategoryMicroservice.Api.Controllers
         [Route("add")]
         public async Task<IActionResult> AddSubcategoryAsync([FromBody] AddSubcategoryDto model)
         {
+            model.Name = Regex.Replace(model.Name.Trim(), @"\s+", " ");
+
             var subcategory = await unitOfWork.SubcategoryRepository.FindByNameAsync(model.Name);
             if (subcategory != null)
                 return Conflict("Subcategory with current name already exists");
