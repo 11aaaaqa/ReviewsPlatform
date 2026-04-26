@@ -52,7 +52,7 @@
                         <div class="modal-form">
                             <div style="display: none; color: red; margin-bottom: 3px;" id="userNameModalErrorBlock"></div>
                             <form id="updateUserNameForm" method="post" asp-controller="User" asp-action="UpdateUserName">
-                                <input class="user-profile-input" name="newUserName" maxlength="30" value="@Model.UserName"
+                                <input class="modal-input" name="newUserName" maxlength="30" value="@Model.UserName"
                                        placeholder="Введите новое имя пользователя" required/>
                                 <input id="updateUserNameSubmit" class="btn-green" type="submit" style="margin-top: 7px;" value="Сохранить"/>
                             </form>
@@ -65,7 +65,7 @@
                         <div class="modal-form">
                             <div style="display: none; color: red; margin-bottom: 3px;" id="passwordErrorBlock"></div>
                             <form id="requestPasswordUpdateForm" method="post" asp-controller="User" asp-action="RequestPasswordUpdate">
-                                <input id="requestPasswordUpdateInput" class="user-profile-input" name="userPassword" min="8" maxlength="100"
+                                <input id="requestPasswordUpdateInput" class="modal-input" name="userPassword" min="8" maxlength="100"
                                        placeholder="Введите текущий пароль" type="password" required />
                                 <input id="requestPasswordUpdateSubmit" type="submit" class="btn-green" style="margin-top: 7px;" value="Сохранить" />
                             </form>

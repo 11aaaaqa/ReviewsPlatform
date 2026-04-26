@@ -79,6 +79,26 @@ h1, h2, h3, h4, h5, h6, p {
     position: relative;
 }
 
+.modal-error-block {
+    display: none;
+    color: red;
+    margin-bottom: 3px;
+}
+
+.modal-input {
+    width: 70%;
+    border: 1px solid salmon;
+    border-radius: 5px;
+    padding: 6px 12px;
+    background-color: white;
+    outline: none;
+}
+
+.modal-input:focus {
+    box-shadow: 0 0 8px salmon;
+    transition: box-shadow 0.15s;
+}
+
 .model-error {
     display: block;
     color: red;
@@ -111,6 +131,20 @@ h1, h2, h3, h4, h5, h6, p {
     color: #C46256;
 }
 
+.themed-link-on-hover {
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    text-decoration: none;
+    color: black;
+}
+
+.themed-link-on-hover:hover {
+    color: salmon;
+    background-color: transparent;
+    text-decoration: underline;
+}
+
 .btn {
     display: block;
     border: none;
@@ -126,6 +160,11 @@ h1, h2, h3, h4, h5, h6, p {
 .btn:hover {
     background: #C46256;
     color: white;
+}
+
+.btn:active {
+    background: #C46256 !important;
+    color: white !important;
 }
 
 .btn:focus {
@@ -200,10 +239,52 @@ html {
   font-size: 14px;
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+@media(min-width: 1401px) {
+    .modal-form {
+        width: 30%;
+    }
+}
+
+@media (max-width: 1400px) {
+    .modal-form {
+        width: 40%;
+    }
+}
+
+@media (max-width: 1200px) {
+    .modal-form {
+        width: 50%;
+    }
+}
+
+@media (max-width: 992px) {
+    .modal-form {
+        width: 60%;
+    }
+}
+
+@media (max-width: 768px) {
+    .modal-form {
+        width: 70%;
+    }
+}
+
+@media (max-width: 600px) {
+    .modal-form {
+        width: 80%;
+    }
+}
+
+@media (max-width: 520px) {
+    .modal-form {
+        width: 90%;
+    }
+}
+
+@media(min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
