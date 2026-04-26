@@ -11,3 +11,74 @@
 .remove-category-btn:hover {
     background-color: hsl(0, 100%, 35%);
 }
+
+.category-select {
+    position: relative;
+    width: 250px;
+}
+
+.category-select-selected {
+    background-color: #f1f1f1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    border-radius: 10px;
+    user-select: none;
+}
+
+.category-select-selected::after {
+    content: "";
+    position: absolute;
+    top: 21px;
+    right: 10px;
+    border: 6px solid transparent;
+    border-top-color: #000;
+}
+
+.category-select-items {
+    position: absolute;
+    background-color: #fff;
+    border-radius: 10px;
+    top: 100%;
+    left: 0;
+    right: 0;
+    border: 1px solid #ccc;
+    z-index: 99;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+    user-select: none;
+}
+
+.category-select-items div {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.category-select-items div:hover {
+      background-color: #f1f1f1;
+}
+
+@media(min-width: 1401px) {
+    .category-select-selected::after {
+        top: 21px;
+    }
+}
+
+@media (max-width: 1400px) {
+    .category-select-selected::after {
+        top: 21px;
+    }
+}
+
+@media (max-width: 768px) {
+    .category-select-selected::after {
+        top: 20px;
+    }
+}
+
+@media (max-width: 600px) {
+    .category-select-selected::after {
+        top: 19px;
+    }
+}

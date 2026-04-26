@@ -24,15 +24,15 @@
                 <div class="modal-form">
                     <div class="modal-error-block" id="addSubcategoryModalErrorBlock"></div>
                     <form id="addSubcategoryForm" method="post" asp-controller="Category" asp-action="AddSubcategory">
-                        <div style="margin-bottom: 7px;">
-                            <label for="categories-select">Категория:</label>
-                            <select name="categoryId" id="categories-select">
-                                <option value="@Guid.Empty" disabled selected>Выберите категорию</option>
+                        <div id="categorySelect" class="category-select" style="margin-bottom: 7px;">
+                            <div id="categorySelectSelected" class="category-select-selected">Выберите категорию</div>
+                            <div id="categorySelectItems" class="category-select-items">
                                 @foreach (var category in Model)
                                 {
-                                    <option value="@category.Id">@category.Name</option>
+                                    <div data-value="@category.Id">@category.Name</div>
                                 }
-                            </select>
+                            </div>
+                            <input id="categorySelectInput" type="hidden" name="categoryId" value="@Guid.Empty" />
                         </div>
 
                         <input class="modal-input" name="name" maxlength="@StringLengthDtoConstants.SubcategoryName"
@@ -72,3 +72,4 @@
 </div>
 <script src="~/js/category/addSubcategory.js"></script>
 <script src="~/js/category/addCategory.js"></script>
+<script src="~/js/category/categorySelect.js"></script>
