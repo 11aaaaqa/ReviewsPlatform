@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Web.MVC.Constants;
 
 namespace Web.MVC.DTOs.user
 {
@@ -7,7 +8,7 @@ namespace Web.MVC.DTOs.user
         [Required(ErrorMessage = "Поле \"Адрес эл. почты\" обязательно")]
         [Display(Name = "Адрес эл. почты")]
         [DataType(DataType.EmailAddress)]
-        [StringLength(200)]
+        [StringLength(StringLengthDtoConstants.EmailAddressMax)]
         public string Email { get; set; }
 
         public bool IsRequested { get; set; } = false;

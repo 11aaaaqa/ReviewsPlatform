@@ -99,8 +99,8 @@ namespace Web.MVC.Controllers
 
             if (string.IsNullOrEmpty(model.Name))
                 return BadRequest("Заполните все поля");
-            if (model.Name.Trim().Length > StringLengthDtoConstants.CategoryName)
-                return BadRequest($"Максимальное количество символов - {StringLengthDtoConstants.CategoryName}");
+            if (model.Name.Trim().Length > StringLengthDtoConstants.CategoryNameMax)
+                return BadRequest($"Максимальное количество символов - {StringLengthDtoConstants.CategoryNameMax}");
 
             return BadRequest("Неверный формат");
         }
@@ -131,8 +131,8 @@ namespace Web.MVC.Controllers
 
             if (string.IsNullOrEmpty(model.Name))
                 return BadRequest("Заполните все поля");
-            if (model.Name.Trim().Length > StringLengthDtoConstants.SubcategoryName)
-                return BadRequest($"Максимальное количество символов - {StringLengthDtoConstants.SubcategoryName}");
+            if (model.Name.Trim().Length > StringLengthDtoConstants.SubcategoryNameMax)
+                return BadRequest($"Максимальное количество символов - {StringLengthDtoConstants.SubcategoryNameMax}");
 
             return BadRequest("Неверный формат");
         }

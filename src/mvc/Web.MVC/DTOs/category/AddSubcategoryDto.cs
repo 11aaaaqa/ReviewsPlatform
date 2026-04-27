@@ -6,7 +6,7 @@ namespace Web.MVC.DTOs.category
     public class AddSubcategoryDto
     {
         [Required]
-        [StringLength(StringLengthDtoConstants.SubcategoryName)]
+        [StringLength(StringLengthDtoConstants.SubcategoryNameMax)]
         public string Name { get; set; }
 
         [Required]

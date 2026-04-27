@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Web.MVC.Constants;
 
 namespace Web.MVC.DTOs.user
 {
@@ -7,14 +8,15 @@ namespace Web.MVC.DTOs.user
         [Required(ErrorMessage = "Поле \"Пароль\" обязательно")]
         [Display(Name = "Пароль")]
         [DataType(DataType.Password)]
-        [StringLength(100, MinimumLength = 8, ErrorMessage = "Минимальная длина пароля 8 символов")]
+        [StringLength(StringLengthDtoConstants.PasswordMax, MinimumLength = StringLengthDtoConstants.PasswordMin,
+            ErrorMessage = "Минимальная длина пароля 8 символов")]
         public string NewPassword { get; set; }
 
         [Required(ErrorMessage = "Поле \"Подтвердите пароль\" обязательно")]
         [Display(Name = "Подтвердите пароль")]
         [DataType(DataType.Password)]
         [Compare(nameof(NewPassword), ErrorMessage = "Пароли не совпадают")]
-        [StringLength(100)]
+        [StringLength(StringLengthDtoConstants.PasswordMax)]
         public string ConfirmNewPassword { get; set; }
 
         [Required]

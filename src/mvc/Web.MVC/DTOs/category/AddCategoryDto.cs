@@ -7,7 +7,7 @@ namespace Web.MVC.DTOs.category
     {
         [Required]
         [RegularExpression("^[A-ZА-ЯЁ][a-zа-яё]*(?: [a-zа-яё]+){0,2}$")]
-        [StringLength(StringLengthDtoConstants.CategoryName)]
+        [StringLength(StringLengthDtoConstants.CategoryNameMax)]
         public string Name { get; set; }
     }
 }
