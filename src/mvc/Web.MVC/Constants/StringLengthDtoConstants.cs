@@ -9,5 +9,6 @@
         public const int UserNameOrEmailMax = 200;
         public const int CategoryNameMax = 25;
         public const int SubcategoryNameMax = 50;
+        public const int ItemNameMax = 100;
     }
 }
