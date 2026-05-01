@@ -39,7 +39,7 @@ builder.Services.AddDataProtection()
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddTransient<AuthHandler>();
-builder.Services.AddSingleton<AvatarConverter>();
+builder.Services.AddSingleton<ImageConverter>();
 
 builder.Services.AddHttpClient(HttpClientNameConstants.Default, httpClient =>
 {
