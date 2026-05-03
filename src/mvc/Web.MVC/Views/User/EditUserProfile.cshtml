@@ -91,7 +91,7 @@
                         <div id="errorMessageContainer" class="hidden" style="color: red; margin-bottom: 3px;"></div>
                         <form id="updateAvatarForm" method="post" asp-controller="User" asp-action="UpdateUserAvatar" asp-route-returnUrl="@returnUrl"
                               enctype="multipart/form-data">
-                            <input id="updateAvatarInput" type="file" name="Image" class="hidden"/>
+                            <input id="updateAvatarInput" type="file" name="Image" class="hidden" accept="image/*" />
                         </form>
                         @if (Model.IsAvatarDefault)
                         {
