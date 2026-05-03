@@ -4,12 +4,10 @@ namespace CategoryMicroservice.Api.DTOs.Items
 {
     public class AddItemAndReviewOnIt
     {
-        [RegularExpression("^[A-ZА-ЯЁ0-9]")]
         [StringLength(100)]
         [Required]
         public string ItemName { get; set; }
 
-        [RegularExpression("^[A-ZА-ЯЁ0-9]")]
         [StringLength(100)]
         public string? ItemBrand { get; set; }
 
@@ -23,7 +21,6 @@ namespace CategoryMicroservice.Api.DTOs.Items
 
         [Required]
         [StringLength(200)]
-        [RegularExpression("^[A-ZА-ЯЁ0-9]")]
         public string ShortReview { get; set; }
 
         [Required]

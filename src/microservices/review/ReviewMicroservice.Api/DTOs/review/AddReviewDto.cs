@@ -6,7 +6,6 @@ namespace ReviewMicroservice.Api.DTOs.review
     {
         [Required]
         [StringLength(200)]
-        [RegularExpression("^[A-ZА-ЯЁ0-9]")]
         public string ShortReview { get; set; }
 
         [Required]
