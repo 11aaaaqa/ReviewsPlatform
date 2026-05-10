@@ -10,6 +10,7 @@ using System.Text;
 using MessageBus.Extensions;
 using MessageBus.Messages.Review;
 using RestrictionMicroservice.Api.MessageBus.Consumers;
+using RestrictionMicroservice.Api.Services.GrpcServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +50,8 @@ builder.Services.AddRabbitMqMessageBus(new RabbitMqOptions
     QueueName = "RestrictionMicroservice"
 }).AddMessageBusHandler<ReviewRemovedEvent, ReviewRemovedEventConsumer>();
 
+builder.Services.AddGrpc();
+
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 
@@ -59,6 +62,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.MapGrpcService<RestrictionService>();
 
 app.UseAuthorization();
 
