@@ -1,0 +1,23 @@
+﻿syntax = "proto3";
+
+package RestrictionGrpcService;
+
+service RestrictionInfo {
+	rpc GetRestrictionInfo (GetRestrictionInfoRequest) returns (GetRestrictionInfoReply);
+}
+
+message GetRestrictionInfoRequest {
+	string userId = 1;
+}
+
+enum RestrictionType {
+	NoRestrictions = 0;
+	All = 1;
+	ReviewPosting = 2;
+	Commenting = 3;
+	Reporting = 4;
+}
+
+message GetRestrictionInfoReply {
+	RestrictionType restrictionType = 1;
+}

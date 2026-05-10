@@ -3,9 +3,11 @@ using Microsoft.IdentityModel.Tokens;
 using RabbitMqMessageBus.Extensions;
 using System.Text;
 using MessageBus.Extensions;
+using MessageBus.Messages.Category;
 using MessageBus.Messages.Item;
 using MessageBus.Messages.Saga.CreateItemWIthReview;
 using Microsoft.EntityFrameworkCore;
+using RestrictionGrpcService;
 using ReviewMicroservice.Api.Database;
 using ReviewMicroservice.Api.MessageBus.Consumers;
 using ReviewMicroservice.Api.Services.ReviewServices;
@@ -44,10 +46,17 @@ builder.Services.AddRabbitMqMessageBus(new RabbitMqOptions
         VirtualHost = builder.Configuration["RABBITMQ_DEFAULT_VHOST"]!,
         QueueName = "ReviewMicroservice"
     }).AddMessageBusHandler<ItemCreatedSagaEvent, ItemCreatedSagaEventConsumer>()
-    .AddMessageBusHandler<ItemRemovedEvent, ItemRemovedEventConsumer>();
+    .AddMessageBusHandler<ItemRemovedEvent, ItemRemovedEventConsumer>()
+    .AddMessageBusHandler<CategoryRemovedEvent, CategoryRemovedEventConsumer>()
+    .AddMessageBusHandler<SubcategoryRemovedEvent, SubcategoryRemovedEventConsumer>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+
+builder.Services.AddGrpcClient<RestrictionInfo.RestrictionInfoClient>(x =>
+{
+    x.Address = new Uri(builder.Configuration["Url:RestrictionMicroservice:Grpc"]!);
+});
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
