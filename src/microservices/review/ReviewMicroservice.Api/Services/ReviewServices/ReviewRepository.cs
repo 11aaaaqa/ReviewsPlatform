@@ -64,6 +64,9 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
         public async Task<List<Review>> GetByItemIdAsync(Guid itemId)
             => await context.Reviews.Where(x => x.ItemId == itemId).ToListAsync();
 
+        public async Task<List<Review>> GetByItemIdAsync(List<Guid> itemIds)
+            => await context.Reviews.Where(x => itemIds.Contains(x.ItemId)).ToListAsync();
+
         public async Task<List<Review>> GetByItemIdAsync(Guid itemId, OrderByEstimation orderByEstimation, int pageNumber, int pageSize)
         {
             var reviews = context.Reviews.Where(x => x.ItemId == itemId);
