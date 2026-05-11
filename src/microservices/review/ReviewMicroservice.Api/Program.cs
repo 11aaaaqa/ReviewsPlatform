@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using RestrictionGrpcService;
 using ReviewMicroservice.Api.Database;
 using ReviewMicroservice.Api.MessageBus.Consumers;
+using ReviewMicroservice.Api.Services;
 using ReviewMicroservice.Api.Services.ReviewServices;
 using ReviewMicroservice.Api.Services.UnitOfWork;
 
@@ -52,6 +53,7 @@ builder.Services.AddRabbitMqMessageBus(new RabbitMqOptions
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddSingleton<ImageValidator>();
 
 builder.Services.AddGrpcClient<RestrictionInfo.RestrictionInfoClient>(x =>
 {
