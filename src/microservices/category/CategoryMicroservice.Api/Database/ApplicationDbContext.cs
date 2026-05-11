@@ -23,6 +23,11 @@ namespace CategoryMicroservice.Api.Database
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Subcategory>().HasIndex(y => y.Name).IsUnique();
+            builder.Entity<Subcategory>()
+                .HasMany<Item>()
+                .WithOne()
+                .HasForeignKey(x => x.SubcategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Category>().HasData(new List<Category>
             {
