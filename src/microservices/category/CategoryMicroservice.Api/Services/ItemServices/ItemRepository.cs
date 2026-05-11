@@ -25,6 +25,12 @@ namespace CategoryMicroservice.Api.Services.ItemServices
             return items;
         }
 
+        public async Task<List<Item>> GetAllBySubcategoryIdAsync(Guid subcategoryId)
+            => await context.Items.Where(x => x.SubcategoryId == subcategoryId).ToListAsync();
+
+        public async Task<List<Item>> GetAllBySubcategoryIdAsync(List<Guid> subcategoryIds)
+            => await context.Items.Where(x => subcategoryIds.Contains(x.SubcategoryId)).ToListAsync();
+
         public async Task<List<Item>> FindByContainedCharactersAsync(string name, int pageNumber, int pageSize)
         {
             var items = await context.Items

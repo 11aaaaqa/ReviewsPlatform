@@ -90,6 +90,13 @@ namespace CategoryMicroservice.Api.Controllers
             var category = await unitOfWork.CategoryRepository.GetByIdAsync(categoryId);
             if(category == null)
                 return NotFound("Category with current identifier does not exist");
+            
+            if (category.ReviewsCount > 0)
+                return BadRequest("Category cannot be removed until it has at least 1 review on it");
+
+            List<Guid> subcategoryIds = category.Subcategories.Select(x => x.Id).ToList();
+            List<Item> itemsToDelete = await unitOfWork.ItemRepository.GetAllBySubcategoryIdAsync(subcategoryIds);
+            List<Guid> itemIdsToDelete = itemsToDelete.Select(x => x.Id).ToList();
 
             string categoryName = category.Name;
             string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
@@ -100,7 +107,8 @@ namespace CategoryMicroservice.Api.Controllers
                 await unitOfWork.CategoryRepository.RemoveAsync(categoryId);
                 await unitOfWork.CompleteAsync();
 
-                await messagePublisher.PublishAsync(new CategoryRemovedEvent { CategoryId = categoryId });
+                await messagePublisher.PublishAsync(new CategoryRemovedEvent
+                    { CategoryId = categoryId, ItemIdsOfRemovedCategory = itemIdsToDelete });
 
                 await unitOfWork.CommitTransactionAsync();
             }
