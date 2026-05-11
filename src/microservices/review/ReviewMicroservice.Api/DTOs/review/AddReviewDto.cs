@@ -18,6 +18,6 @@ namespace ReviewMicroservice.Api.DTOs.review
         [Required]
         public Guid ItemId { get; set; }
 
-        public List<IFormFile> Pictures { get; set; } = new();
+        public List<byte[]> Pictures { get; set; } = new();
     }
 }

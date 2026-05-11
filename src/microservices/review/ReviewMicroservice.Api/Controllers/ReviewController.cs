@@ -3,19 +3,21 @@ using MessageBus.Messages.Review;
 using MessageBus.Publisher;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RestrictionGrpcService;
 using ReviewMicroservice.Api.Constants;
 using ReviewMicroservice.Api.DTOs;
 using ReviewMicroservice.Api.DTOs.review;
 using ReviewMicroservice.Api.Enums;
 using ReviewMicroservice.Api.Models.Business;
+using ReviewMicroservice.Api.Services;
 using ReviewMicroservice.Api.Services.UnitOfWork;
 
 namespace ReviewMicroservice.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ReviewController(IUnitOfWork unitOfWork, IMessagePublisher messagePublisher, ILogger<ReviewController> logger)
-        : ControllerBase
+    public class ReviewController(IUnitOfWork unitOfWork, IMessagePublisher messagePublisher, ILogger<ReviewController> logger,
+        RestrictionInfo.RestrictionInfoClient restrictionInfoClient, ImageValidator imageValidator) : ControllerBase
     {
         [HttpGet]
         [Route("get-by-id/{reviewId}")]
@@ -161,20 +163,24 @@ namespace ReviewMicroservice.Api.Controllers
             if (model == null)
                 return BadRequest("Request size exceeds the limit");
 
+            foreach (var pictureSource in model.Pictures)
+            {
+                if(!imageValidator.IsImage(pictureSource)) return BadRequest("Incorrect picture format");
+            }
+
             string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
             Guid userId = new Guid(userIdStr);
-
-            //gRPC to check if user allowed to add
-
-            List<byte[]> pictures = new();
-            if (model.Pictures.Count > 0)
+            try
             {
-                using MemoryStream memoryStream = new MemoryStream();
-                foreach (var picture in model.Pictures)
-                {
-                    await picture.CopyToAsync(memoryStream);
-                    pictures.Add(memoryStream.ToArray());
-                }
+                var restrictionInfoReply = await restrictionInfoClient.GetRestrictionInfoAsync(
+                    new GetRestrictionInfoRequest { UserId = userIdStr });
+                if (restrictionInfoReply.RestrictionType == RestrictionType.All || restrictionInfoReply.RestrictionType == RestrictionType.ReviewPosting)
+                    return Forbid();
+            }
+            catch (Exception e)
+            {
+                logger.LogCritical(e, "Rpc call threw an exception while trying to reach Restriction microservice");
+                return StatusCode(StatusCodes.Status503ServiceUnavailable);
             }
 
             var reviewToAdd = new Review
@@ -182,7 +188,7 @@ namespace ReviewMicroservice.Api.Controllers
                 Id = Guid.NewGuid(), UserId = userId, ItemId = model.ItemId, CreatedAt = DateOnly.FromDateTime(DateTime.UtcNow),
                 IsCreatedWithItem = false, DislikesCount = 0, LikesCount = 0, ItemEstimation = model.ItemEstimation,
                 RejectionReason = null, ReviewStatus = ReviewStatus.UnderConsideration, ShortReview = model.ShortReview,
-                Text = model.Text, Pictures = pictures
+                Text = model.Text, Pictures = model.Pictures
             };
 
             await unitOfWork.ReviewRepository.AddAsync(reviewToAdd);
