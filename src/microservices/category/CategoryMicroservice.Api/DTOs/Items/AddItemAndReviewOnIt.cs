@@ -12,7 +12,7 @@ namespace CategoryMicroservice.Api.DTOs.Items
         public string? ItemBrand { get; set; }
 
         [Required]
-        public IFormFile ItemPicture { get; set; }
+        public byte[] ItemPicture { get; set; }
 
         [Required]
         public Guid SubcategoryId { get; set; }
@@ -30,6 +30,6 @@ namespace CategoryMicroservice.Api.DTOs.Items
         [Required]
         public int ReviewItemEstimation { get; set; }
 
-        public List<IFormFile> ReviewPictures { get; set; } = new();
+        public List<byte[]> ReviewPictures { get; set; } = new();
     }
 }

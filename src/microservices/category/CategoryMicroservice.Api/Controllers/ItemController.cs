@@ -8,16 +8,29 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using CategoryMicroservice.Api.Constants;
+using CategoryMicroservice.Api.Services;
 using MessageBus.Messages.Item;
 using MessageBus.Messages.Saga.CreateItemWIthReview;
+using RestrictionGrpcService;
 
 namespace CategoryMicroservice.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ItemController(IUnitOfWork unitOfWork, IMessagePublisher messagePublisher, ILogger<ItemController> logger) : ControllerBase
+    public class ItemController(IUnitOfWork unitOfWork, IMessagePublisher messagePublisher, ILogger<ItemController> logger,
+        ImageValidator imageValidator, RestrictionInfo.RestrictionInfoClient restrictionInfoClient) : ControllerBase
     {
-        private readonly List<string> availablePictureExtensions = new() { ".jpg", ".png", ".jpeg" };
+
+        [HttpGet]
+        [Route("get-by-id/{itemId}")]
+        public async Task<IActionResult> GetItemByIdAsync([FromRoute] Guid itemId)
+        {
+            var item = await unitOfWork.ItemRepository.GetByIdAsync(itemId);
+            if (item == null)
+                return NotFound("Item with current identifier does not exist");
+
+            return Ok(item);
+        }
 
         [HttpGet]
         [Route("get-all-by-subcategory/{subcategoryId}")]
@@ -70,8 +83,13 @@ namespace CategoryMicroservice.Api.Controllers
             if (model == null)
                 return BadRequest("Request size exceeds the limit");
 
-            if (model.ReviewPictures.Count > 5) 
-                return BadRequest("Review's pictures count exceeds the count of 5");
+            model.ReviewText = model.ReviewText.Trim();
+            model.ShortReview = Regex.Replace(model.ShortReview.Trim(), @"\s+", " ");
+            model.ItemName = Regex.Replace(model.ItemName.Trim(), @"\s+", " ");
+            if (model.ItemBrand != null)
+                model.ItemBrand = Regex.Replace(model.ItemBrand.Trim(), @"\s+", " ");
+            if(string.IsNullOrEmpty(model.ShortReview) || string.IsNullOrEmpty(model.ItemName) || string.IsNullOrEmpty(model.ReviewText))
+                return BadRequest();
 
             if (await unitOfWork.SubcategoryRepository.GetByIdAsync(model.SubcategoryId) == null)
                 return NotFound("Subcategory with current identifier does not exist");
@@ -80,36 +98,27 @@ namespace CategoryMicroservice.Api.Controllers
             if (items.Any(x => x.Status == ItemStatus.Verified && x.SubcategoryId == model.SubcategoryId))
                 return Conflict("Item with current name already exists");
 
-            //gRPC to check if user allowed to add
-
-            bool isItemPictureValid = availablePictureExtensions.Any(x => x == Path.GetExtension(model.ItemPicture.FileName).ToLower());
-            bool isReviewPicturesValid = true;
-            if (model.ReviewPictures.Count > 0)
-                isReviewPicturesValid = model.ReviewPictures.All(x => availablePictureExtensions.Contains(Path.GetExtension(x.FileName).ToLower()));
-
-            if (!isItemPictureValid || !isReviewPicturesValid) return BadRequest("Incorrect picture format");
-
-            using MemoryStream memoryStream = new MemoryStream();
-            await model.ItemPicture.CopyToAsync(memoryStream);
-            byte[] itemPicture = memoryStream.ToArray();
-
-            List<byte[]> reviewsPictures = new();
-            if (model.ReviewPictures.Count > 0)
+            if(!imageValidator.IsImage(model.ItemPicture)) return BadRequest("Incorrect picture format");
+            foreach (var reviewPictureSource in model.ReviewPictures)
             {
-                foreach (var reviewPicture in model.ReviewPictures)
-                {
-                    await reviewPicture.CopyToAsync(memoryStream);
-                    reviewsPictures.Add(memoryStream.ToArray());
-                }
+                if(!imageValidator.IsImage(reviewPictureSource)) return BadRequest("Incorrect picture format");
             }
-
-            model.ShortReview = Regex.Replace(model.ShortReview.Trim(), @"\s+", " ");
-            model.ItemName = Regex.Replace(model.ItemName.Trim(), @"\s+", " ");
-            if(model.ItemBrand != null)
-                model.ItemBrand = Regex.Replace(model.ItemBrand.Trim(), @"\s+", " ");
 
             string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
             Guid userId = new Guid(userIdStr);
+            try
+            {
+                var restrictionInfoReply = await restrictionInfoClient.GetRestrictionInfoAsync(
+                    new GetRestrictionInfoRequest { UserId = userIdStr });
+                if (restrictionInfoReply.RestrictionType == RestrictionType.All || restrictionInfoReply.RestrictionType == RestrictionType.ReviewPosting)
+                    return Forbid();
+            }
+            catch (Exception e)
+            {
+                logger.LogCritical(e, "Rpc call threw an exception while trying to reach Restriction microservice");
+                return StatusCode(StatusCodes.Status503ServiceUnavailable);
+            }
+
             try
             {
                 await unitOfWork.BeginTransactionAsync();
@@ -118,19 +127,19 @@ namespace CategoryMicroservice.Api.Controllers
                 {
                     Id = Guid.NewGuid(), Brand = model.ItemBrand, SubcategoryId = model.SubcategoryId,
                     GeneralEstimation = 0, Name = model.ItemName, ReviewsCount = 0,
-                    Status = ItemStatus.Pending, Picture = itemPicture 
+                    Status = ItemStatus.Pending, Picture = model.ItemPicture 
                 };
                 await unitOfWork.ItemRepository.AddAsync(itemToAdd);
                 await unitOfWork.CompleteAsync();
 
                 await messagePublisher.PublishAsync(new ItemCreatedSagaEvent
                 {
-                    ReviewPictures = reviewsPictures, ReviewItemEstimation = model.ReviewItemEstimation,
+                    ReviewPictures = model.ReviewPictures, ReviewItemEstimation = model.ReviewItemEstimation,
                     ReviewText = model.ReviewText, ShortReview = model.ShortReview, UserIdCreatedBy = userId,
                     ItemId = itemToAdd.Id
                 });
 
-                await unitOfWork.CompleteAsync();
+                await unitOfWork.CommitTransactionAsync();
             }
             catch (Exception e)
             {
