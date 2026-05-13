@@ -8,6 +8,7 @@ using ReviewMicroservice.Api.Constants;
 using ReviewMicroservice.Api.DTOs;
 using ReviewMicroservice.Api.DTOs.review;
 using ReviewMicroservice.Api.Enums;
+using ReviewMicroservice.Api.Models;
 using ReviewMicroservice.Api.Models.Business;
 using ReviewMicroservice.Api.Services;
 using ReviewMicroservice.Api.Services.UnitOfWork;
@@ -33,13 +34,13 @@ namespace ReviewMicroservice.Api.Controllers
         [Authorize(Roles = RoleNames.Admin + "," + RoleNames.Moderator)]
         [HttpGet]
         [Route("get-under-consideration")]
-        public async Task<IActionResult> GetAllReviewsUnderConsiderationAsync(int pageNumber, int pageSize)
+        public async Task<IActionResult> GetAllReviewsUnderConsiderationAsync([FromQuery] Pagination pagination)
         {
             var reviews = await unitOfWork.ReviewRepository.GetAllByStatusAsync(ReviewStatus.UnderConsideration,
-                OrderByDate.Descending, pageNumber, pageSize);
+                OrderByDate.Descending, pagination.PageNumber, pagination.PageSize);
 
             var reviewsNextPage = await unitOfWork.ReviewRepository.GetAllByStatusAsync(ReviewStatus.UnderConsideration,
-                OrderByDate.Descending, pageNumber + 1, pageSize);
+                OrderByDate.Descending, pagination.PageNumber + 1, pagination.PageSize);
 
             return Ok(new ReviewsResult { IsNextPageExisted = reviewsNextPage.Count > 0, Reviews = reviews });
         }
@@ -47,13 +48,13 @@ namespace ReviewMicroservice.Api.Controllers
         [HttpGet]
         [Route("get-by-user-id/{userId}")]
         public async Task<IActionResult> GetAllReviewsByUserIdAsync([FromRoute] Guid userId, ReviewStatus reviewStatus,
-            OrderByDate orderByDate, int pageNumber, int pageSize)
+            OrderByDate orderByDate, [FromQuery] Pagination pagination)
         {
             var reviews =
-                await unitOfWork.ReviewRepository.GetByUserIdAsync(userId, reviewStatus, orderByDate, pageNumber, pageSize);
+                await unitOfWork.ReviewRepository.GetByUserIdAsync(userId, reviewStatus, orderByDate, pagination.PageNumber, pagination.PageSize);
 
             var reviewsNextPage =
-                await unitOfWork.ReviewRepository.GetByUserIdAsync(userId, reviewStatus, orderByDate, pageNumber + 1, pageSize);
+                await unitOfWork.ReviewRepository.GetByUserIdAsync(userId, reviewStatus, orderByDate, pagination.PageNumber + 1, pagination.PageSize);
 
             return Ok(new ReviewsResult { Reviews = reviews, IsNextPageExisted = reviewsNextPage.Count > 0 });
         }
@@ -61,13 +62,13 @@ namespace ReviewMicroservice.Api.Controllers
         [HttpGet]
         [Route("get-by-item-id/{itemId}")]
         public async Task<IActionResult> GetAllReviewsByItemIdAsync([FromRoute] Guid itemId, OrderByDate orderByDate,
-            int pageNumber, int pageSize)
+            [FromQuery] Pagination pagination)
         {
             var reviews = await unitOfWork.ReviewRepository.GetByItemIdAsync(itemId, ReviewStatus.Verified, orderByDate,
-                pageNumber, pageSize);
+                pagination.PageNumber, pagination.PageSize);
 
             var reviewsNextPage = await unitOfWork.ReviewRepository.GetByItemIdAsync(itemId, ReviewStatus.Verified, orderByDate,
-                pageNumber + 1, pageSize);
+                pagination.PageNumber + 1, pagination.PageSize);
 
             return Ok(new ReviewsResult { IsNextPageExisted = reviewsNextPage.Count > 0, Reviews = reviews });
         }
@@ -75,13 +76,13 @@ namespace ReviewMicroservice.Api.Controllers
         [HttpGet]
         [Route("get-by-item-id-by-estimation/{itemId}")]
         public async Task<IActionResult> GetAllReviewsByItemIdByEstimationAsync([FromRoute] Guid itemId, OrderByEstimation orderByEstimation,
-            int pageNumber, int pageSize)
+            [FromQuery] Pagination pagination)
         {
             var reviews =
-                await unitOfWork.ReviewRepository.GetByItemIdAsync(itemId, orderByEstimation, pageNumber, pageSize);
+                await unitOfWork.ReviewRepository.GetByItemIdAsync(itemId, orderByEstimation, pagination.PageNumber, pagination.PageSize);
 
             var reviewsNextPage =
-                await unitOfWork.ReviewRepository.GetByItemIdAsync(itemId, orderByEstimation, pageNumber + 1, pageSize);
+                await unitOfWork.ReviewRepository.GetByItemIdAsync(itemId, orderByEstimation, pagination.PageNumber + 1, pagination.PageSize);
 
             return Ok(new ReviewsResult { Reviews = reviews, IsNextPageExisted = reviewsNextPage.Count > 0 });
         }

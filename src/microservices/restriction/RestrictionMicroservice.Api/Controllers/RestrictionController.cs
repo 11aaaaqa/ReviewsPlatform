@@ -1,10 +1,11 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RestrictionMicroservice.Api.Constants;
 using RestrictionMicroservice.Api.DTOs.restriction;
+using RestrictionMicroservice.Api.Models;
 using RestrictionMicroservice.Api.Models.Business;
 using RestrictionMicroservice.Api.Services.UnitOfWork;
+using System.Security.Claims;
 
 namespace RestrictionMicroservice.Api.Controllers
 {
@@ -26,11 +27,11 @@ namespace RestrictionMicroservice.Api.Controllers
 
         [HttpGet]
         [Route("all")]
-        public async Task<IActionResult> GetAllRestrictionsAsync(int pageNumber, int pageSize)
+        public async Task<IActionResult> GetAllRestrictionsAsync([FromQuery] Pagination pagination)
         {
-            var restrictions = await unitOfWork.RestrictionRepository.GetAllAsync(pageNumber, pageSize);
+            var restrictions = await unitOfWork.RestrictionRepository.GetAllAsync(pagination.PageNumber, pagination.PageSize);
 
-            var restrictionsNextPage = await unitOfWork.RestrictionRepository.GetAllAsync(pageNumber + 1, pageSize);
+            var restrictionsNextPage = await unitOfWork.RestrictionRepository.GetAllAsync(pagination.PageNumber + 1, pagination.PageSize);
             bool isNextPageExisted = restrictionsNextPage.Count > 0;
 
             return Ok(new RestrictionsResult { Restrictions = restrictions, IsNextPageExisted = isNextPageExisted });
@@ -38,11 +39,11 @@ namespace RestrictionMicroservice.Api.Controllers
 
         [HttpGet]
         [Route("find")]
-        public async Task<IActionResult> FindRestrictionsAsync(string query, int pageNumber, int pageSize)
+        public async Task<IActionResult> FindRestrictionsAsync(string query, [FromQuery] Pagination pagination)
         {
-            var restrictions = await unitOfWork.RestrictionRepository.GetAllAsync(query, pageNumber, pageSize);
+            var restrictions = await unitOfWork.RestrictionRepository.GetAllAsync(query, pagination.PageNumber, pagination.PageSize);
 
-            var restrictionsNextPage = await unitOfWork.RestrictionRepository.GetAllAsync(query, pageNumber + 1, pageSize);
+            var restrictionsNextPage = await unitOfWork.RestrictionRepository.GetAllAsync(query, pagination.PageNumber + 1, pagination.PageSize);
             bool isNextPageExisted = restrictionsNextPage.Count > 0;
 
             return Ok(new RestrictionsResult { Restrictions = restrictions, IsNextPageExisted = isNextPageExisted });
@@ -62,13 +63,13 @@ namespace RestrictionMicroservice.Api.Controllers
 
         [HttpGet]
         [Route("get-by-restricted-user/{userId}")]
-        public async Task<IActionResult> GetAllRestrictionsByRestrictedUserIdAsync([FromRoute] Guid userId, int pageNumber, int pageSize)
+        public async Task<IActionResult> GetAllRestrictionsByRestrictedUserIdAsync([FromRoute] Guid userId, [FromQuery] Pagination pagination)
         {
             var restrictions =
-                await unitOfWork.RestrictionRepository.GetAllByRestrictedUserIdAsync(userId, pageNumber, pageSize);
+                await unitOfWork.RestrictionRepository.GetAllByRestrictedUserIdAsync(userId, pagination.PageNumber, pagination.PageSize);
 
             var restrictionsNextPage =
-                await unitOfWork.RestrictionRepository.GetAllByRestrictedUserIdAsync(userId, pageNumber + 1, pageSize);
+                await unitOfWork.RestrictionRepository.GetAllByRestrictedUserIdAsync(userId, pagination.PageNumber + 1, pagination.PageSize);
             bool isNextPageExisted = restrictionsNextPage.Count > 0;
 
             return Ok(new RestrictionsResult { Restrictions = restrictions, IsNextPageExisted = isNextPageExisted });
@@ -76,13 +77,13 @@ namespace RestrictionMicroservice.Api.Controllers
 
         [HttpGet]
         [Route("get-by-restricting-user/{userId}")]
-        public async Task<IActionResult> GetAllRestrictionsByRestrictingUserIdAsync([FromRoute] Guid userId, int pageNumber, int pageSize)
+        public async Task<IActionResult> GetAllRestrictionsByRestrictingUserIdAsync([FromRoute] Guid userId, [FromQuery] Pagination pagination)
         {
             var restrictions =
-                await unitOfWork.RestrictionRepository.GetAllByRestrictingUserIdAsync(userId, pageNumber, pageSize);
+                await unitOfWork.RestrictionRepository.GetAllByRestrictingUserIdAsync(userId, pagination.PageNumber, pagination.PageSize);
 
             var restrictionsNextPage =
-                await unitOfWork.RestrictionRepository.GetAllByRestrictingUserIdAsync(userId, pageNumber + 1, pageSize);
+                await unitOfWork.RestrictionRepository.GetAllByRestrictingUserIdAsync(userId, pagination.PageNumber + 1, pagination.PageSize);
             bool isNextPageExisted = restrictionsNextPage.Count > 0;
 
             return Ok(new RestrictionsResult { Restrictions = restrictions, IsNextPageExisted = isNextPageExisted });
@@ -91,13 +92,13 @@ namespace RestrictionMicroservice.Api.Controllers
         [HttpGet]
         [Route("find-by-restricting-user/{userId}")]
         public async Task<IActionResult> FindRestrictionsByRestrictingUserIdAsync([FromRoute] Guid userId, string query,
-            int pageNumber, int pageSize)
+            [FromQuery] Pagination pagination)
         {
             var restrictions =
-                await unitOfWork.RestrictionRepository.GetAllByRestrictingUserIdAsync(query, userId, pageNumber, pageSize);
+                await unitOfWork.RestrictionRepository.GetAllByRestrictingUserIdAsync(query, userId, pagination.PageNumber, pagination.PageSize);
 
             var restrictionsNextPage =
-                await unitOfWork.RestrictionRepository.GetAllByRestrictingUserIdAsync(query, userId, pageNumber + 1, pageSize);
+                await unitOfWork.RestrictionRepository.GetAllByRestrictingUserIdAsync(query, userId, pagination.PageNumber + 1, pagination.PageSize);
             bool isNextPageExisted = restrictionsNextPage.Count > 0;
 
             return Ok(new RestrictionsResult { Restrictions = restrictions, IsNextPageExisted = isNextPageExisted });

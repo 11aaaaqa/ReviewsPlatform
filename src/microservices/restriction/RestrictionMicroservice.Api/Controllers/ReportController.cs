@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using RestrictionMicroservice.Api.Constants;
 using RestrictionMicroservice.Api.DTOs.report;
 using RestrictionMicroservice.Api.Enums;
+using RestrictionMicroservice.Api.Models;
 using RestrictionMicroservice.Api.Models.Business;
 using RestrictionMicroservice.Api.Services.UnitOfWork;
 
@@ -27,11 +28,11 @@ namespace RestrictionMicroservice.Api.Controllers
 
         [HttpGet]
         [Route("all")]
-        public async Task<IActionResult> GetAllReportsAsync(int pageNumber, int pageSize)
+        public async Task<IActionResult> GetAllReportsAsync([FromQuery] Pagination pagination)
         {
-            var reports = await unitOfWork.ReportRepository.GetAllAsync(pageSize, pageNumber);
+            var reports = await unitOfWork.ReportRepository.GetAllAsync(pagination.PageSize, pagination.PageNumber);
 
-            var reportsNextPage = await unitOfWork.ReportRepository.GetAllAsync(pageSize, pageNumber + 1);
+            var reportsNextPage = await unitOfWork.ReportRepository.GetAllAsync(pagination.PageSize, pagination.PageNumber + 1);
             bool isNextPageExisted = reportsNextPage.Count > 0;
 
             return Ok(new ReportsResult { Reports = reports, IsNextPageExisted = isNextPageExisted });
@@ -39,11 +40,11 @@ namespace RestrictionMicroservice.Api.Controllers
 
         [HttpGet]
         [Route("get-by-user/{userId}")]
-        public async Task<IActionResult> GetAllReportsByUserIdAsync([FromRoute] Guid userId, int pageNumber, int pageSize)
+        public async Task<IActionResult> GetAllReportsByUserIdAsync([FromRoute] Guid userId, [FromQuery] Pagination pagination)
         {
-            var reports = await unitOfWork.ReportRepository.GetAllAsync(userId, pageSize, pageNumber);
+            var reports = await unitOfWork.ReportRepository.GetAllAsync(userId, pagination.PageSize, pagination.PageNumber);
 
-            var reportsNextPage = await unitOfWork.ReportRepository.GetAllAsync(userId, pageSize, pageNumber + 1);
+            var reportsNextPage = await unitOfWork.ReportRepository.GetAllAsync(userId, pagination.PageSize, pagination.PageNumber + 1);
             bool isNextPageExisted = reportsNextPage.Count > 0;
 
             return Ok(new ReportsResult { Reports = reports, IsNextPageExisted = isNextPageExisted });

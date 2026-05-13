@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using CategoryMicroservice.Api.Constants;
+using CategoryMicroservice.Api.Models;
 using CategoryMicroservice.Api.Services;
 using MessageBus.Messages.Item;
 using MessageBus.Messages.Saga.CreateItemWIthReview;
@@ -34,12 +35,12 @@ namespace CategoryMicroservice.Api.Controllers
 
         [HttpGet]
         [Route("get-all-by-subcategory/{subcategoryId}")]
-        public async Task<IActionResult> GetAllItemsBySubcategoryIdAsync([FromRoute] Guid subcategoryId, int pageNumber, int pageSize)
+        public async Task<IActionResult> GetAllItemsBySubcategoryIdAsync([FromRoute] Guid subcategoryId, [FromQuery] Pagination pagination)
         {
-            var items = await unitOfWork.ItemRepository.GetAllBySubcategoryIdAsync(subcategoryId, pageNumber, pageSize);
+            var items = await unitOfWork.ItemRepository.GetAllBySubcategoryIdAsync(subcategoryId, pagination.PageNumber, pagination.PageSize);
 
             var nextPageItems =
-                await unitOfWork.ItemRepository.GetAllBySubcategoryIdAsync(subcategoryId, pageNumber + 1, pageSize);
+                await unitOfWork.ItemRepository.GetAllBySubcategoryIdAsync(subcategoryId, pagination.PageNumber + 1, pagination.PageSize);
 
             bool isNextPageExisted = nextPageItems.Count > 0;
 
@@ -48,12 +49,12 @@ namespace CategoryMicroservice.Api.Controllers
 
         [HttpGet]
         [Route("find-items")]
-        public async Task<IActionResult> FindItemsAsync(string name, int pageNumber, int pageSize)
+        public async Task<IActionResult> FindItemsAsync(string name, [FromQuery] Pagination pagination)
         {
-            var items = await unitOfWork.ItemRepository.FindByContainedCharactersAsync(name, pageNumber, pageSize);
+            var items = await unitOfWork.ItemRepository.FindByContainedCharactersAsync(name, pagination.PageNumber, pagination.PageSize);
 
             var nextPageItems =
-                await unitOfWork.ItemRepository.FindByContainedCharactersAsync(name, pageNumber + 1, pageSize);
+                await unitOfWork.ItemRepository.FindByContainedCharactersAsync(name, pagination.PageNumber + 1, pagination.PageSize);
 
             bool isNextPageExisted = nextPageItems.Count > 0;
 
@@ -62,12 +63,12 @@ namespace CategoryMicroservice.Api.Controllers
 
         [HttpGet]
         [Route("find-items-in-subcategory/{subcategoryId}")]
-        public async Task<IActionResult> FindItemsInSubcategoryAsync(Guid subcategoryId, string name, int pageNumber, int pageSize)
+        public async Task<IActionResult> FindItemsInSubcategoryAsync(Guid subcategoryId, string name, [FromQuery] Pagination pagination)
         {
-            var items = await unitOfWork.ItemRepository.FindByContainedCharactersAsync(subcategoryId, name, pageNumber, pageSize);
+            var items = await unitOfWork.ItemRepository.FindByContainedCharactersAsync(subcategoryId, name, pagination.PageNumber, pagination.PageSize);
 
             var nextPageItems =
-                await unitOfWork.ItemRepository.FindByContainedCharactersAsync(subcategoryId, name, pageNumber + 1, pageSize);
+                await unitOfWork.ItemRepository.FindByContainedCharactersAsync(subcategoryId, name, pagination.PageNumber + 1, pagination.PageSize);
 
             bool isNextPageExisted = nextPageItems.Count > 0;
 
