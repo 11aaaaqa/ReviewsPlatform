@@ -1,39 +1,45 @@
 ﻿@using Web.MVC.Constants
 @model List<Web.MVC.Models.Api_responses.category.CategoryResponse>
-<link rel="stylesheet" href="~/css/review/add-review-select.css"/>
+<link rel="stylesheet" href="~/css/review/add-review-select.css" />
 
-<div>
+<div class="add-review-select-page-block">
     <div style="display: flex; gap: 8px; margin-bottom: 10px;">
         <button id="selectSubcategorySelectionBtn" class="btn">Добавить товар</button>
         <button id="findItemSelectionBtn" class="btn btn-selected">Найти в каталоге</button>
     </div>
-    
-    <div id="selectSubcategoryBlock" class="hidden">
-        @foreach (var category in Model)
-        {
-            <div>
-                <h4>@category.Name</h4>
-                <div style="margin-left: 20px;">
-                    @foreach (var subcategory in category.Subcategories)
-                    {
-                        <p><a class="themed-link-on-hover" asp-controller="Review" asp-action="AddReviewWithItem" asp-route-subcategoryId="@subcategory.Id">
-                            @subcategory.Name
-                        </a></p>
-                    }
+
+    <div class="add-review-select-block">
+        <div id="selectSubcategoryBlock" class="hidden">
+            @foreach (var category in Model)
+            {
+                <div>
+                    <h4>@category.Name</h4>
+                    <div style="margin-left: 20px;">
+                        @foreach (var subcategory in category.Subcategories)
+                        {
+                            <p>
+                                <a class="themed-link-on-hover" asp-controller="Review" asp-action="AddReviewWithItem" asp-route-subcategoryId="@subcategory.Id">
+                                    @subcategory.Name
+                                </a>
+                            </p>
+                        }
+                    </div>
                 </div>
-            </div>
-        }
-    </div>
-    
-    <div id="findItemBlock">
-        <form id="findItemsForm">
-            <div class="flex" style="gap: 7px; margin-bottom: 7px;">
-                <input id="searchItemInput" class="themed-input" type="text" placeholder="Найти товар" maxlength="@StringLengthDtoConstants.ItemNameMax" />
-                <button id="searchItemBtn" class="btn">Найти</button>
-            </div>
-        </form>
-        <div id="foundItemsBlock"></div>
-        <div id="loadSpinnerContainer" class="load-spinner-container"></div>
+            }
+        </div>
+
+        <div id="findItemBlock">
+            <form id="findItemsForm">
+                <div class="flex" style="gap: 7px; margin-bottom: 8px;">
+                    <input id="searchItemInput" class="themed-input" type="text" placeholder="Найти товар" maxlength="@StringLengthDtoConstants.ItemNameMax" />
+                    <button id="searchItemBtn" class="btn">Найти</button>
+                </div>
+            </form>
+            <div id="foundItemsBlock"></div>
+            <div id="add-review-sentinel" style="height: 10px;"></div>
+            <div id="loadSpinnerContainer" class="load-spinner-container"></div>
+            <div id="foundItemsErrorBlock" style="display: none; color: red; margin-top: 10px;"></div>
+        </div>
     </div>
 </div>
 <script>
@@ -41,34 +47,47 @@
     const searchItemBtn = document.getElementById('searchItemBtn');
     const loadSpinnerContainer = document.getElementById('loadSpinnerContainer');
     const foundItemsBlock = document.getElementById('foundItemsBlock');
+    const foundItemsErrorBlock = document.getElementById('foundItemsErrorBlock');
 
     document.getElementById('findItemsForm').addEventListener('submit', function(e) {
         e.preventDefault();
     });
 
-    const pageSize = 50;
+    let query;
+    const pageSize = 30;
     let pageNumber = 1;
     let isNextPageExisted = false;
+    let loading = false;
+    let itemsCanBeLoaded = false;
 
     searchItemBtn.addEventListener('click', async function() {
         if (searchItemInput.value.trim() === '') return;
 
+        foundItemsBlock.innerHTML = '';
+        foundItemsErrorBlock.style.display = 'none';
+        showLoader();
+        query = searchItemInput.value;
         pageNumber = 1;
-        loadSpinnerContainer.innerHTML = '<div class="load-spinner"></div>';
 
-        var response = await fetch(`/items/json/search?query=${encodeURIComponent(searchItemInput.value)}&pageSize=${pageSize}&pageNumber=${pageNumber}`);
+        var response = await fetch(`/items/json/search?query=${encodeURIComponent(query)}&pageSize=${pageSize}&pageNumber=${pageNumber}`);
         if (!response.ok) {
-            loadSpinnerContainer.innerHTML = '';
+            hideLoader();
             foundItemsBlock.textContent = 'Что-то пошло не так. Попробуйте еще раз.';
             return;
         }
 
-        foundItemsBlock.innerHTML = '';
-
         const itemsResult = await response.json();
-        itemsResult.items.forEach(item => {
+        displayItems(itemsResult.items);
+        isNextPageExisted = itemsResult.isNextPageExisted;
+
+        hideLoader();
+        pageNumber++;
+    });
+
+    function displayItems(items) {
+        items.forEach(item => {
             const link = document.createElement('a');
-            link.href = `items/${item.id}/reviews/add`;
+            link.href = `/items/${item.id}/reviews/add`;
             link.classList.add('block-link');
 
             const container = document.createElement('div');
@@ -104,13 +123,54 @@
 
             foundItemsBlock.appendChild(link);
         });
+    }
+
+    function showLoader() {
+        loadSpinnerContainer.innerHTML = '<div class="load-spinner"></div>';
+    }
+
+    function hideLoader() {
+        loadSpinnerContainer.innerHTML = '';
+    }
+
+    const sentinel = document.getElementById('add-review-sentinel');
+    async function loadItems() {
+        if (!itemsCanBeLoaded) {
+            itemsCanBeLoaded = true;
+            return;
+        }
+        if (loading || isNextPageExisted) return;
+
+        foundItemsErrorBlock.style.display = 'none';
+        loading = true;
+        showLoader();
+
+        var response = await fetch(`/items/json/search?query=${encodeURIComponent(query)}&pageSize=${pageSize}&pageNumber=${pageNumber}`);
+        if (!response.ok) {
+            hideLoader();
+            foundItemsErrorBlock.textContent = 'Что-то пошло не так. Попробуйте еще раз.';
+            foundItemsErrorBlock.style.display = 'block';
+            return;
+        }
+
+        const itemsResult = await response.json();
+        displayItems(itemsResult.items);
         isNextPageExisted = itemsResult.isNextPageExisted;
 
-        loadSpinnerContainer.innerHTML = '';
+        hideLoader();
         pageNumber++;
-    });
+        loading = false;
+    }
 
-    //сделать infinity scroll
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            loadItems();
+        }
+    }, {
+        rootMargin: '100px'
+    });
+    observer.observe(sentinel);
+
 
 
 
@@ -136,5 +196,6 @@
 
         findItemBlock.style.display = 'none';
         selectSubcategoryBlock.style.display = 'block';
+        itemsCanBeLoaded = false;
     });
 </script>

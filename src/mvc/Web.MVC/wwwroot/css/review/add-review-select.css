@@ -1,0 +1,52 @@
+﻿.btn-selected {
+    background: #C46256;
+}
+
+.block-link {
+    padding: 15px 8px;
+}
+
+.block-link:not(:last-child) {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.add-review-select-page-block {
+    margin: 0 20%;
+}
+
+.add-review-select-block {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+    padding: 15px 20px;
+}
+
+@media (max-width: 1400px) {
+    .add-review-select-page-block {
+        margin: 0 15%;
+    }
+}
+
+@media (max-width: 1200px) {
+    .add-review-select-page-block {
+        margin: 0 10%;
+    }
+}
+
+@media (max-width: 992px) {
+    .add-review-select-page-block {
+        margin: 0 5%;
+    }
+}
+
+@media (max-width: 768px) {
+    .add-review-select-page-block {
+        margin: 0 2%;
+    }
+}
+
+@media (max-width: 600px) {
+    .add-review-select-page-block {
+        margin: 0;
+    }
+}

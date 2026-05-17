@@ -1,0 +1,438 @@
+﻿@using Web.MVC.Constants
+@model Web.MVC.DTOs.reivew.AddReviewWithItemDto
+<link rel="stylesheet" href="~/css/review/add-review-with-item.css"/>
+
+<div class="add-review-page-block">
+    <input type="hidden" id="reviewTextMaxLength" value="@StringLengthDtoConstants.ReviewTextMax"/>
+    <input type="hidden" id="shortReviewMaxLength" value="@StringLengthDtoConstants.ShortReviewMax" />
+    <form id="addReviewForm" method="post" asp-controller="Review" asp-action="AddReviewWithItem" enctype="multipart/form-data">
+        <div id="errorMessageContainer" class="hidden" style="color: red; margin-bottom: 3px;"></div>
+        <div>
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+            <span class="model-error" asp-validation-for="ItemName"></span>
+            <span class="model-error" asp-validation-for="ItemBrand"></span>
+            <span class="model-error" asp-validation-for="ItemPicture"></span>
+            <span class="model-error" asp-validation-for="ReviewItemEstimation"></span>
+            <span class="model-error" asp-validation-for="ReviewText"></span>
+            <span class="model-error" asp-validation-for="ShortReview"></span>
+        </div>
+        <input type="hidden" asp-for="SubcategoryId"/>
+
+        <div style="margin-bottom: 10px;">
+            <div id="addItemFormPart">
+                <div class="add-review-form-block">
+                    <h4>Название товара</h4>
+                    <input id="itemNameInput" class="themed-input" asp-for="ItemName" placeholder="Введите название товара" required/>
+                </div>
+                <div class="add-review-form-block">
+                    <h4>Бренд товара (если есть)</h4>
+                    <input id="itemBrandInput" class="themed-input" asp-for="ItemBrand" placeholder="Введите бренд товара"/>
+                </div>
+                <div class="add-review-form-block">
+                    <h4>Фотография товара</h4>
+                    <input id="itemPictureInput" class="hidden" asp-for="ItemPicture" accept="image/*" required/>
+                    <img id="itemPictureImg" width="200" height="200" style="display: none; margin-bottom: 7px"/>
+                    <button id="chooseItemPictureBtn" type="button" class="btn-wide-stretched">Выбрать изображение</button>
+                </div>
+            </div>
+
+            <div id="addReviewFormPart" class="hidden">
+                <div class="add-review-form-block">
+                    <h4 style="margin-bottom: 0;">Ваша оценка товара</h4>
+                    <div style="margin: 0;">
+                        <input id="reviewItemEstimationInput" type="hidden" asp-for="ReviewItemEstimation"/>
+                        <span class="add-review-star" data-value="1">&#9733;</span>
+                        <span class="add-review-star" data-value="2">&#9733;</span>
+                        <span class="add-review-star" data-value="3">&#9733;</span>
+                        <span class="add-review-star" data-value="4">&#9733;</span>
+                        <span class="add-review-star" data-value="5">&#9733;</span>
+                    </div>
+                </div>
+                <div class="add-review-form-block">
+                    <h4>Отзыв</h4>
+                    <div class="review-block" id="reviewBlock" contenteditable="true" placeholder="Введите отзыв"></div>
+                    <input id="reviewTextInput" class="hidden" asp-for="ReviewText"/>
+                </div>
+                <div class="add-review-form-block">
+                    <h4>Краткое резюме о товаре</h4>
+                    <div class="review-block" id="shortReviewBlock" contenteditable="true" placeholder="Введите краткое резюме" style="min-height: 75px"></div>
+                    <input id="shortReviewInput" class="hidden" asp-for="ShortReview"/>
+                </div>
+                <div class="add-review-form-block">
+                    <h4>Добавьте фотографии</h4>
+                    <div id="reviewPicturesPreviewBlock" style="display: flex; flex-wrap: wrap;"></div>
+                    <button id="selectReviewPicturesBtn" type="button" class="btn-wide-stretched">Выбрать изображение</button>
+                    <input id="reviewPicturesInput" class="hidden" asp-for="ReviewPictures" accept="image/*" multiple/>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex" style="align-items: center; gap: 8px;">
+            <div>
+                <button id="nextBtn" type="button" class="btn">Далее</button>
+                <button id="prevBtn" type="button" class="btn hidden">Назад</button>
+            </div>
+            <input id="sendFormSubmit" class="btn hidden" type="submit" value="Сохранить"/>
+        </div>
+    </form>
+</div>
+
+<script>
+    const errorMessageContainer = document.getElementById('errorMessageContainer');
+    const pictureExtensions = ['.jpg', '.jpeg', '.png'];
+
+    document.getElementById('addReviewForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        reviewTextInput.value = reviewBlock.innerText.trim();
+        shortReviewInput.value = shortReviewBlock.innerText.trim();
+        document.getElementById('itemNameInput').value = document.getElementById('itemNameInput').value.trim();
+        document.getElementById('itemBrandInput').value = document.getElementById('itemBrandInput').value.trim();
+
+        const dataTransfer = new DataTransfer();
+        filesArray.forEach(file => dataTransfer.items.add(file));
+        reviewPicturesInput.files = dataTransfer.files;
+
+        var formData = new FormData(document.getElementById('addReviewForm'));
+
+        const response = await fetch('/reviews/add',
+            {
+                method: 'POST',
+                body: formData
+            });
+
+        if (response.redirected) {
+            window.location.href = response.url;
+        } else if(response.status === 400) {
+            const result = await response.json();
+
+            errorMessageContainer.textContent = '';
+
+            if (result.errors && result.errors.length > 0) {
+                result.errors.forEach(error => {
+                    const errorItem = document.createElement('div');
+                    errorItem.textContent = error;
+                    errorMessageContainer.appendChild(errorItem);
+                });
+                errorMessageContainer.style.display = 'block';
+            }
+        } else {
+            errorMessageContainer.textContent = 'Что-то пошло не так';
+            errorMessageContainer.style.display = 'block';
+        }
+    });
+
+    function validatePicturesSize(filesToAdd) {
+        let reviewPicturesSizeInBytes = 0;
+        filesArray.forEach(file => {
+            reviewPicturesSizeInBytes += file.size;
+        });
+
+        let itemPictureSizeInBytes = 0;
+        if(itemPictureInput.files && itemPictureInput.files[0])
+            itemPictureSizeInBytes = itemPictureInput.files[0].size;
+
+        let newPicturesSizeInBytes = 0;
+        if (Array.isArray(filesToAdd)) {
+            filesToAdd.forEach(file => {
+                newPicturesSizeInBytes += file.size;
+            });
+        } else if (filesToAdd && filesToAdd.size) {
+            newPicturesSizeInBytes = filesToAdd.size;
+        }
+
+        return (reviewPicturesSizeInBytes + itemPictureSizeInBytes + newPicturesSizeInBytes) < 12 * 1024 * 1024;
+    }
+
+
+
+
+
+
+
+    const reviewPicturesInput = document.getElementById('reviewPicturesInput');
+    const reviewPicturesPreviewBlock = document.getElementById('reviewPicturesPreviewBlock');
+    let filesArray = [];
+
+    document.getElementById('selectReviewPicturesBtn').addEventListener('click', () => {
+        reviewPicturesInput.click();
+    });
+
+    reviewPicturesInput.addEventListener('change', function(event) {
+        const files = Array.from(event.target.files);
+        if (!validatePicturesSize(files)) {
+            errorMessageContainer.textContent = 'Размер изображений не должен превышать 12 МБ';
+            errorMessageContainer.style.display = 'block';
+            return;
+        }
+        errorMessageContainer.style.display = 'none';
+
+        files.forEach(file => {
+            if (!file.type.startsWith('image/')) {
+                this.value = '';
+                errorMessageContainer.textContent = 'Неверный формат изображения';
+                errorMessageContainer.style.display = 'block';
+                return;
+            }
+
+            const fileName = file.name.toLowerCase();
+            if (!pictureExtensions.some(x => fileName.endsWith(x))) {
+                this.value = '';
+                errorMessageContainer.textContent = 'Неверный формат изображения';
+                errorMessageContainer.style.display = 'block';
+                return;
+            }
+        });
+        
+        filesArray = filesArray.concat(files);
+        renderPreviews();
+    });
+
+    function removeImage(index) {
+        filesArray.splice(index, 1);
+        renderPreviews();
+    }
+
+    function renderPreviews() {
+        reviewPicturesPreviewBlock.innerHTML = '';
+        filesArray.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'relative';
+                wrapper.style.display = ' inline-block';
+                wrapper.style.margin = '5px';
+
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.maxWidth = '200px';
+                img.style.maxHeight = '200px';
+
+                const closeBtn = document.createElement('button');
+                closeBtn.type = 'button';
+                closeBtn.innerHTML = '&times;';
+                closeBtn.style.position = 'absolute';
+                closeBtn.style.fontSize = '25px';
+                closeBtn.style.top = '0';
+                closeBtn.style.right = '0';
+                closeBtn.style.background = 'transparent';
+                closeBtn.style.color = 'red';
+                closeBtn.style.border = 'none';
+                closeBtn.style.cursor = 'pointer';
+
+                closeBtn.addEventListener('click', () => {
+                    removeImage(index);
+                });
+
+                wrapper.appendChild(img);
+                wrapper.appendChild(closeBtn);
+                reviewPicturesPreviewBlock.appendChild(wrapper);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+
+
+
+
+
+
+
+    const reviewBlock = document.getElementById('reviewBlock');
+    const shortReviewBlock = document.getElementById('shortReviewBlock');
+
+    const reviewTextInput = document.getElementById('reviewTextInput');
+    const shortReviewInput = document.getElementById('shortReviewInput');
+
+    const reviewTextMaxLength = document.getElementById('reviewTextMaxLength').value;
+    const shortReviewMaxLength = document.getElementById('shortReviewMaxLength').value;
+
+    if (reviewTextInput.value)
+        reviewBlock.innerText = reviewTextInput.value;
+
+    if (shortReviewInput.value)
+        shortReviewBlock.innerText = shortReviewInput.value;
+
+    reviewBlock.addEventListener('beforeinput', (e) => {
+        const currentLength = reviewBlock.innerText.length;
+
+        const selection = window.getSelection();
+        const selectedTextLength = selection.toString().length;
+
+        if (currentLength - selectedTextLength >= reviewTextMaxLength && e.inputType.startsWith('insert')) {
+            e.preventDefault();
+        }
+    });
+
+    shortReviewBlock.addEventListener('beforeinput', (e) => {
+        const currentLength = shortReviewBlock.innerText.length;
+
+        const selection = window.getSelection();
+        const selectedTextLength = selection.toString().length;
+
+        if (currentLength - selectedTextLength >= shortReviewMaxLength && e.inputType.startsWith('insert')) {
+            e.preventDefault();
+        }
+    });
+
+    reviewBlock.addEventListener('paste', (e) => {
+        const paste = (e.clipboardData || window.clipboardData).getData('text');
+        const currentLength = reviewBlock.innerText.length;
+        const selection = window.getSelection().toString().length;
+
+        if (currentLength - selection + paste.length > reviewTextMaxLength) {
+            e.preventDefault();
+            const allowedLength = reviewTextMaxLength - (currentLength - selection);
+            if (allowedLength > 0) {
+                document.execCommand('insertText', false, paste.substring(0, allowedLength));
+            }
+        }
+    });
+
+    shortReviewBlock.addEventListener('paste', (e) => {
+        const paste = (e.clipboardData || window.clipboardData).getData('text');
+        const currentLength = reviewBlock.innerText.length;
+        const selection = window.getSelection().toString().length;
+
+        if (currentLength - selection + paste.length > shortReviewMaxLength) {
+            e.preventDefault();
+            const allowedLength = shortReviewMaxLength - (currentLength - selection);
+            if (allowedLength > 0) {
+                document.execCommand('insertText', false, paste.substring(0, allowedLength));
+            }
+        }
+    });
+
+
+
+
+
+
+
+
+
+    const stars = document.querySelectorAll('.add-review-star');
+    const ratingInput = document.getElementById('reviewItemEstimationInput');
+
+    if(ratingInput.value)
+        highlightStars(ratingInput.value);
+
+    stars.forEach(star => {
+        star.addEventListener('mouseenter', function() {
+            const value = star.dataset.value;
+            highlightStars(value);
+        });
+        star.addEventListener('mouseleave', function() {
+            highlightStars(ratingInput.value);
+        });
+        star.addEventListener('click', function() {
+            ratingInput.value = star.dataset.value;
+            highlightStars(star.dataset.value);
+        });
+    });
+
+    function highlightStars(rating) {
+        stars.forEach(star => {
+            if (star.dataset.value <= rating) {
+                star.classList.add('selected');
+            } else {
+                star.classList.remove('selected');
+            }
+        });
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    const itemPictureInput = document.getElementById('itemPictureInput');
+    const itemPictureImg = document.getElementById('itemPictureImg');
+
+    document.getElementById('chooseItemPictureBtn').addEventListener('click', () => {
+        itemPictureInput.click();
+    });
+
+    itemPictureInput.addEventListener('change', function(e) {
+        const file = this.files[0];
+        if (!validatePicturesSize(file)) {
+            errorMessageContainer.textContent = 'Размер изображений не должен превышать 12 МБ';
+            errorMessageContainer.style.display = 'block';
+            return;
+        }
+        errorMessageContainer.style.display = 'none';
+
+        if (!file.type.startsWith('image/')) {
+            this.value = '';
+            errorMessageContainer.textContent = 'Неверный формат изображения';
+            errorMessageContainer.style.display = 'block';
+            return;
+        }
+
+        const fileName = file.name.toLowerCase();
+        if (!pictureExtensions.some(x => fileName.endsWith(x))) {
+            this.value = '';
+            errorMessageContainer.textContent = 'Неверный формат изображения';
+            errorMessageContainer.style.display = 'block';
+            return;
+        }
+
+        errorMessageContainer.style.display = 'none';
+        if (itemPictureImg.src && itemPictureImg.src.startsWith('blob:')) {
+            URL.revokeObjectURL(itemPictureImg.src);
+        }
+        itemPictureImg.src = URL.createObjectURL(file);
+        itemPictureImg.style.display = 'block';
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+    const nextBtn = document.getElementById('nextBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const sendFormSubmit = document.getElementById('sendFormSubmit');
+    const addItemFormPart = document.getElementById('addItemFormPart');
+    const addReviewFormPart = document.getElementById('addReviewFormPart');
+
+    nextBtn.addEventListener('click', () => {
+        if (document.getElementById('itemNameInput').value && itemPictureInput.value) {
+            nextBtn.classList.add('hidden');
+            prevBtn.classList.remove('hidden');
+            sendFormSubmit.classList.remove('hidden');
+
+            addItemFormPart.classList.add('hidden');
+            addReviewFormPart.classList.remove('hidden');
+
+            if (errorMessageContainer.textContent === 'Заполните все поля') {
+                errorMessageContainer.style.display = 'none';
+            }
+        } else {
+            errorMessageContainer.textContent = 'Заполните все поля';
+            errorMessageContainer.style.display = 'block';
+        }
+    });
+
+    prevBtn.addEventListener('click', () => {
+        nextBtn.classList.remove('hidden');
+        prevBtn.classList.add('hidden');
+        sendFormSubmit.classList.add('hidden');
+
+        addItemFormPart.classList.remove('hidden');
+        addReviewFormPart.classList.add('hidden');
+    });
+</script>
