@@ -40,6 +40,7 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddTransient<AuthHandler>();
 builder.Services.AddSingleton<ImageConverter>();
+builder.Services.AddSingleton<SortService>();
 
 builder.Services.AddHttpClient(HttpClientNameConstants.Default, httpClient =>
 {

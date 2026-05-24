@@ -17,11 +17,13 @@ namespace Web.MVC.Controllers
         private readonly IHttpClientFactory httpClientFactory;
         private readonly ImageConverter imageConverter;
         private readonly ILogger<ReviewController> logger;
-        public ReviewController(IHttpClientFactory httpClientFactory, ImageConverter imageConverter, ILogger<ReviewController> logger)
+        private readonly SortService sortService;
+        public ReviewController(IHttpClientFactory httpClientFactory, ImageConverter imageConverter, ILogger<ReviewController> logger, SortService sortService)
         {
             this.httpClientFactory = httpClientFactory;
             this.imageConverter = imageConverter;
             this.logger = logger;
+            this.sortService = sortService;
         }
 
         [Authorize]
@@ -111,7 +113,7 @@ namespace Web.MVC.Controllers
             categoriesResponse.EnsureSuccessStatusCode();
             var categories = await categoriesResponse.Content.ReadFromJsonAsync<List<CategoryResponse>>();
 
-            return View(categories);
+            return View(sortService.SortCategories(categories!));
         }
 
         [Authorize]
