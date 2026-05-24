@@ -207,6 +207,9 @@ namespace ReviewMicroservice.Api.Controllers
             if (review == null)
                 return NotFound("Review with current identifier does not exist");
 
+            if (review.ReviewStatus != ReviewStatus.UnderConsideration)
+                return BadRequest("Review is not in Under consideration status");
+
             try
             {
                 await unitOfWork.BeginTransactionAsync();
@@ -241,6 +244,9 @@ namespace ReviewMicroservice.Api.Controllers
             var review = await unitOfWork.ReviewRepository.GetByIdAsync(model.ReviewId);
             if (review == null)
                 return NotFound("Review with current identifier does not exist");
+
+            if (review.ReviewStatus != ReviewStatus.UnderConsideration)
+                return BadRequest("Review is not in Under consideration status");
 
             try
             {
