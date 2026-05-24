@@ -58,7 +58,6 @@
     let pageNumber = 1;
     let isNextPageExisted = false;
     let loading = false;
-    let itemsCanBeLoaded = false;
 
     searchItemBtn.addEventListener('click', async function() {
         if (searchItemInput.value.trim() === '') return;
@@ -135,11 +134,7 @@
 
     const sentinel = document.getElementById('add-review-sentinel');
     async function loadItems() {
-        if (!itemsCanBeLoaded) {
-            itemsCanBeLoaded = true;
-            return;
-        }
-        if (loading || isNextPageExisted) return;
+        if (loading || !isNextPageExisted || !query) return;
 
         foundItemsErrorBlock.style.display = 'none';
         loading = true;
@@ -196,6 +191,5 @@
 
         findItemBlock.style.display = 'none';
         selectSubcategoryBlock.style.display = 'block';
-        itemsCanBeLoaded = false;
     });
 </script>
