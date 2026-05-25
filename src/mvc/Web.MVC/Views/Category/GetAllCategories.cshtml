@@ -23,7 +23,9 @@
                 <h5>@category.Name</h5>
                 @foreach (var subcategory in category.Subcategories)
                 {
-                    <p><a class="themed-link-on-hover">@subcategory.Name</a></p>
+                    <p><a class="themed-link-on-hover" asp-controller="Category" asp-action="GetItemsBySubcategoryId" asp-route-subcategoryId="@subcategory.Id">
+                        @subcategory.Name
+                    </a></p>
                 }
             </div>
         }

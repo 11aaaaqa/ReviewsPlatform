@@ -1,12 +1,14 @@
 ﻿using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Web;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Web.MVC.Constants;
 using Web.MVC.DTOs.category;
 using Web.MVC.Models.Api_responses.category;
 using Web.MVC.Models.View_models.Category;
+using Web.MVC.Services;
 
 namespace Web.MVC.Controllers
 {
@@ -14,10 +16,14 @@ namespace Web.MVC.Controllers
     {
         private readonly IHttpClientFactory httpClientFactory;
         private readonly ILogger<CategoryController> logger;
-        public CategoryController(IHttpClientFactory httpClientFactory, ILogger<CategoryController> logger)
+        private readonly ImageConverter imageConverter;
+        private readonly SortService sortService;
+        public CategoryController(IHttpClientFactory httpClientFactory, ILogger<CategoryController> logger, ImageConverter imageConverter, SortService sortService)
         {
             this.httpClientFactory = httpClientFactory;
             this.logger = logger;
+            this.imageConverter = imageConverter;
+            this.sortService = sortService;
         }
 
         [HttpGet]
@@ -27,9 +33,10 @@ namespace Web.MVC.Controllers
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
 
             var categoriesResponse = await httpClient.GetAsync("/api/Category/all");
+            categoriesResponse.EnsureSuccessStatusCode();
             var categories = await categoriesResponse.Content.ReadFromJsonAsync<List<CategoryResponse>>();
 
-            categories = SortCategories(categories!);
+            categories = sortService.SortCategories(categories!);
 
             bool isUserAllowedToAddCategory = User.Identity.IsAuthenticated && User.IsInRole(RoleNames.Admin);
 
@@ -44,9 +51,10 @@ namespace Web.MVC.Controllers
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
 
             var categoriesResponse = await httpClient.GetAsync("/api/Category/all");
+            categoriesResponse.EnsureSuccessStatusCode();
             var categories = await categoriesResponse.Content.ReadFromJsonAsync<List<CategoryResponse>>();
 
-            categories = SortCategories(categories!);
+            categories = sortService.SortCategories(categories!);
 
             return View(categories);
         }
@@ -137,21 +145,114 @@ namespace Web.MVC.Controllers
             return BadRequest("Неверный формат");
         }
 
-        private List<CategoryResponse> SortCategories(List<CategoryResponse> categories)
+        [HttpGet]
+        [Route("categories/{subcategoryId}")]
+        public async Task<IActionResult> GetItemsBySubcategoryId([FromRoute] Guid subcategoryId, string? query)
         {
-            categories = categories
-                .OrderBy(x => x.Name.ToLower().Contains("разное") || x.Name.ToLower().Contains("другое"))
-                .ThenBy(x => x.ReviewsCount)
-                .Select(x => new CategoryResponse
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+
+            var subcategoryResponse= await httpClient.GetAsync($"/api/Subcategory/get-by-id/{subcategoryId}");
+            subcategoryResponse.EnsureSuccessStatusCode();
+            var subcategory = await subcategoryResponse.Content.ReadFromJsonAsync<SubcategoryResponse>();
+
+            int pageSize = 10; //изменить на 30
+            int pageNumber = 1;
+
+            ItemsResult itemsResult;
+
+            if (query == null)
+            {
+                var itemsResponse = await httpClient.GetAsync(
+                    $"/api/Item/get-all-by-subcategory/{subcategoryId}?pageNumber={pageNumber}&pageSize={pageSize}");
+                itemsResponse.EnsureSuccessStatusCode();
+                itemsResult = await itemsResponse.Content.ReadFromJsonAsync<ItemsResult>();
+            }
+            else
+            {
+                query = HttpUtility.UrlEncode(query);
+                var itemsResponse = await httpClient.GetAsync(
+                    $"/api/Item/find-items-in-subcategory/{subcategoryId}?name={query}&pageNumber={pageNumber}&pageSize={pageSize}");
+                itemsResponse.EnsureSuccessStatusCode();
+                itemsResult = await itemsResponse.Content.ReadFromJsonAsync<ItemsResult>();
+            }
+
+            List<ItemDisplay> items = new List<ItemDisplay>();
+            foreach (var item in itemsResult.Items)
+            {
+                items.Add(new ItemDisplay
                 {
-                    Name = x.Name,
-                    Id = x.Id,
-                    ReviewsCount = x.ReviewsCount,
-                    Subcategories = x.Subcategories
-                        .OrderBy(c => c.Name.ToLower().Contains("разное") || c.Name.ToLower().Contains("другое"))
-                        .ThenBy(c => c.ReviewsCount).ToList()
-                }).ToList();
-            return categories;
+                    Id = item.Id, Brand = item.Brand, GeneralEstimation = item.GeneralEstimation,
+                    Name = item.Name, SubcategoryId = item.SubcategoryId, ReviewsCount = item.ReviewsCount,
+                    PictureSrc = imageConverter.GetImageSrc(item.Picture)
+                });
+            }
+
+            return View(new GetItemsBySubcategoryIdViewModel
+            {
+                Subcategory = subcategory!, Items = items, IsNextPageExisted = itemsResult.IsNextPageExisted, PageSize = pageSize
+            });
+        }
+
+        [Route("categories/{subcategoryId}/json")] //sensitive GetItemsBySubcategoryId
+        public async Task<IActionResult> GetItemsBySubcategoryIdJson([FromRoute] Guid subcategoryId, string? query, int pageNumber, int pageSize)
+        {
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+
+            ItemsResult itemsResult;
+
+            if (query == null)
+            {
+                var itemsResponse = await httpClient.GetAsync(
+                    $"/api/Item/get-all-by-subcategory/{subcategoryId}?pageNumber={pageNumber}&pageSize={pageSize}");
+                itemsResponse.EnsureSuccessStatusCode();
+                itemsResult = await itemsResponse.Content.ReadFromJsonAsync<ItemsResult>();
+            }
+            else
+            {
+                query = HttpUtility.UrlEncode(query);
+                var itemsResponse = await httpClient.GetAsync(
+                    $"/api/Item/find-items-in-subcategory/{subcategoryId}?name={query}&pageNumber={pageNumber}&pageSize={pageSize}");
+                itemsResponse.EnsureSuccessStatusCode();
+                itemsResult = await itemsResponse.Content.ReadFromJsonAsync<ItemsResult>();
+            }
+
+            List<ItemDisplay> items = new List<ItemDisplay>();
+            foreach (var item in itemsResult.Items)
+            {
+                items.Add(new ItemDisplay
+                {
+                    Id = item.Id, Brand = item.Brand, GeneralEstimation = item.GeneralEstimation, Name = item.Name,
+                    SubcategoryId = item.SubcategoryId, ReviewsCount = item.ReviewsCount, PictureSrc = imageConverter.GetImageSrc(item.Picture)
+                });
+            }
+
+            return new JsonResult(new { items, itemsResult.IsNextPageExisted });
+        }
+
+        [Route("items/json/search")] //sensitive AddReviewSelect view
+        public async Task<IActionResult> FindItemsJson(string query, int pageNumber, int pageSize)
+        {
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+
+            query = HttpUtility.UrlEncode(query);
+
+            var findItemsResponse = await httpClient.GetAsync(
+                $"/api/Item/find-items?name={query}&pageNumber={pageNumber}&pageSize={pageSize}");
+            findItemsResponse.EnsureSuccessStatusCode();
+            var itemsResult = await findItemsResponse.Content.ReadFromJsonAsync<ItemsResult>();
+
+            var model = new FindItemsJsonViewModel { IsNextPageExisted = itemsResult!.IsNextPageExisted, Items = new List<ItemDisplay>() };
+            foreach (var itemResponse in itemsResult.Items)
+            {
+                model.Items.Add(new ItemDisplay
+                {
+                    Brand = itemResponse.Brand, GeneralEstimation = double.Round(itemResponse.GeneralEstimation, 1), Id = itemResponse.Id,
+                    Name = itemResponse.Name, SubcategoryId = itemResponse.SubcategoryId, ReviewsCount = itemResponse.ReviewsCount,
+                    PictureSrc = imageConverter.GetImageSrc(itemResponse.Picture)
+                });
+            }
+
+            return new JsonResult(model);
         }
     }
 }
