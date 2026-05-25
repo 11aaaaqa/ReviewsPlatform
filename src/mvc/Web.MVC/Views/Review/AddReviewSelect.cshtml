@@ -68,7 +68,7 @@
         query = searchItemInput.value;
         pageNumber = 1;
 
-        var response = await fetch(`/items/json/search?query=${encodeURIComponent(query)}&pageSize=${pageSize}&pageNumber=${pageNumber}`);
+        const response = await fetch(`/items/json/search?query=${encodeURIComponent(query)}&pageSize=${pageSize}&pageNumber=${pageNumber}`);
         if (!response.ok) {
             hideLoader();
             foundItemsBlock.textContent = 'Что-то пошло не так. Попробуйте еще раз.';
@@ -136,8 +136,8 @@
     async function loadItems() {
         if (loading || !isNextPageExisted || !query) return;
 
-        foundItemsErrorBlock.style.display = 'none';
         loading = true;
+        foundItemsErrorBlock.style.display = 'none';
         showLoader();
 
         var response = await fetch(`/items/json/search?query=${encodeURIComponent(query)}&pageSize=${pageSize}&pageNumber=${pageNumber}`);
@@ -145,6 +145,7 @@
             hideLoader();
             foundItemsErrorBlock.textContent = 'Что-то пошло не так. Попробуйте еще раз.';
             foundItemsErrorBlock.style.display = 'block';
+            loading = false;
             return;
         }
 

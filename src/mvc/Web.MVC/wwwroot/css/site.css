@@ -157,6 +157,17 @@ h1, h2, h3, h4, h5, h6, p {
     background-color: #f1f1f1;
 }
 
+.block-link-colored {
+    display: block;
+    text-decoration: none;
+    color: black;
+    cursor: pointer;
+}
+
+.block-link-colored:hover {
+    color: salmon;
+}
+
 .load-spinner-container {
     text-align: center;
 }
