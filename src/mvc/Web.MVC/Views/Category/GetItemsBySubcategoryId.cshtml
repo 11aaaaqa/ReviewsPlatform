@@ -24,7 +24,12 @@
                             <img src="@item.PictureSrc" style="width: 120px; height: 120px; object-fit: cover;"/>
                             <div>
                                 <h5 style="margin-bottom: 3px;">@item.Name</h5>
-                                <p>Рейтинг: @item.GeneralEstimation</p>
+                                <div style="display: flex; gap: 5px; align-items: center;">
+                                    <div class="star-rating">
+                                        <div class="star-rating-fill" data-rating="@item.GeneralEstimation">★★★★★</div>
+                                    </div>
+                                    <p style="margin-top: 3px;">Рейтинг: @item.GeneralEstimation</p>
+                                </div>
                                 @if (item.Brand != null)
                                 {
                                     <p>Компания: @item.Brand</p>
@@ -122,9 +127,27 @@
             h5.textContent = item.name;
             h5.style.marginBottom = '3px';
             itemInfoBlock.appendChild(h5);
+
+            const ratingBlock = document.createElement('div');
+            ratingBlock.style.display = 'flex';
+            ratingBlock.style.gap = '5px';
+            ratingBlock.style.alignItems = 'center';
+            const starRating = document.createElement('div');
+            starRating.classList.add('star-rating');
+            const starRatingFill = document.createElement('div');
+            starRatingFill.classList.add('star-rating-fill');
+            starRatingFill.style.width = `${item.generalEstimation * 20}%`;
+            starRatingFill.textContent = '★★★★★';
+            starRating.appendChild(starRatingFill);
+
             const ratingP = document.createElement('p');
             ratingP.textContent = `Рейтинг: ${item.generalEstimation}`;
-            itemInfoBlock.appendChild(ratingP);
+            ratingP.style.marginTop = '3px';
+
+            ratingBlock.appendChild(starRating);
+            ratingBlock.appendChild(ratingP);
+            itemInfoBlock.appendChild(ratingBlock);
+
             if (item.brand) {
                 const brandP = document.createElement('p');
                 brandP.textContent = `Компания: ${item.brand}`;
@@ -143,4 +166,11 @@
             itemsBlock.appendChild(itemBlock);
         });
     }
+
+    const starsToFill = document.querySelectorAll('.star-rating-fill');
+    starsToFill.forEach(stars => {
+        const rating = stars.dataset.rating;
+        const width = rating * 20;
+        stars.style.width = `${width}%`;
+    });
 </script>

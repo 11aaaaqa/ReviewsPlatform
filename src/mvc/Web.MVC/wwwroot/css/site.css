@@ -1,4 +1,4 @@
-p {
+﻿p {
     margin: 0;
     padding: 0;
 }
@@ -185,6 +185,28 @@ h1, h2, h3, h4, h5, h6, p {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+.star-rating {
+    font-size: 23px;
+    display: inline-block;
+    position: relative;
+    color: #ccc;
+}
+
+.star-rating::before {
+    content: '★★★★★';
+    letter-spacing: 2px;
+}
+
+.star-rating-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    letter-spacing: 2px;
+    color: #ffca28;
 }
 
 .themed-input {
