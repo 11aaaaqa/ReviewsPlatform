@@ -155,7 +155,7 @@ namespace Web.MVC.Controllers
             subcategoryResponse.EnsureSuccessStatusCode();
             var subcategory = await subcategoryResponse.Content.ReadFromJsonAsync<SubcategoryResponse>();
 
-            int pageSize = 10; //изменить на 30
+            int pageSize = 30;
             int pageNumber = 1;
 
             ItemsResult itemsResult;

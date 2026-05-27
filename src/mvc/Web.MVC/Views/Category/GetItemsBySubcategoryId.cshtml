@@ -26,7 +26,7 @@
                                 <h5 style="margin-bottom: 3px;">@item.Name</h5>
                                 <div style="display: flex; gap: 5px; align-items: center;">
                                     <div class="star-rating">
-                                        <div class="star-rating-fill" data-rating="@item.GeneralEstimation">★★★★★</div>
+                                        <div class="star-rating-fill" style="width: @(item.GeneralEstimation * 20)%">★★★★★</div>
                                     </div>
                                     <p style="margin-top: 3px;">Рейтинг: @item.GeneralEstimation</p>
                                 </div>
@@ -166,11 +166,4 @@
             itemsBlock.appendChild(itemBlock);
         });
     }
-
-    const starsToFill = document.querySelectorAll('.star-rating-fill');
-    starsToFill.forEach(stars => {
-        const rating = stars.dataset.rating;
-        const width = rating * 20;
-        stars.style.width = `${width}%`;
-    });
 </script>
