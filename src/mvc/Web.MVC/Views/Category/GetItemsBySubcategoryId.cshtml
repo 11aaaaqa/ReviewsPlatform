@@ -19,7 +19,7 @@
             @foreach (var item in Model.Items)
             {
                 <div class="item-block">
-                    <a class="block-link-colored">
+                    <a class="block-link-colored" asp-controller="Review" asp-action="GetReviewsByItemId" asp-route-itemId="@item.Id">
                         <div class="flex" style="gap: 12px; align-items: center;">
                             <img src="@item.PictureSrc" style="width: 120px; height: 120px; object-fit: cover;"/>
                             <div>
@@ -110,6 +110,7 @@
 
             const a = document.createElement('a');
             a.classList.add('block-link-colored');
+            a.href = `/items/${item.id}/reviews`;
 
             const itemDisplayBlock = document.createElement('div');
             itemDisplayBlock.style.display = 'flex';
