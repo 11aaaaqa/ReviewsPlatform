@@ -1,0 +1,75 @@
+﻿@model Web.MVC.Models.View_models.Review.GetReviewsByItemIdViewModel
+<link rel="stylesheet" href="~/css/review/get-reviews-by-item-id.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+@{
+    string GetReviewWord(int count)
+    {
+        int mod100 = count % 100;
+        int mod10 = count % 10;
+
+        if (mod10 == 1 && mod100 != 11) return "отзыв";
+        if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "отзыва";
+        return "отзывов";
+    }
+}
+
+<div class="get-reviews-page-block">
+    <div class="item-info-block">
+        <h3 style="margin-bottom: 18px;">@Model.Item.Name — отзывы</h3>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <img src="@Model.Item.PictureSrc" style="max-width: 220px; max-height: 220px;"/>
+            <div>
+                <div class="star-rating" style="font-size: 30px;">
+                    <div class="star-rating-fill" style="width: @(Model.Item.GeneralEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                </div>
+                <p style="color: gray; font-size: 14px; font-weight: 700;">
+                    Среднее: @Model.Item.GeneralEstimation (@Model.Item.ReviewsCount @GetReviewWord(Model.Item.ReviewsCount))
+                </p>
+                <a style="margin: 10px 0 10px 0;" class="btn-wide-stretched" asp-controller="Review" asp-action="AddReview" asp-route-itemId="@Model.Item.Id">
+                    Написать отзыв
+                </a>
+                @if (Model.Item.Brand != null)
+                {
+                    <p style="font-size: 15px;">Бренд: @Model.Item.Brand</p>
+                }
+            </div>
+        </div>
+    </div>
+    
+    <div>
+        @foreach (var review in Model.Reviews)
+        {
+            <div class="review-block">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="get-reviews-flex">
+                        <img src="@review.User.AvatarSrc" style="width: 30px; height: 30px; object-fit: cover;"/>
+                        <p><a class="block-link-colored" asp-controller="User" asp-action="GetUserById" asp-route-userId="@review.User.Id">
+                            @review.User.UserName
+                        </a></p>
+                    </div>
+                    <p style="color: rgba(125, 125, 125, 0.7);">@review.CreatedAt.ToString("dd.MM.yyyy")</p>
+                </div>
+                <div class="get-reviews-flex">
+                    <p style="font-weight: 700; margin-top: 3px;">Оценка:</p>
+                    <div class="star-rating">
+                        <div class="star-rating-fill" style="width: @(review.ItemEstimation * 20)%;">★★★★★</div>
+                    </div>
+                </div>
+                <a class="block-link-colored" style="margin: 10px 0 15px 0;"> @* ссылка на отзыв *@
+                    <div>@review.Text</div>
+                </a>
+                <div style="display: flex; gap: 10px;">
+                    <div class="get-reviews-flex">
+                        <i class="fa-regular fa-thumbs-up"></i>
+                        <span>@review.LikesCount</span>
+                    </div>
+                    <div class="get-reviews-flex">
+                        <i class="fa-regular fa-thumbs-down"></i>
+                        <span>@review.DislikesCount</span>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
