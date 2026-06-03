@@ -12,6 +12,5 @@ namespace Web.MVC.Models.View_models.Review
 
         public OrderByDate? Date { get; set; }
         public OrderByEstimation? Estimation { get; set; }
-        public int? Stars { get; set; }
     }
 }

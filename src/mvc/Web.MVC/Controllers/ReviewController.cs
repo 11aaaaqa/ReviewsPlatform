@@ -207,7 +207,7 @@ namespace Web.MVC.Controllers
 
         [HttpGet]
         [Route("items/{itemId}/reviews")] //sensible GetItemsBySubcategoryId view
-        public async Task<IActionResult> GetReviewsByItemId([FromRoute] Guid itemId, OrderByDate? date, OrderByEstimation? estimation, int? stars)
+        public async Task<IActionResult> GetReviewsByItemId([FromRoute] Guid itemId, OrderByDate? date, OrderByEstimation? estimation)
         {
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
 
@@ -224,7 +224,7 @@ namespace Web.MVC.Controllers
             int pageNumber = 1;
             int pageSize = 10; //изменить на 30
 
-            var reviewsResult = await GetReviews(itemId, date, estimation, stars, pageNumber, pageSize);
+            var reviewsResult = await GetReviews(itemId, date, estimation, pageNumber, pageSize);
             if (reviewsResult == null) return BadRequest();
 
             var reviewsDisplay = await GetReviewDisplayList(reviewsResult.Reviews);
@@ -232,15 +232,14 @@ namespace Web.MVC.Controllers
             return View(new GetReviewsByItemIdViewModel
             {
                 IsNextPageExisted = reviewsResult.IsNextPageExisted, PageSize = pageSize, Reviews = reviewsDisplay,
-                Item = itemDisplay, Date = date, Estimation = estimation, Stars = stars
+                Item = itemDisplay, Date = date, Estimation = estimation
             });
         }
 
-        private async Task<ReviewsResultResponse?> GetReviews(Guid itemId, OrderByDate? date, OrderByEstimation? estimation, int? stars, int pageNumber,
+        private async Task<ReviewsResultResponse?> GetReviews(Guid itemId, OrderByDate? date, OrderByEstimation? estimation, int pageNumber,
             int pageSize)
         {
-            if ((date != null && estimation != null && stars != null) || (date != null && estimation != null) || (date != null && stars != null) 
-                || (estimation != null && stars != null)) return null;
+            if (date != null && estimation != null) return null;
 
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
 
@@ -254,11 +253,6 @@ namespace Web.MVC.Controllers
             {
                 reviewsResponse = await httpClient.GetAsync(
                     $"/api/Review/get-by-item-id-by-estimation/{itemId}?pageSize={pageSize}&pageNumber={pageNumber}&orderByEstimation={estimation}");
-            }
-            else if (stars != null)
-            {
-                reviewsResponse = await httpClient.GetAsync(
-                    $"/api/Review/get-by-item-id-by-stars/{itemId}?pageSize={pageSize}&pageNumber={pageNumber}&stars={stars}");
             }
             else
             {

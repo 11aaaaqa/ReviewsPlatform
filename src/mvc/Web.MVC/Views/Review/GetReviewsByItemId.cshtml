@@ -1,4 +1,5 @@
-﻿@model Web.MVC.Models.View_models.Review.GetReviewsByItemIdViewModel
+﻿@using Web.MVC.Models.Api_responses.review.enums
+@model Web.MVC.Models.View_models.Review.GetReviewsByItemIdViewModel
 <link rel="stylesheet" href="~/css/review/get-reviews-by-item-id.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -37,6 +38,47 @@
         </div>
     </div>
     
+    <div class="reviews-filter-block">
+        @if (Model.Date == null && Model.Estimation == null)
+        {
+            <a class="reviews-filter-link active" asp-controller="Review" asp-action="GetReviewsByItemId" asp-route-itemId="@Model.Item.Id">Актуальные</a>
+        }
+        else
+        {
+            <a class="reviews-filter-link" asp-controller="Review" asp-action="GetReviewsByItemId" asp-route-itemId="@Model.Item.Id">Актуальные</a>
+        }
+        @switch (Model.Date)
+        {
+            case null:
+                <a class="reviews-filter-link" asp-controller="Review" asp-action="GetReviewsByItemId" asp-route-itemId="@Model.Item.Id" 
+                   asp-route-date="@OrderByDate.Descending">По дате ▼</a>
+                break;
+            case OrderByDate.Descending:
+                <a class="reviews-filter-link active" asp-controller="Review" asp-action="GetReviewsByItemId" asp-route-itemId="@Model.Item.Id" 
+                   asp-route-date="@OrderByDate.Ascending">По дате ▼</a>
+                break;
+            case OrderByDate.Ascending:
+                <a class="reviews-filter-link active" asp-controller="Review" asp-action="GetReviewsByItemId" asp-route-itemId="@Model.Item.Id"
+                   asp-route-date="@OrderByDate.Descending">По дате ▲</a>
+                break;
+        }
+        @switch (Model.Estimation)
+        {
+            case null:
+                <a class="reviews-filter-link" asp-controller="Review" asp-action="GetReviewsByItemId" asp-route-itemId="@Model.Item.Id"
+                   asp-route-estimation="@OrderByEstimation.Descending">По оценке ▼</a>
+                break;
+            case OrderByEstimation.Descending:
+                <a class="reviews-filter-link active" asp-controller="Review" asp-action="GetReviewsByItemId" asp-route-itemId="@Model.Item.Id"
+                   asp-route-estimation="@OrderByEstimation.Ascending">По оценке ▼</a>
+                break;
+            case OrderByEstimation.Ascending:
+                <a class="reviews-filter-link active" asp-controller="Review" asp-action="GetReviewsByItemId" asp-route-itemId="@Model.Item.Id"
+                   asp-route-estimation="@OrderByEstimation.Descending">По оценке ▲</a>
+                break;
+        }
+    </div>
+
     <div>
         @foreach (var review in Model.Reviews)
         {
@@ -45,8 +87,8 @@
                     <div class="get-reviews-flex">
                         <img src="@review.User.AvatarSrc" style="width: 30px; height: 30px; object-fit: cover;"/>
                         <p><a class="block-link-colored" asp-controller="User" asp-action="GetUserById" asp-route-userId="@review.User.Id">
-                            @review.User.UserName
-                        </a></p>
+                                @review.User.UserName
+                            </a></p>
                     </div>
                     <p style="color: rgba(125, 125, 125, 0.7);">@review.CreatedAt.ToString("dd.MM.yyyy")</p>
                 </div>
@@ -57,7 +99,7 @@
                     </div>
                 </div>
                 <a class="block-link-colored" style="margin: 10px 0 15px 0;"> @* ссылка на отзыв *@
-                    <div>@review.Text</div>
+                    <div>@review.ShortReview</div>
                 </a>
                 <div style="display: flex; gap: 10px;">
                     <div class="get-reviews-flex">
@@ -73,3 +115,6 @@
         }
     </div>
 </div>
+<script>
+
+</script>
