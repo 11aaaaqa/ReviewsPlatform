@@ -6,7 +6,7 @@ namespace Web.MVC.Models.View_models.Review
     public class GetReviewsByItemIdViewModel
     {
         public ItemDisplay Item { get; set; }
-        public List<ReviewDisplay> Reviews { get; set; }
+        public List<ReviewNoPictureDisplay> Reviews { get; set; }
         public bool IsNextPageExisted { get; set; }
         public int PageSize { get; set; }
 

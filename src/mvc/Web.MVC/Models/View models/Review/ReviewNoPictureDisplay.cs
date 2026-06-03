@@ -3,7 +3,7 @@ using Web.MVC.Models.View_models.User;
 
 namespace Web.MVC.Models.View_models.Review
 {
-    public class ReviewDisplay
+    public class ReviewNoPictureDisplay
     {
         public Guid Id { get; set; }
         public string ShortReview { get; set; }
