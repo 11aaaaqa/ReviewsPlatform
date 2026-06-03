@@ -47,8 +47,8 @@ namespace ReviewMicroservice.Api.Controllers
 
         [HttpGet]
         [Route("get-by-user-id/{userId}")]
-        public async Task<IActionResult> GetAllReviewsByUserIdAsync([FromRoute] Guid userId, ReviewStatus reviewStatus,
-            OrderByDate orderByDate, [FromQuery] Pagination pagination)
+        public async Task<IActionResult> GetAllReviewsByUserIdAsync([FromRoute] Guid userId, [FromQuery] ReviewStatus reviewStatus,
+            [FromQuery] OrderByDate orderByDate, [FromQuery] Pagination pagination)
         {
             var reviews =
                 await unitOfWork.ReviewRepository.GetByUserIdAsync(userId, reviewStatus, orderByDate, pagination.PageNumber, pagination.PageSize);
@@ -61,7 +61,7 @@ namespace ReviewMicroservice.Api.Controllers
 
         [HttpGet]
         [Route("get-by-item-id/{itemId}")]
-        public async Task<IActionResult> GetAllReviewsByItemIdAsync([FromRoute] Guid itemId, OrderByDate orderByDate,
+        public async Task<IActionResult> GetAllReviewsByItemIdAsync([FromRoute] Guid itemId, [FromQuery] OrderByDate orderByDate,
             [FromQuery] Pagination pagination)
         {
             var reviews = await unitOfWork.ReviewRepository.GetByItemIdAsync(itemId, ReviewStatus.Verified, orderByDate,
@@ -75,7 +75,7 @@ namespace ReviewMicroservice.Api.Controllers
 
         [HttpGet]
         [Route("get-by-item-id-by-estimation/{itemId}")]
-        public async Task<IActionResult> GetAllReviewsByItemIdByEstimationAsync([FromRoute] Guid itemId, OrderByEstimation orderByEstimation,
+        public async Task<IActionResult> GetAllReviewsByItemIdByEstimationAsync([FromRoute] Guid itemId, [FromQuery] OrderByEstimation orderByEstimation,
             [FromQuery] Pagination pagination)
         {
             var reviews =
@@ -85,6 +85,19 @@ namespace ReviewMicroservice.Api.Controllers
                 await unitOfWork.ReviewRepository.GetByItemIdAsync(itemId, orderByEstimation, pagination.PageNumber + 1, pagination.PageSize);
 
             return Ok(new ReviewsResult { Reviews = reviews, IsNextPageExisted = reviewsNextPage.Count > 0 });
+        }
+
+        [HttpGet]
+        [Route("get-by-item-id-by-actuality/{itemId}")]
+        public async Task<IActionResult> GetAllReviewsByItemIdByActualityAsync([FromRoute] Guid itemId, [FromQuery] Pagination pagination)
+        {
+            var reviews =
+                await unitOfWork.ReviewRepository.GetByItemIdByActualityAsync(itemId, pagination.PageNumber, pagination.PageSize);
+
+            var reviewsNextPage =
+                await unitOfWork.ReviewRepository.GetByItemIdByActualityAsync(itemId, pagination.PageNumber + 1, pagination.PageSize);
+
+            return Ok(new ReviewsResult { IsNextPageExisted = reviewsNextPage.Count > 0, Reviews = reviews });
         }
 
         [Authorize(Roles = RoleNames.Admin + "," + RoleNames.Moderator)]
@@ -163,6 +176,9 @@ namespace ReviewMicroservice.Api.Controllers
         {
             if (model == null)
                 return BadRequest("Request size exceeds the limit");
+            
+            if (model.ItemEstimation < 1 || model.ItemEstimation > 5)
+                return BadRequest("Incorrect item estimation");
 
             foreach (var pictureSource in model.Pictures)
             {

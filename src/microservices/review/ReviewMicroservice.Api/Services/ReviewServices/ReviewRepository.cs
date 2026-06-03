@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ReviewMicroservice.Api.Database;
 using ReviewMicroservice.Api.Enums;
+using ReviewMicroservice.Api.Models;
 using ReviewMicroservice.Api.Models.Business;
 
 namespace ReviewMicroservice.Api.Services.ReviewServices
@@ -10,9 +11,15 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
         public async Task<Review?> GetByIdAsync(Guid id)
             => await context.Reviews.SingleOrDefaultAsync(x => x.Id == id);
 
-        public async Task<List<Review>> GetAllByStatusAsync(ReviewStatus status, OrderByDate orderByDate, int pageNumber, int pageSize)
+        public async Task<List<ReviewNoPictures>> GetAllByStatusAsync(ReviewStatus status, OrderByDate orderByDate, int pageNumber, int pageSize)
         {
-            var reviews = context.Reviews.Where(x => x.ReviewStatus == status);
+            var reviews = context.Reviews.Where(x => x.ReviewStatus == status).Select(x => 
+                new ReviewNoPictures
+                {
+                    Id = x.Id, ReviewStatus = x.ReviewStatus, UserId = x.UserId, ItemId = x.ItemId, ItemEstimation = x.ItemEstimation,
+                    IsCreatedWithItem = x.IsCreatedWithItem, CreatedAt = x.CreatedAt, DislikesCount = x.DislikesCount,
+                    LikesCount = x.LikesCount, RejectionReason = x.RejectionReason, ShortReview = x.ShortReview, Text = x.Text
+                });
             switch (orderByDate)
             {
                 case OrderByDate.Descending:
@@ -26,11 +33,18 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
             return await reviews.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
         }
 
-        public async Task<List<Review>> GetByUserIdAsync(Guid userId, ReviewStatus reviewStatus,
+        public async Task<List<ReviewNoPictures>> GetByUserIdAsync(Guid userId, ReviewStatus reviewStatus,
             OrderByDate orderByDate, int pageNumber, int pageSize)
         {
             var reviews = context.Reviews.Where(x => x.UserId == userId)
-                .Where(x => x.ReviewStatus == reviewStatus);
+                .Where(x => x.ReviewStatus == reviewStatus)
+                .Select(x => 
+                new ReviewNoPictures
+                {
+                    Id = x.Id, ReviewStatus = x.ReviewStatus, UserId = x.UserId, ItemId = x.ItemId, ItemEstimation = x.ItemEstimation,
+                    IsCreatedWithItem = x.IsCreatedWithItem, CreatedAt = x.CreatedAt, DislikesCount = x.DislikesCount,
+                    LikesCount = x.LikesCount, RejectionReason = x.RejectionReason, ShortReview = x.ShortReview, Text = x.Text
+                });
             switch (orderByDate)
             {
                 case OrderByDate.Ascending:
@@ -44,10 +58,17 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
             return await reviews.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
         }
 
-        public async Task<List<Review>> GetByItemIdAsync(Guid itemId, ReviewStatus reviewStatus, OrderByDate orderByDate, int pageNumber, int pageSize)
+        public async Task<List<ReviewNoPictures>> GetByItemIdAsync(Guid itemId, ReviewStatus reviewStatus, OrderByDate orderByDate, int pageNumber, int pageSize)
         {
             var reviews = context.Reviews.Where(x => x.ItemId == itemId)
-                .Where(x => x.ReviewStatus == reviewStatus);
+                .Where(x => x.ReviewStatus == reviewStatus)
+                .Select(x => 
+                new ReviewNoPictures
+                {
+                    Id = x.Id, ReviewStatus = x.ReviewStatus, UserId = x.UserId, ItemId = x.ItemId, ItemEstimation = x.ItemEstimation,
+                    IsCreatedWithItem = x.IsCreatedWithItem, CreatedAt = x.CreatedAt, DislikesCount = x.DislikesCount,
+                    LikesCount = x.LikesCount, RejectionReason = x.RejectionReason, ShortReview = x.ShortReview, Text = x.Text
+                });
             switch (orderByDate)
             {
                 case OrderByDate.Ascending:
@@ -64,12 +85,35 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
         public async Task<List<Review>> GetByItemIdAsync(Guid itemId)
             => await context.Reviews.Where(x => x.ItemId == itemId).ToListAsync();
 
+        public async Task<List<ReviewNoPictures>> GetByItemIdByActualityAsync(Guid itemId, int pageNumber, int pageSize)
+        {
+            return await context.Reviews
+                .Where(x => x.ItemId == itemId && x.ReviewStatus == ReviewStatus.Verified)
+                .Select(x => 
+                    new ReviewNoPictures
+                    {
+                        Id = x.Id, ReviewStatus = x.ReviewStatus, UserId = x.UserId, ItemId = x.ItemId, ItemEstimation = x.ItemEstimation,
+                        IsCreatedWithItem = x.IsCreatedWithItem, CreatedAt = x.CreatedAt, DislikesCount = x.DislikesCount,
+                        LikesCount = x.LikesCount, RejectionReason = x.RejectionReason, ShortReview = x.ShortReview, Text = x.Text
+                    })
+                .OrderByDescending(x => x.LikesCount)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize).ToListAsync();
+        }
+
         public async Task<List<Review>> GetByItemIdAsync(List<Guid> itemIds)
             => await context.Reviews.Where(x => itemIds.Contains(x.ItemId)).ToListAsync();
 
-        public async Task<List<Review>> GetByItemIdAsync(Guid itemId, OrderByEstimation orderByEstimation, int pageNumber, int pageSize)
+        public async Task<List<ReviewNoPictures>> GetByItemIdAsync(Guid itemId, OrderByEstimation orderByEstimation, int pageNumber, int pageSize)
         {
-            var reviews = context.Reviews.Where(x => x.ItemId == itemId);
+            var reviews = context.Reviews.Where(x => x.ItemId == itemId && x.ReviewStatus == ReviewStatus.Verified)
+                .Select(x => 
+                    new ReviewNoPictures
+                    {
+                        Id = x.Id, ReviewStatus = x.ReviewStatus, UserId = x.UserId, ItemId = x.ItemId, ItemEstimation = x.ItemEstimation,
+                        IsCreatedWithItem = x.IsCreatedWithItem, CreatedAt = x.CreatedAt, DislikesCount = x.DislikesCount,
+                        LikesCount = x.LikesCount, RejectionReason = x.RejectionReason, ShortReview = x.ShortReview, Text = x.Text
+                    });
             switch (orderByEstimation)
             {
                 case OrderByEstimation.Ascending:

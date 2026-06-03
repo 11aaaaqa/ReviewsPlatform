@@ -1,10 +1,10 @@
-﻿using ReviewMicroservice.Api.Models.Business;
+﻿using ReviewMicroservice.Api.Models;
 
 namespace ReviewMicroservice.Api.DTOs
 {
     public class ReviewsResult
     {
-        public List<Review> Reviews { get; set; } = new();
+        public List<ReviewNoPictures> Reviews { get; set; } = new();
         public bool IsNextPageExisted { get; set; }
     }
 }
