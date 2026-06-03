@@ -11,6 +11,7 @@ using Web.MVC.Models.Api_responses.category;
 using Web.MVC.Models.Api_responses.review;
 using Web.MVC.Models.Api_responses.review.enums;
 using Web.MVC.Models.View_models.Category;
+using Web.MVC.Models.View_models.Category.json;
 using Web.MVC.Models.View_models.Review;
 using Web.MVC.Models.View_models.User;
 using Web.MVC.Services;
@@ -222,7 +223,7 @@ namespace Web.MVC.Controllers
             };
 
             int pageNumber = 1;
-            int pageSize = 10; //изменить на 30
+            int pageSize = 30;
 
             var reviewsResult = await GetReviews(itemId, date, estimation, pageNumber, pageSize);
             if (reviewsResult == null) return BadRequest();
@@ -234,6 +235,19 @@ namespace Web.MVC.Controllers
                 IsNextPageExisted = reviewsResult.IsNextPageExisted, PageSize = pageSize, Reviews = reviewsDisplay,
                 Item = itemDisplay, Date = date, Estimation = estimation
             });
+        }
+
+        [Route("items/{itemId}/reviews/json")]
+        public async Task<IActionResult> GetReviewsByItemIdJson([FromRoute] Guid itemId, int pageNumber, int pageSize, OrderByDate? date,
+            OrderByEstimation? estimation)
+        {
+            var reviewsResult = await GetReviews(itemId, date, estimation, pageNumber, pageSize);
+            if (reviewsResult == null) return BadRequest();
+
+            var reviewsDisplay = await GetReviewDisplayList(reviewsResult.Reviews);
+
+            return new JsonResult(new ReviewDisplayJson
+                { IsNextPageExisted = reviewsResult.IsNextPageExisted, Reviews = reviewsDisplay });
         }
 
         private async Task<ReviewsResultResponse?> GetReviews(Guid itemId, OrderByDate? date, OrderByEstimation? estimation, int pageNumber,

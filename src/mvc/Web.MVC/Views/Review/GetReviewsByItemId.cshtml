@@ -14,6 +14,9 @@
         return "отзывов";
     }
 }
+<input id="isNextReviewsPageExistedInput" class="hidden" value="@Model.IsNextPageExisted.ToString().ToLower()" />
+<input id="reviewsPageSizeInput" class="hidden" value="@Model.PageSize" />
+<input id="itemIdInput" class="hidden" value="@Model.Item.Id"/>
 
 <div class="get-reviews-page-block">
     <div class="item-info-block">
@@ -79,7 +82,7 @@
         }
     </div>
 
-    <div>
+    <div id="reviewsBlock">
         @foreach (var review in Model.Reviews)
         {
             <div class="review-block">
@@ -87,8 +90,8 @@
                     <div class="get-reviews-flex">
                         <img src="@review.User.AvatarSrc" style="width: 30px; height: 30px; object-fit: cover;"/>
                         <p><a class="block-link-colored" asp-controller="User" asp-action="GetUserById" asp-route-userId="@review.User.Id">
-                                @review.User.UserName
-                            </a></p>
+                            @review.User.UserName
+                        </a></p>
                     </div>
                     <p style="color: rgba(125, 125, 125, 0.7);">@review.CreatedAt.ToString("dd.MM.yyyy")</p>
                 </div>
@@ -114,7 +117,150 @@
             </div>
         }
     </div>
+    <div id="getReviewsSentinel" style="height: 10px;"></div>
+    <div id="loadSpinnerContainer" class="load-spinner-container"></div>
+    <div id="reviewsErrorBlock" style="display: none; color: red; margin-top: 10px;"></div>
 </div>
 <script>
+    const sentinel = document.getElementById('getReviewsSentinel');
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            loadReviews();
+        }
+    }, {
+        rootMargin: '100px'
+    });
+    observer.observe(sentinel);
 
+    const reviewsErrorBlock = document.getElementById('reviewsErrorBlock');
+    const itemId = document.getElementById('itemIdInput').value;
+    let loading = false;
+    let pageNumber = 2;
+    const pageSize = parseInt(document.getElementById('reviewsPageSizeInput').value, 10);
+    let isNextPageExisted = document.getElementById('isNextReviewsPageExistedInput').value === 'true';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const date = urlParams.get('date') || '';
+    const estimation = urlParams.get('estimation') || '';
+    async function loadReviews() {
+        if (loading || !isNextPageExisted) return;
+
+        loading = true;
+        reviewsErrorBlock.style.display = 'none';
+        showLoader();
+
+        const response = await fetch(
+            `/items/${itemId}/reviews/json?pageSize=${pageSize}&pageNumber=${pageNumber}&date=${encodeURIComponent(date)}&estimation=${encodeURIComponent(estimation)}`);
+        if (!response.ok) {
+            hideLoader();
+            reviewsErrorBlock.textContent = 'Что-то пошло не так. Попробуйте еще раз.';
+            reviewsErrorBlock.style.display = 'block';
+            loading = false;
+            return;
+        }
+
+        const reviewsResult = await response.json();
+        displayReviews(reviewsResult.reviews);
+        isNextPageExisted = reviewsResult.isNextPageExisted;
+
+        hideLoader();
+        pageNumber++;
+        loading = false;
+    }
+
+    function showLoader() {
+        document.getElementById('loadSpinnerContainer').innerHTML = '<div class="load-spinner"></div>';
+    }
+
+    function hideLoader() {
+        document.getElementById('loadSpinnerContainer').innerHTML = '';
+    }
+
+    function displayReviews(reviews) {
+        reviews.forEach(review => {
+            const reviewBlock = document.createElement('div');
+            reviewBlock.classList.add('review-block');
+
+
+            const block1 = document.createElement('div');
+            block1.style.display = 'flex';
+            block1.style.justifyContent = 'space-between';
+            block1.style.alignItems = 'center';
+
+            const userFlex = document.createElement('div');
+            userFlex.classList.add('get-reviews-flex');
+
+            const avatar = document.createElement('img');
+            avatar.src = review.user.avatarSrc;
+            avatar.style.cssText = 'width: 30px; height: 30px; object-fit: cover;';
+
+            const userNameP = document.createElement('p');
+            const userLink = document.createElement('a');
+            userLink.classList.add('block-link-colored');
+            userLink.href = `/users/${review.user.id}`;
+            userLink.textContent = review.user.userName;
+            userNameP.appendChild(userLink);
+
+            userFlex.appendChild(avatar);
+            userFlex.appendChild(userNameP);
+
+            const dateP = document.createElement('p');
+            dateP.style.color = 'rgba(125, 125, 125, 0.7)';
+            const date = new Date(review.createdAt);
+            dateP.textContent = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+            block1.appendChild(userFlex);
+            block1.appendChild(dateP);
+            reviewBlock.appendChild(block1);
+
+
+            const block2 = document.createElement('div');
+            block2.classList.add('get-reviews-flex');
+
+            const estimationLabel = document.createElement('p');
+            estimationLabel.style.cssText = 'font-weight: 700; margin-top: 3px;';
+            estimationLabel.textContent = 'Оценка:';
+
+            const starRating = document.createElement('div');
+            starRating.classList.add('star-rating');
+
+            const starFill = document.createElement('div');
+            starFill.classList.add('star-rating-fill');
+            starFill.style.width = `${review.itemEstimation * 20}%`;
+            starFill.textContent = '★★★★★';
+
+            starRating.appendChild(starFill);
+            block2.appendChild(estimationLabel);
+            block2.appendChild(starRating);
+            reviewBlock.appendChild(block2);
+
+
+            const block3 = document.createElement('a');
+            block3.classList.add('block-link-colored');
+            block3.style.cssText = 'margin: 10px 0 15px 0;';
+
+            const reviewText = document.createElement('div');
+            reviewText.textContent = review.shortReview;
+            block3.appendChild(reviewText);
+            reviewBlock.appendChild(block3);
+
+
+            const block4 = document.createElement('div');
+            block4.style.cssText = 'display: flex; gap: 10px;';
+
+            const likesFlex = document.createElement('div');
+            likesFlex.classList.add('get-reviews-flex');
+            likesFlex.innerHTML = `<i class="fa-regular fa-thumbs-up"></i><span>${review.likesCount}</span>`;
+
+            const dislikesFlex = document.createElement('div');
+            dislikesFlex.classList.add('get-reviews-flex');
+            dislikesFlex.innerHTML = `<i class="fa-regular fa-thumbs-down"></i><span>${review.dislikesCount}</span>`;
+
+            block4.appendChild(likesFlex);
+            block4.appendChild(dislikesFlex);
+            reviewBlock.appendChild(block4);
+
+            document.getElementById('reviewsBlock').appendChild(reviewBlock);
+        });
+    }
 </script>
