@@ -89,7 +89,8 @@ namespace CategoryMicroservice.Api.Controllers
             model.ItemName = Regex.Replace(model.ItemName.Trim(), @"\s+", " ");
             if (model.ItemBrand != null)
                 model.ItemBrand = Regex.Replace(model.ItemBrand.Trim(), @"\s+", " ");
-            if(string.IsNullOrEmpty(model.ShortReview) || string.IsNullOrEmpty(model.ItemName) || string.IsNullOrEmpty(model.ReviewText))
+            if(string.IsNullOrEmpty(model.ShortReview) || string.IsNullOrEmpty(model.ItemName) || string.IsNullOrEmpty(model.ReviewText)
+               || model.ReviewItemEstimation < 1 || model.ReviewItemEstimation > 5)
                 return BadRequest();
 
             if (await unitOfWork.SubcategoryRepository.GetByIdAsync(model.SubcategoryId) == null)
