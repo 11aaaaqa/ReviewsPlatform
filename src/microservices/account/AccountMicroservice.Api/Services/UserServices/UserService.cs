@@ -16,6 +16,9 @@ namespace AccountMicroservice.Api.Services.UserServices
         public async Task<User?> GetUserByEmailAsync(string email)
             => await context.Users.Include(x => x.Roles).SingleOrDefaultAsync(x => x.Email == email);
 
+        public async Task<List<User>> GetUsersByUserIds(List<Guid> userIds)
+            => await context.Users.Where(x => userIds.Contains(x.Id)).ToListAsync();
+
         public async Task AddUserAsync(User user)
         {
             await context.Users.AddAsync(user);
