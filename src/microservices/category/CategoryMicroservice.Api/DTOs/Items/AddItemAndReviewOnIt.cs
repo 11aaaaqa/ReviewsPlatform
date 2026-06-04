@@ -20,7 +20,7 @@ namespace CategoryMicroservice.Api.DTOs.Items
 
 
         [Required]
-        [StringLength(200)]
+        [StringLength(500)]
         public string ShortReview { get; set; }
 
         [Required]

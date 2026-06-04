@@ -5,7 +5,7 @@ namespace ReviewMicroservice.Api.DTOs.review
     public class AddReviewDto
     {
         [Required]
-        [StringLength(200)]
+        [StringLength(500)]
         public string ShortReview { get; set; }
 
         [Required]

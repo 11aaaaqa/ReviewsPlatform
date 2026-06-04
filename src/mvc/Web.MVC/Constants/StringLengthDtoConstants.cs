@@ -11,7 +11,7 @@
         public const int SubcategoryNameMax = 50;
         public const int ItemNameMax = 100;
         public const int ItemBrandMax = 100;
-        public const int ShortReviewMax = 200;
+        public const int ShortReviewMax = 500;
         public const int ReviewTextMax = 2000;
     }
 }
