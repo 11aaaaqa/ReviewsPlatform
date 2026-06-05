@@ -1,0 +1,110 @@
+﻿.review-images-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.review-img-wrapper {
+    position: relative;
+    width: 135px;
+    height: 135px;
+    overflow: hidden;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.review-img-wrapper:hover {
+    transform: scale(1.04);
+}
+
+.review-img-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: filter 0.2s;
+}
+
+.review-img-wrapper.has-more .review-img-thumb {
+    filter: blur(3px) brightness(0.6);
+}
+
+.review-img-wrapper.has-more::after {
+    content: attr(data-more-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+    font-size: 16px;
+    pointer-events: none;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.hidden-photo {
+    display: none !important;
+}
+
+.item-info-block {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+    padding: 15px 20px;
+    margin-bottom: 15px;
+}
+
+.review-block {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+    padding: 15px 20px;
+    margin-bottom: 15px;
+}
+
+.get-review-by-id-page-block {
+    margin: 0 20% 0 20%;
+}
+
+@media (max-width: 1400px) {
+    .get-review-by-id-page-block {
+        margin: 0 15% 0 15%;
+    }
+}
+
+@media (max-width: 1200px) {
+    .get-review-by-id-page-block {
+        margin: 0 10% 0 10%;
+    }
+}
+
+@media (max-width: 992px) {
+    .get-review-by-id-page-block {
+        margin: 0 7% 0 7%;
+    }
+}
+
+@media (max-width: 768px) {
+    .get-review-by-id-page-block {
+        margin: 0 5% 0 5%;
+    }
+}
+
+@media (max-width: 600px) {
+    .get-review-by-id-page-block {
+        margin: 0 2% 0 2%;
+    }
+}
+
+@media (max-width: 520px) {
+    .get-review-by-id-page-block {
+        margin: 0;
+    }
+}

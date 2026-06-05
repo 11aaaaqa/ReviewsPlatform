@@ -11,8 +11,8 @@ using Web.MVC.Models.Api_responses.category;
 using Web.MVC.Models.Api_responses.review;
 using Web.MVC.Models.Api_responses.review.enums;
 using Web.MVC.Models.View_models.Category;
-using Web.MVC.Models.View_models.Category.json;
 using Web.MVC.Models.View_models.Review;
+using Web.MVC.Models.View_models.Review.json;
 using Web.MVC.Models.View_models.User;
 using Web.MVC.Services;
 
@@ -65,12 +65,12 @@ namespace Web.MVC.Controllers
                     return BadRequest(new { errors });
                 }
 
-                using MemoryStream memoryStream = new MemoryStream();
                 List<byte[]> pictures = new();
                 if (model.Pictures.Count > 0)
                 {
                     foreach (var picture in model.Pictures)
                     {
+                        using MemoryStream memoryStream = new MemoryStream();
                         await picture.CopyToAsync(memoryStream);
                         pictures.Add(memoryStream.ToArray());
                     }
@@ -165,8 +165,9 @@ namespace Web.MVC.Controllers
                 {
                     foreach (var reviewPicture in model.ReviewPictures)
                     {
-                        await reviewPicture.CopyToAsync(memoryStream);
-                        reviewPictures.Add(memoryStream.ToArray());
+                        using MemoryStream ms = new MemoryStream();
+                        await reviewPicture.CopyToAsync(ms);
+                        reviewPictures.Add(ms.ToArray());
                     }
                 }
 
@@ -250,6 +251,52 @@ namespace Web.MVC.Controllers
                 { IsNextPageExisted = reviewsResult.IsNextPageExisted, Reviews = reviewsDisplay });
         }
 
+        [HttpGet]
+        [Route("reviews/{reviewId}")]
+        public async Task<IActionResult> GetReviewById([FromRoute] Guid reviewId)
+        {
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+
+            var reviewResponse = await httpClient.GetAsync($"/api/Review/get-by-id/{reviewId}");
+            reviewResponse.EnsureSuccessStatusCode();
+            var review = await reviewResponse.Content.ReadFromJsonAsync<ReviewResponse>();
+            
+            var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{review!.UserId}");
+            userResponse.EnsureSuccessStatusCode();
+            var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
+
+            List<string> pictures = new List<string>();
+            foreach (var picture in review.Pictures)
+            {
+                pictures.Add(imageConverter.GetImageSrc(picture));
+            }
+
+            var userDisplay = new UserDisplay
+            {
+                AvatarSrc = imageConverter.GetImageSrc(user!.AvatarSource), Email = user.Email, Id = user.Id, Roles = user.Roles,
+                IsAvatarDefault = user.IsAvatarDefault, IsEmailVerified = user.IsEmailVerified,
+                RegistrationDate = user.RegistrationDate, UserName = user.UserName
+            };
+
+            var itemResponse = await httpClient.GetAsync($"/api/Item/get-by-id/{review.ItemId}");
+            itemResponse.EnsureSuccessStatusCode();
+            var item = await itemResponse.Content.ReadFromJsonAsync<ItemResponse>();
+
+            var itemDisplay = new ItemDisplay
+            {
+                Brand = item!.Brand, GeneralEstimation = item.GeneralEstimation, Id = item.Id,
+                Name = item.Name, ReviewsCount = item.ReviewsCount, SubcategoryId = item.SubcategoryId,
+                PictureSrc = imageConverter.GetImageSrc(item.Picture)
+            };
+
+            return View(new ReviewDisplay
+            {
+                CreatedAt = review.CreatedAt, CreatedByUser = userDisplay, DislikesCount = review.DislikesCount, Id = review.Id,
+                Item = itemDisplay, ItemEstimation = review.ItemEstimation, LikesCount = review.LikesCount,
+                PicturesSrc = pictures, ShortReview = review.ShortReview, Text = review.Text
+            });
+        }
+
         private async Task<ReviewsResultResponse?> GetReviews(Guid itemId, OrderByDate? date, OrderByEstimation? estimation, int pageNumber,
             int pageSize)
         {
@@ -280,7 +327,7 @@ namespace Web.MVC.Controllers
             return reviewsResult;
         }
 
-        private async Task<List<ReviewDisplay>> GetReviewDisplayList(List<ReviewNoPicturesResponse> reviews)
+        private async Task<List<ReviewNoPictureDisplay>> GetReviewDisplayList(List<ReviewNoPicturesResponse> reviews)
         {
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
             using StringContent jsonContent = new(JsonSerializer.Serialize(reviews.Select(x => x.UserId).ToList()),
@@ -289,7 +336,7 @@ namespace Web.MVC.Controllers
             usersResponse.EnsureSuccessStatusCode();
             var users = await usersResponse.Content.ReadFromJsonAsync<List<UserResponse>>();
 
-            List<ReviewDisplay> reviewsDisplay = new List<ReviewDisplay>();
+            List<ReviewNoPictureDisplay> reviewsDisplay = new List<ReviewNoPictureDisplay>();
             foreach (var review in reviews)
             {
                 var user = users!.Single(x => x.Id == review.UserId);
@@ -300,7 +347,7 @@ namespace Web.MVC.Controllers
                     RegistrationDate = user.RegistrationDate, UserName = user.UserName
                 };
 
-                reviewsDisplay.Add(new ReviewDisplay
+                reviewsDisplay.Add(new ReviewNoPictureDisplay
                 {
                     CreatedAt = review.CreatedAt, DislikesCount = review.DislikesCount, Id = review.Id, IsCreatedWithItem = review.IsCreatedWithItem,
                     ItemEstimation = review.ItemEstimation, ItemId = review.ItemId, LikesCount = review.LikesCount,

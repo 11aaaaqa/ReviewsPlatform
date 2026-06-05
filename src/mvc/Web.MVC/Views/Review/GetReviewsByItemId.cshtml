@@ -101,7 +101,8 @@
                         <div class="star-rating-fill" style="width: @(review.ItemEstimation * 20)%;">★★★★★</div>
                     </div>
                 </div>
-                <a class="block-link-colored" style="margin: 10px 0 15px 0;"> @* ссылка на отзыв *@
+                <a asp-controller="Review" asp-action="GetReviewById" asp-route-reviewId="@review.Id"
+                   class="block-link-colored" style="margin: 10px 0 15px 0;">
                     <div>@review.ShortReview</div>
                 </a>
                 <div style="display: flex; gap: 10px;">
@@ -238,6 +239,7 @@
             const block3 = document.createElement('a');
             block3.classList.add('block-link-colored');
             block3.style.cssText = 'margin: 10px 0 15px 0;';
+            block3.href = `/reviews/${review.id}`;
 
             const reviewText = document.createElement('div');
             reviewText.textContent = review.shortReview;
