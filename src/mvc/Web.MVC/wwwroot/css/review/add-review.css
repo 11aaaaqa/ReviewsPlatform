@@ -1,0 +1,81 @@
+﻿.review-block {
+    width: 100%;
+    min-height: 110px;
+    border: 1px solid salmon;
+    border-radius: 8px;
+    padding: 6px 12px;
+    background-color: white;
+    word-break: break-word;
+    outline: none;
+}
+
+.review-block:empty:before {
+    content: attr(placeholder);
+    color: #aaa;
+    pointer-events: none;
+}
+
+.review-block:focus {
+    box-shadow: 0 0 8px salmon;
+    transition: box-shadow 0.1s;
+}
+
+.add-review-star {
+    font-size: 40px;
+    cursor: pointer;
+    color: gray;
+}
+
+.add-review-star.selected {
+    color: rgb(255,205,0);
+}
+
+.themed-input {
+    width: 350px;
+}
+
+.add-review-form-block {
+    margin-bottom: 12px;
+}
+
+.add-review-page-block {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+    padding: 15px 20px;
+    margin: 0 20%;
+}
+
+@media (max-width: 1400px) {
+    .add-review-page-block {
+        margin: 0 15%;
+    }
+}
+
+@media (max-width: 1200px) {
+    .add-review-page-block {
+        margin: 0 10%;
+    }
+}
+
+@media (max-width: 992px) {
+    .add-review-page-block {
+        margin: 0 5%;
+    }
+}
+
+@media (max-width: 768px) {
+    .add-review-page-block {
+        margin: 0 2%;
+    }
+
+    .themed-input {
+        width: 320px;
+    }
+}
+
+@media (max-width: 600px) {
+    .add-review-page-block {
+        margin: 0;
+    }
+}

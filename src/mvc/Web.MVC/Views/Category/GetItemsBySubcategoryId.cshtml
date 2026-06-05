@@ -1,0 +1,170 @@
+﻿@using Web.MVC.Constants
+@model Web.MVC.Models.View_models.Category.GetItemsBySubcategoryIdViewModel
+<link rel="stylesheet" href="~/css/category/get-items-by-subcategory.css"/>
+
+<div class="get-items-page-block">
+    <h3 style="margin-bottom: 13px;">@Model.Subcategory.Name</h3>
+    <form method="get" asp-controller="Category" asp-action="GetItemsBySubcategoryId" asp-route-subcategoryId="@Model.Subcategory.Id">
+        <div class="flex" style="gap: 7px; margin-bottom: 8px;">
+            <input id="findItemsInput" class="themed-input" type="text" name="query" placeholder="Поиск" maxlength="@StringLengthDtoConstants.ItemNameMax"/>
+            <input type="submit" class="btn" value="Найти"/>
+        </div>
+    </form>
+
+    <div>
+        <input id="isNextItemsPageExistedInput" class="hidden" value="@Model.IsNextPageExisted.ToString().ToLower()"/>
+        <input id="itemsPageSizeInput" class="hidden" value="@Model.PageSize" />
+        <input id="subcategoryIdInput" class="hidden" value="@Model.Subcategory.Id"/>
+        <div id="itemsBlock">
+            @foreach (var item in Model.Items)
+            {
+                <div class="item-block">
+                    <a class="block-link-colored" asp-controller="Review" asp-action="GetReviewsByItemId" asp-route-itemId="@item.Id">
+                        <div class="flex" style="gap: 12px; align-items: center;">
+                            <img src="@item.PictureSrc" style="width: 120px; height: 120px; object-fit: cover;"/>
+                            <div>
+                                <h5 style="margin-bottom: 3px;">@item.Name</h5>
+                                <div style="display: flex; gap: 5px; align-items: center;">
+                                    <div class="star-rating">
+                                        <div class="star-rating-fill" style="width: @(item.GeneralEstimation * 20)%">★★★★★</div>
+                                    </div>
+                                    <p style="margin-top: 3px;">Рейтинг: @item.GeneralEstimation</p>
+                                </div>
+                                @if (item.Brand != null)
+                                {
+                                    <p>Компания: @item.Brand</p>
+                                }
+                                <p style="color: rgba(125,125,125,0.7)">Количество отзывов: @item.ReviewsCount</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+        <div id="getItemsSentinel" style="height: 10px;"></div>
+        <div id="loadSpinnerContainer" class="load-spinner-container"></div>
+        <div id="itemsErrorBlock" style="display: none; color: red; margin-top: 10px;"></div>
+    </div>
+</div>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const query = urlParams.get('query') || '';
+    let isNextPageExisted = document.getElementById('isNextItemsPageExistedInput').value === 'true';
+    let pageNumber = 2;
+    const pageSize = parseInt(document.getElementById('itemsPageSizeInput').value, 10);
+    let loading = false;
+    const subcategoryId = document.getElementById('subcategoryIdInput').value;
+
+    const itemsBlock = document.getElementById('itemsBlock');
+
+    const sentinel = document.getElementById('getItemsSentinel');
+    const loadSpinnerContainer = document.getElementById('loadSpinnerContainer');
+    const itemsErrorBlock = document.getElementById('itemsErrorBlock');
+
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            loadItems();
+        }
+    }, {
+        rootMargin: '100px'
+    });
+    observer.observe(sentinel);
+
+    async function loadItems() {
+        if (loading || !isNextPageExisted) return;
+
+        loading = true;
+        itemsErrorBlock.style.display = 'none';
+        showLoader();
+
+        const response = await fetch(`/categories/${subcategoryId}/json?query=${encodeURIComponent(query)}&pageSize=${pageSize}&pageNumber=${pageNumber}`);
+        if (!response.ok) {
+            hideLoader();
+            itemsErrorBlock.textContent = 'Что-то пошло не так. Попробуйте еще раз.';
+            itemsErrorBlock.style.display = 'block';
+            loading = false;
+            return;
+        }
+
+        const itemsResult = await response.json();
+        displayItems(itemsResult.items);
+        isNextPageExisted = itemsResult.isNextPageExisted;
+
+        hideLoader();
+        pageNumber++;
+        loading = false;
+    }
+
+    function showLoader() {
+        loadSpinnerContainer.innerHTML = '<div class="load-spinner"></div>';
+    }
+
+    function hideLoader() {
+        loadSpinnerContainer.innerHTML = '';
+    }
+
+    function displayItems(items) {
+        items.forEach(item => {
+            const itemBlock = document.createElement('div');
+            itemBlock.classList.add('item-block');
+
+            const a = document.createElement('a');
+            a.classList.add('block-link-colored');
+            a.href = `/items/${item.id}/reviews`;
+
+            const itemDisplayBlock = document.createElement('div');
+            itemDisplayBlock.style.display = 'flex';
+            itemDisplayBlock.style.gap = '12px';
+            itemDisplayBlock.style.alignItems = 'center';
+
+            const img = document.createElement('img');
+            img.style.width = '120px';
+            img.style.height = '120px';
+            img.style.objectFit = 'cover';
+            img.src = item.pictureSrc;
+
+            const itemInfoBlock = document.createElement('div');
+            const h5 = document.createElement('h5');
+            h5.textContent = item.name;
+            h5.style.marginBottom = '3px';
+            itemInfoBlock.appendChild(h5);
+
+            const ratingBlock = document.createElement('div');
+            ratingBlock.style.display = 'flex';
+            ratingBlock.style.gap = '5px';
+            ratingBlock.style.alignItems = 'center';
+            const starRating = document.createElement('div');
+            starRating.classList.add('star-rating');
+            const starRatingFill = document.createElement('div');
+            starRatingFill.classList.add('star-rating-fill');
+            starRatingFill.style.width = `${item.generalEstimation * 20}%`;
+            starRatingFill.textContent = '★★★★★';
+            starRating.appendChild(starRatingFill);
+
+            const ratingP = document.createElement('p');
+            ratingP.textContent = `Рейтинг: ${item.generalEstimation}`;
+            ratingP.style.marginTop = '3px';
+
+            ratingBlock.appendChild(starRating);
+            ratingBlock.appendChild(ratingP);
+            itemInfoBlock.appendChild(ratingBlock);
+
+            if (item.brand) {
+                const brandP = document.createElement('p');
+                brandP.textContent = `Компания: ${item.brand}`;
+                itemInfoBlock.appendChild(brandP);
+            }
+            const countP = document.createElement('p');
+            countP.style.color = 'rgba(125,125,125,0.7)';
+            countP.textContent = `Количество отзывов: ${item.reviewsCount}`;
+            itemInfoBlock.appendChild(countP);
+
+            itemDisplayBlock.appendChild(img);
+            itemDisplayBlock.appendChild(itemInfoBlock);
+
+            a.appendChild(itemDisplayBlock);
+            itemBlock.appendChild(a);
+            itemsBlock.appendChild(itemBlock);
+        });
+    }
+</script>

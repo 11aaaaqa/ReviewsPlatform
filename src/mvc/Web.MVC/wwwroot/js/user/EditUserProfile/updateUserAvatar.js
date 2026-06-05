@@ -35,17 +35,12 @@ updateAvatarInput.addEventListener('change', async function (e) {
     if (response.redirected) {
         window.location.href = response.url;
     }
-    else if (response.status === 400) {
+    else if (response.status === 400 || response.status === 404) {
         errorMessageContainer.textContent = await response.text();
         errorMessageContainer.style.display = 'block';
         this.value = '';
     }
     else if (response.ok) {
         window.location.reload();
-    }
-    else if (response.status === 404) {
-        errorMessageContainer.textContent = "Размер файла превышает 2 мб";
-        errorMessageContainer.style.display = 'block';
-        this.value = '';
     }
 });

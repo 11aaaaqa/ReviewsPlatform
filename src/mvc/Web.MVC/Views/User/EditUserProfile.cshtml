@@ -1,4 +1,5 @@
-﻿@model Web.MVC.Models.View_models.User.EditUserProfileViewModel
+﻿@using Web.MVC.Constants
+@model Web.MVC.Models.View_models.User.EditUserProfileViewModel
 <link rel="stylesheet" href="~/css/user/edit-user-profile.css"/>
 <link rel="stylesheet" href="~/css/profile.css"/>
 
@@ -52,7 +53,7 @@
                         <div class="modal-form">
                             <div style="display: none; color: red; margin-bottom: 3px;" id="userNameModalErrorBlock"></div>
                             <form id="updateUserNameForm" method="post" asp-controller="User" asp-action="UpdateUserName">
-                                <input class="user-profile-input" name="newUserName" maxlength="30" value="@Model.UserName"
+                                <input class="modal-input" name="newUserName" maxlength="@StringLengthDtoConstants.UserNameMax" value="@Model.UserName"
                                        placeholder="Введите новое имя пользователя" required/>
                                 <input id="updateUserNameSubmit" class="btn-green" type="submit" style="margin-top: 7px;" value="Сохранить"/>
                             </form>
@@ -65,8 +66,8 @@
                         <div class="modal-form">
                             <div style="display: none; color: red; margin-bottom: 3px;" id="passwordErrorBlock"></div>
                             <form id="requestPasswordUpdateForm" method="post" asp-controller="User" asp-action="RequestPasswordUpdate">
-                                <input id="requestPasswordUpdateInput" class="user-profile-input" name="userPassword" min="8" maxlength="100"
-                                       placeholder="Введите текущий пароль" type="password" required />
+                                <input id="requestPasswordUpdateInput" class="modal-input" name="userPassword" min="@StringLengthDtoConstants.PasswordMin"
+                                       maxlength="@StringLengthDtoConstants.PasswordMax" placeholder="Введите текущий пароль" type="password" required />
                                 <input id="requestPasswordUpdateSubmit" type="submit" class="btn-green" style="margin-top: 7px;" value="Сохранить" />
                             </form>
                             <h5 id="requestPasswordUpdateSuccessText" style="display: none;">
@@ -90,7 +91,7 @@
                         <div id="errorMessageContainer" class="hidden" style="color: red; margin-bottom: 3px;"></div>
                         <form id="updateAvatarForm" method="post" asp-controller="User" asp-action="UpdateUserAvatar" asp-route-returnUrl="@returnUrl"
                               enctype="multipart/form-data">
-                            <input id="updateAvatarInput" type="file" name="Image" class="hidden"/>
+                            <input id="updateAvatarInput" type="file" name="Image" class="hidden" accept="image/*" />
                         </form>
                         @if (Model.IsAvatarDefault)
                         {

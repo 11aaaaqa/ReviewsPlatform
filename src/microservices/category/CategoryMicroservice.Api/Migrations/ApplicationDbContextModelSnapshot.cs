@@ -75,6 +75,42 @@ namespace CategoryMicroservice.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("CategoryMicroservice.Api.Models.Business.Item", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Brand")
+                        .HasColumnType("text");
+
+                    b.Property<double>("GeneralEstimation")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("Picture")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<int>("ReviewsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SubcategoryId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubcategoryId");
+
+                    b.ToTable("Items");
+                });
+
             modelBuilder.Entity("CategoryMicroservice.Api.Models.Business.Subcategory", b =>
                 {
                     b.Property<Guid>("Id")
@@ -269,6 +305,15 @@ namespace CategoryMicroservice.Api.Migrations
                             Name = "Другое",
                             ReviewsCount = 0
                         });
+                });
+
+            modelBuilder.Entity("CategoryMicroservice.Api.Models.Business.Item", b =>
+                {
+                    b.HasOne("CategoryMicroservice.Api.Models.Business.Subcategory", null)
+                        .WithMany()
+                        .HasForeignKey("SubcategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("CategoryMicroservice.Api.Models.Business.Subcategory", b =>

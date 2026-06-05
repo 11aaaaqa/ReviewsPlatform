@@ -9,6 +9,7 @@ namespace CategoryMicroservice.Api.Database
 
         public DbSet<Category> Categories { get; set; }
         public DbSet<Subcategory> Subcategories { get; set; }
+        public DbSet<Item> Items { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -22,6 +23,11 @@ namespace CategoryMicroservice.Api.Database
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Subcategory>().HasIndex(y => y.Name).IsUnique();
+            builder.Entity<Subcategory>()
+                .HasMany<Item>()
+                .WithOne()
+                .HasForeignKey(x => x.SubcategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Category>().HasData(new List<Category>
             {

@@ -1,4 +1,4 @@
-p {
+﻿p {
     margin: 0;
     padding: 0;
 }
@@ -79,6 +79,26 @@ h1, h2, h3, h4, h5, h6, p {
     position: relative;
 }
 
+.modal-error-block {
+    display: none;
+    color: red;
+    margin-bottom: 3px;
+}
+
+.modal-input {
+    width: 70%;
+    border: 1px solid salmon;
+    border-radius: 5px;
+    padding: 6px 12px;
+    background-color: white;
+    outline: none;
+}
+
+.modal-input:focus {
+    box-shadow: 0 0 8px salmon;
+    transition: box-shadow 0.15s;
+}
+
 .model-error {
     display: block;
     color: red;
@@ -99,6 +119,18 @@ h1, h2, h3, h4, h5, h6, p {
     word-break: break-word;
 }
 
+.user-name-link {
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    text-decoration: none;
+    color: black;
+}
+
+.user-name-link:hover {
+    color: salmon;
+}
+
 .themed-link {
     cursor: pointer;
     border: none;
@@ -109,6 +141,98 @@ h1, h2, h3, h4, h5, h6, p {
 
 .themed-link:hover {
     color: #C46256;
+}
+
+.themed-link-on-hover {
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    text-decoration: none;
+    color: black;
+}
+
+.themed-link-on-hover:hover {
+    color: salmon;
+    background-color: transparent;
+    text-decoration: underline;
+}
+
+.block-link {
+    display: block;
+    text-decoration: none;
+    color: black;
+    cursor: pointer;
+}
+
+.block-link:hover {
+    color: black;
+    background-color: #f1f1f1;
+}
+
+.block-link-colored {
+    display: block;
+    text-decoration: none;
+    color: black;
+    cursor: pointer;
+}
+
+.block-link-colored:hover {
+    color: salmon;
+}
+
+.load-spinner-container {
+    text-align: center;
+}
+
+.load-spinner {
+    border: 4px solid #f2f2f2;
+    border-top: 4px solid salmon;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 50px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.star-rating {
+    font-size: 23px;
+    display: inline-block;
+    position: relative;
+    color: #ccc;
+}
+
+.star-rating::before {
+    content: '★★★★★';
+    letter-spacing: 2px;
+}
+
+.star-rating-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    letter-spacing: 2px;
+    color: #ffca28;
+}
+
+.themed-input {
+    width: 260px;
+    border: 1px solid salmon;
+    border-radius: 8px;
+    padding: 6px 12px;
+    background-color: white;
+    outline: none;
+}
+
+.themed-input:focus {
+    box-shadow: 0 0 8px salmon;
+    transition: box-shadow 0.1s;
 }
 
 .btn {
@@ -126,6 +250,11 @@ h1, h2, h3, h4, h5, h6, p {
 .btn:hover {
     background: #C46256;
     color: white;
+}
+
+.btn:active {
+    background: #C46256 !important;
+    color: white !important;
 }
 
 .btn:focus {
@@ -200,10 +329,52 @@ html {
   font-size: 14px;
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+@media(min-width: 1401px) {
+    .modal-form {
+        width: 30%;
+    }
+}
+
+@media (max-width: 1400px) {
+    .modal-form {
+        width: 40%;
+    }
+}
+
+@media (max-width: 1200px) {
+    .modal-form {
+        width: 50%;
+    }
+}
+
+@media (max-width: 992px) {
+    .modal-form {
+        width: 60%;
+    }
+}
+
+@media (max-width: 768px) {
+    .modal-form {
+        width: 70%;
+    }
+}
+
+@media (max-width: 600px) {
+    .modal-form {
+        width: 80%;
+    }
+}
+
+@media (max-width: 520px) {
+    .modal-form {
+        width: 90%;
+    }
+}
+
+@media(min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {

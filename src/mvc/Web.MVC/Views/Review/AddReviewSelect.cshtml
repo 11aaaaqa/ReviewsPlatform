@@ -1,0 +1,196 @@
+﻿@using Web.MVC.Constants
+@model List<Web.MVC.Models.Api_responses.category.CategoryResponse>
+<link rel="stylesheet" href="~/css/review/add-review-select.css" />
+
+<div class="add-review-select-page-block">
+    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+        <button id="selectSubcategorySelectionBtn" class="btn">Добавить товар</button>
+        <button id="findItemSelectionBtn" class="btn btn-selected">Найти в каталоге</button>
+    </div>
+
+    <div class="add-review-select-block">
+        <div id="selectSubcategoryBlock" class="hidden">
+            @foreach (var category in Model)
+            {
+                <div>
+                    <h4>@category.Name</h4>
+                    <div style="margin-left: 20px;">
+                        @foreach (var subcategory in category.Subcategories)
+                        {
+                            <p>
+                                <a class="themed-link-on-hover" asp-controller="Review" asp-action="AddReviewWithItem" asp-route-subcategoryId="@subcategory.Id">
+                                    @subcategory.Name
+                                </a>
+                            </p>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div id="findItemBlock">
+            <form id="findItemsForm">
+                <div class="flex" style="gap: 7px; margin-bottom: 8px;">
+                    <input id="searchItemInput" class="themed-input" type="text" placeholder="Найти товар" maxlength="@StringLengthDtoConstants.ItemNameMax" />
+                    <button id="searchItemBtn" class="btn">Найти</button>
+                </div>
+            </form>
+            <div id="foundItemsBlock"></div>
+            <div id="add-review-sentinel" style="height: 10px;"></div>
+            <div id="loadSpinnerContainer" class="load-spinner-container"></div>
+            <div id="foundItemsErrorBlock" style="display: none; color: red; margin-top: 10px;"></div>
+        </div>
+    </div>
+</div>
+<script>
+    const searchItemInput = document.getElementById('searchItemInput');
+    const searchItemBtn = document.getElementById('searchItemBtn');
+    const loadSpinnerContainer = document.getElementById('loadSpinnerContainer');
+    const foundItemsBlock = document.getElementById('foundItemsBlock');
+    const foundItemsErrorBlock = document.getElementById('foundItemsErrorBlock');
+
+    document.getElementById('findItemsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+    });
+
+    let query;
+    const pageSize = 30;
+    let pageNumber = 1;
+    let isNextPageExisted = false;
+    let loading = false;
+
+    searchItemBtn.addEventListener('click', async function() {
+        if (searchItemInput.value.trim() === '') return;
+
+        foundItemsBlock.innerHTML = '';
+        foundItemsErrorBlock.style.display = 'none';
+        showLoader();
+        query = searchItemInput.value;
+        pageNumber = 1;
+
+        const response = await fetch(`/items/json/search?query=${encodeURIComponent(query)}&pageSize=${pageSize}&pageNumber=${pageNumber}`);
+        if (!response.ok) {
+            hideLoader();
+            foundItemsBlock.textContent = 'Что-то пошло не так. Попробуйте еще раз.';
+            return;
+        }
+
+        const itemsResult = await response.json();
+        displayItems(itemsResult.items);
+        isNextPageExisted = itemsResult.isNextPageExisted;
+
+        hideLoader();
+        pageNumber++;
+    });
+
+    function displayItems(items) {
+        items.forEach(item => {
+            const link = document.createElement('a');
+            link.href = `/items/${item.id}/reviews/add`;
+            link.classList.add('block-link');
+
+            const container = document.createElement('div');
+            container.style.display = 'flex';
+            container.style.gap = '8px';
+            container.style.alignItems = 'center';
+
+            const imageContainer = document.createElement('div');
+            const image = document.createElement('img');
+            image.style.height = '80px';
+            image.style.width = '80px';
+            image.style.objectFit = 'cover';
+            image.src = item.pictureSrc;
+            imageContainer.appendChild(image);
+            container.appendChild(imageContainer);
+
+            const infoContainer = document.createElement('div');
+            const nameP = document.createElement('p');
+            nameP.textContent = item.name;
+            nameP.style.fontWeight = 600;
+            infoContainer.appendChild(nameP);
+            if (item.brand) {
+                const brandP = document.createElement('p');
+                brandP.textContent = `Компания: ${item.brand}`;
+                infoContainer.appendChild(brandP);
+            }
+            const ratingP = document.createElement('p');
+            ratingP.textContent = `Рейтинг: ${item.generalEstimation}`;
+            infoContainer.appendChild(ratingP);
+            container.appendChild(infoContainer);
+
+            link.appendChild(container);
+
+            foundItemsBlock.appendChild(link);
+        });
+    }
+
+    function showLoader() {
+        loadSpinnerContainer.innerHTML = '<div class="load-spinner"></div>';
+    }
+
+    function hideLoader() {
+        loadSpinnerContainer.innerHTML = '';
+    }
+
+    const sentinel = document.getElementById('add-review-sentinel');
+    async function loadItems() {
+        if (loading || !isNextPageExisted || !query) return;
+
+        loading = true;
+        foundItemsErrorBlock.style.display = 'none';
+        showLoader();
+
+        var response = await fetch(`/items/json/search?query=${encodeURIComponent(query)}&pageSize=${pageSize}&pageNumber=${pageNumber}`);
+        if (!response.ok) {
+            hideLoader();
+            foundItemsErrorBlock.textContent = 'Что-то пошло не так. Попробуйте еще раз.';
+            foundItemsErrorBlock.style.display = 'block';
+            loading = false;
+            return;
+        }
+
+        const itemsResult = await response.json();
+        displayItems(itemsResult.items);
+        isNextPageExisted = itemsResult.isNextPageExisted;
+
+        hideLoader();
+        pageNumber++;
+        loading = false;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            loadItems();
+        }
+    }, {
+        rootMargin: '100px'
+    });
+    observer.observe(sentinel);
+
+
+
+
+
+
+    const findItemSelectionBtn = document.getElementById('findItemSelectionBtn');
+    const findItemBlock = document.getElementById('findItemBlock');
+
+    const selectSubcategorySelectionBtn = document.getElementById('selectSubcategorySelectionBtn');
+    const selectSubcategoryBlock = document.getElementById('selectSubcategoryBlock');
+
+    findItemSelectionBtn.addEventListener('click', () => {
+        findItemSelectionBtn.classList.toggle('btn-selected');
+        selectSubcategorySelectionBtn.classList.toggle('btn-selected');
+
+        findItemBlock.style.display = 'block';
+        selectSubcategoryBlock.style.display = 'none';
+    });
+
+    selectSubcategorySelectionBtn.addEventListener('click', () => {
+        findItemSelectionBtn.classList.toggle('btn-selected');
+        selectSubcategorySelectionBtn.classList.toggle('btn-selected');
+
+        findItemBlock.style.display = 'none';
+        selectSubcategoryBlock.style.display = 'block';
+    });
+</script>

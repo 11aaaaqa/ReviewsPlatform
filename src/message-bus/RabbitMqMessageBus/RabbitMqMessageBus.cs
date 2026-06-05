@@ -48,7 +48,7 @@ namespace RabbitMqMessageBus
             await using var channel = await connection!.CreateChannelAsync();
             await channel.ExchangeDeclareAsync(exchange: ExchangeName, type: ExchangeType.Direct);
 
-            byte[] encodedMessage = JsonSerializer.SerializeToUtf8Bytes(messageBusEvent);
+            byte[] encodedMessage = JsonSerializer.SerializeToUtf8Bytes(messageBusEvent, messageBusEvent.GetType());
             var basicProperties = new BasicProperties { DeliveryMode = DeliveryModes.Persistent };
             await channel.BasicPublishAsync(exchange: ExchangeName, routingKey: routingKey, body: encodedMessage,
                 mandatory: true, basicProperties: basicProperties);

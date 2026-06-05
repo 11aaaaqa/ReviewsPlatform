@@ -1,0 +1,110 @@
+﻿@model Web.MVC.Models.View_models.Review.ReviewDisplay
+<link rel="stylesheet" href="~/css/review/get-review-by-id.css"/>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
+<script src="https://cdn.jsdelivr.net/npm/@@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+
+@{
+    string GetReviewWord(int count)
+    {
+        int mod100 = count % 100;
+        int mod10 = count % 10;
+
+        if (mod10 == 1 && mod100 != 11) return "отзыв";
+        if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "отзыва";
+        return "отзывов";
+    }
+}
+
+<div class="get-review-by-id-page-block">
+    <div class="item-info-block">
+        <h3 style="margin-bottom: 18px;">@Model.Item.Name</h3>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <img src="@Model.Item.PictureSrc" style="max-width: 220px; max-height: 220px;" />
+            <div>
+                <div class="star-rating" style="font-size: 30px;">
+                    <div class="star-rating-fill" style="width: @(Model.Item.GeneralEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                </div>
+                <p style="color: gray; font-size: 14px; font-weight: 700;">
+                    Среднее: @Model.Item.GeneralEstimation (@Model.Item.ReviewsCount @GetReviewWord(Model.Item.ReviewsCount))
+                </p>
+                <a style="margin: 10px 0 10px 0;" class="btn-wide-stretched" asp-controller="Review" asp-action="AddReview" asp-route-itemId="@Model.Item.Id">
+                    Написать отзыв
+                </a>
+                @if (Model.Item.Brand != null)
+                {
+                    <p style="font-size: 15px;">Бренд: @Model.Item.Brand</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="review-block">
+        <div>
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 5px;">
+                <img src="@Model.CreatedByUser.AvatarSrc" style="width: 50px; height: 50px; object-fit: cover;" />
+                <a class="user-name-link" asp-controller="User" asp-action="GetUserById" asp-route-userId="@Model.CreatedByUser.Id">
+                    @Model.CreatedByUser.UserName
+                </a>
+            </div>
+            <p style="color: rgba(125, 125, 125, 0.7); font-size: 14px;">Опубликовано @Model.CreatedAt.ToString("dd.MM.yyyy")</p>
+            <div style="display: flex; align-items: center; gap: 7px; margin: 12px 0 12px 0;">
+                <h4 style="margin-top: 8px;">Оценка:</h4>
+                <div class="star-rating" style="font-size: 30px;">
+                    <div class="star-rating-fill" style="width: @(Model.ItemEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div>
+                @Model.Text
+            </div>
+
+            @if (Model.PicturesSrc.Any())
+            {
+                int maxVisiblePhotos = 4;
+                int totalPhotos = Model.PicturesSrc.Count;
+
+                <div class="review-images-grid" id="review-gallery-grid">
+                    @for (int i = 0; i < totalPhotos; i++)
+                    {
+                        bool isHidden = i >= maxVisiblePhotos;
+                        bool isLastVisibleWithMore = (i == maxVisiblePhotos - 1) && (totalPhotos > maxVisiblePhotos);
+
+                        <div class="review-img-wrapper @(isHidden ? "hidden-photo" : "") @(isLastVisibleWithMore ? "has-more" : "")"
+                             @(isLastVisibleWithMore ? $"data-more-text=+{totalPhotos - maxVisiblePhotos + 1}" : "")>
+
+                            <a href="@Url.Content(Model.PicturesSrc[i])" data-fancybox="review-gallery">
+                                <img src="@Url.Content(Model.PicturesSrc[i])" class="review-img-thumb" alt="Фото отзыва" />
+                            </a>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div>
+            <div style="display: flex; gap: 10px; font-size: 20px;">
+                <div class="get-reviews-flex">
+                    <i class="fa-regular fa-thumbs-up"></i>
+                    <span>@Model.LikesCount</span>
+                </div>
+                <div class="get-reviews-flex">
+                    <i class="fa-regular fa-thumbs-down"></i>
+                    <span>@Model.DislikesCount</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        Fancybox.bind("[data-fancybox='review-gallery']", {
+            Infinite: true,
+            Images: { Panzoom: { maxScale: 3 } }
+        });
+    });
+</script>

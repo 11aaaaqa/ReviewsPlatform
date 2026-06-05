@@ -2,6 +2,7 @@
 using CategoryMicroservice.Api.Exceptions;
 using CategoryMicroservice.Api.Models.Business;
 using CategoryMicroservice.Api.Services.CategoryServices;
+using CategoryMicroservice.Api.Services.ItemServices;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace CategoryMicroservice.Api.Services.UnitOfWork
@@ -10,15 +11,18 @@ namespace CategoryMicroservice.Api.Services.UnitOfWork
     {
         public ICategoryRepository<Category> CategoryRepository { get; }
         public ICategoryRepository<Subcategory> SubcategoryRepository { get; }
+        public IItemRepository ItemRepository { get; }
+
         private readonly ApplicationDbContext context;
         private IDbContextTransaction? transaction;
 
         public UnitOfWork(ICategoryRepository<Category> categoryRepository, ICategoryRepository<Subcategory> subcategoryRepository,
-            ApplicationDbContext context)
+            IItemRepository itemRepository, ApplicationDbContext context)
         {
             this.context = context;
             CategoryRepository = categoryRepository;
             SubcategoryRepository = subcategoryRepository;
+            ItemRepository = itemRepository;
         }
 
         public async Task CompleteAsync()

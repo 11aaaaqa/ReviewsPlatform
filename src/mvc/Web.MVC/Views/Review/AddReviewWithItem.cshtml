@@ -1,0 +1,120 @@
+﻿@using Web.MVC.Constants
+@model Web.MVC.DTOs.reivew.AddReviewWithItemDto
+<link rel="stylesheet" href="~/css/review/add-review.css"/>
+
+<div class="add-review-page-block">
+    <input type="hidden" id="reviewTextMaxLength" value="@StringLengthDtoConstants.ReviewTextMax"/>
+    <input type="hidden" id="shortReviewMaxLength" value="@StringLengthDtoConstants.ShortReviewMax" />
+    <input type="hidden" id="picturesMaxSize" value="12"/>
+    <form id="addReviewForm" method="post" asp-controller="Review" asp-action="AddReviewWithItem" enctype="multipart/form-data">
+        <div id="errorMessageContainer" class="hidden" style="color: red; margin-bottom: 3px;"></div>
+        <div>
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+            <span class="model-error" asp-validation-for="ItemName"></span>
+            <span class="model-error" asp-validation-for="ItemBrand"></span>
+            <span class="model-error" asp-validation-for="ItemPicture"></span>
+            <span class="model-error" asp-validation-for="ReviewItemEstimation"></span>
+            <span class="model-error" asp-validation-for="ReviewText"></span>
+            <span class="model-error" asp-validation-for="ShortReview"></span>
+        </div>
+        <input type="hidden" asp-for="SubcategoryId"/>
+
+        <div style="margin-bottom: 10px;">
+            <div id="addItemFormPart">
+                <div class="add-review-form-block">
+                    <h4>Название товара</h4>
+                    <input id="itemNameInput" class="themed-input" asp-for="ItemName" placeholder="Введите название товара" required/>
+                </div>
+                <div class="add-review-form-block">
+                    <h4>Бренд товара (если есть)</h4>
+                    <input id="itemBrandInput" class="themed-input" asp-for="ItemBrand" placeholder="Введите бренд товара"/>
+                </div>
+                <div class="add-review-form-block">
+                    <h4>Фотография товара</h4>
+                    <input id="itemPictureInput" class="hidden" asp-for="ItemPicture" accept="image/*" required/>
+                    <img id="itemPictureImg" width="200" height="200" style="display: none; margin-bottom: 7px"/>
+                    <button id="chooseItemPictureBtn" type="button" class="btn-wide-stretched">Выбрать изображение</button>
+                </div>
+            </div>
+
+            <div id="addReviewFormPart" class="hidden">
+                <div class="add-review-form-block">
+                    <h4 style="margin-bottom: 0;">Ваша оценка товара</h4>
+                    <div style="margin: 0;">
+                        <input id="reviewItemEstimationInput" type="hidden" asp-for="ReviewItemEstimation"/>
+                        <span class="add-review-star" data-value="1">&#9733;</span>
+                        <span class="add-review-star" data-value="2">&#9733;</span>
+                        <span class="add-review-star" data-value="3">&#9733;</span>
+                        <span class="add-review-star" data-value="4">&#9733;</span>
+                        <span class="add-review-star" data-value="5">&#9733;</span>
+                    </div>
+                </div>
+                <div class="add-review-form-block">
+                    <h4>Отзыв</h4>
+                    <div class="review-block" id="reviewBlock" contenteditable="true" placeholder="Введите отзыв"></div>
+                    <input id="reviewTextInput" class="hidden" asp-for="ReviewText"/>
+                </div>
+                <div class="add-review-form-block">
+                    <h4>Краткое резюме о товаре</h4>
+                    <div class="review-block" id="shortReviewBlock" contenteditable="true" placeholder="Введите краткое резюме" style="min-height: 75px"></div>
+                    <input id="shortReviewInput" class="hidden" asp-for="ShortReview"/>
+                </div>
+                <div class="add-review-form-block">
+                    <h4>Добавьте фотографии</h4>
+                    <div id="reviewPicturesPreviewBlock" style="display: flex; flex-wrap: wrap;"></div>
+                    <button id="selectReviewPicturesBtn" type="button" class="btn-wide-stretched">Выбрать изображение</button>
+                    <input id="reviewPicturesInput" class="hidden" asp-for="ReviewPictures" accept="image/*" multiple/>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex" style="align-items: center; gap: 8px;">
+            <div>
+                <button id="nextBtn" type="button" class="btn">Далее</button>
+                <button id="prevBtn" type="button" class="btn hidden">Назад</button>
+            </div>
+            <input id="sendFormSubmit" class="btn hidden" type="submit" value="Сохранить"/>
+        </div>
+    </form>
+</div>
+
+<script src="~/js/review/AddReview/addReviewVariablesDeclaration.js"></script>
+<script>
+    const nextBtn = document.getElementById('nextBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const sendFormSubmit = document.getElementById('sendFormSubmit');
+    const addItemFormPart = document.getElementById('addItemFormPart');
+    const addReviewFormPart = document.getElementById('addReviewFormPart');
+
+    nextBtn.addEventListener('click', () => {
+        if (document.getElementById('itemNameInput').value && itemPictureInput.value) {
+            nextBtn.classList.add('hidden');
+            prevBtn.classList.remove('hidden');
+            sendFormSubmit.classList.remove('hidden');
+
+            addItemFormPart.classList.add('hidden');
+            addReviewFormPart.classList.remove('hidden');
+
+            if (errorMessageContainer.textContent === 'Заполните все поля') {
+                errorMessageContainer.style.display = 'none';
+            }
+        } else {
+            errorMessageContainer.textContent = 'Заполните все поля';
+            errorMessageContainer.style.display = 'block';
+        }
+    });
+
+    prevBtn.addEventListener('click', () => {
+        nextBtn.classList.remove('hidden');
+        prevBtn.classList.add('hidden');
+        sendFormSubmit.classList.add('hidden');
+
+        addItemFormPart.classList.remove('hidden');
+        addReviewFormPart.classList.add('hidden');
+    });
+</script>
+<script src="~/js/review/AddReview/addReviewStarsHighlight.js"></script>
+<script src="~/js/review/AddReview/addReviewInputTextBlock.js"></script>
+<script src="~/js/review/AddReview/addReviewSelectPictures.js"></script>
+<script src="~/js/review/AddReview/AddWithItem/addReviewWithItemForm.js"></script>
+<script src="~/js/review/AddReview/AddWithItem/addReviewWithItemItemPicture.js"></script>

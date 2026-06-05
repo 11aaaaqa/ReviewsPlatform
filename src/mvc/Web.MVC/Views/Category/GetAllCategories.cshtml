@@ -1,0 +1,33 @@
+﻿@model Web.MVC.Models.View_models.Category.GetAllCategoriesViewModel
+<link rel="stylesheet" href="~/css/category/all-categories.css"/>
+
+<div class="all-categories-page-block">
+    @if (Model.IsUserAllowedToAddCategory)
+    {
+        <div class="flex" style="flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 7px;">
+            <h3>Каталог отзывов</h3>
+            <a asp-controller="Category" asp-action="EditCategories" class="btn">Редактирование категорий</a>
+        </div>
+    }
+    else
+    {
+        <div>
+            <h3>Каталог отзывов</h3>
+        </div>
+    }
+
+    <div class="categories-block">
+        @foreach (var category in Model.Categories)
+        {
+            <div class="category-block">
+                <h5>@category.Name</h5>
+                @foreach (var subcategory in category.Subcategories)
+                {
+                    <p><a class="themed-link-on-hover" asp-controller="Category" asp-action="GetItemsBySubcategoryId" asp-route-subcategoryId="@subcategory.Id">
+                        @subcategory.Name
+                    </a></p>
+                }
+            </div>
+        }
+    </div>
+</div>

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
+using Web.MVC.Constants;
 
 namespace Web.MVC.DTOs.user
 {
@@ -9,7 +10,7 @@ namespace Web.MVC.DTOs.user
 
         [Required(ErrorMessage = "Поле \"Имя пользователя\" обязательно")]
         [Display(Name = "Имя пользователя")]
-        [StringLength(30)]
+        [StringLength(StringLengthDtoConstants.UserNameMax)]
         public string NewUserName
         {
             get => newUserName;

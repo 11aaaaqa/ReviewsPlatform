@@ -17,17 +17,17 @@ namespace Web.MVC.Controllers
     {
         private readonly IHttpClientFactory httpClientFactory;
         private readonly ILogger<UserController> logger;
-        private readonly AvatarConverter avatarConverter;
+        private readonly ImageConverter imageConverter;
         private readonly IDataProtector dataProtector;
         private readonly IConfiguration configuration;
         private readonly List<string> availableFileExtensions = new() { ".jpg", ".png", ".jpeg"};
         public UserController(IHttpClientFactory httpClientFactory, ILogger<UserController> logger,
-            AvatarConverter avatarConverter, IDataProtectionProvider dataProtectionProvider, IConfiguration configuration)
+            ImageConverter imageConverter, IDataProtectionProvider dataProtectionProvider, IConfiguration configuration)
         {
             dataProtector = dataProtectionProvider.CreateProtector(DataProtectionPurposeConstants.Jwt);
             this.httpClientFactory = httpClientFactory;
             this.logger = logger;
-            this.avatarConverter = avatarConverter;
+            this.imageConverter = imageConverter;
             this.configuration = configuration;
         }
 
@@ -42,7 +42,7 @@ namespace Web.MVC.Controllers
 
             bool canUserSetTheRoles = User.IsInRole(RoleNames.Admin);
             bool canUserViewTheRoles = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.Moderator);
-            string avatarSrc = avatarConverter.GetAvatarSrc(user.AvatarSource);
+            string avatarSrc = imageConverter.GetImageSrc(user.AvatarSource);
             var model = new GetUserByIdViewModel
             {
                 User = user, CanUserSetTheRoles = canUserSetTheRoles,
@@ -104,7 +104,7 @@ namespace Web.MVC.Controllers
 
             var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
 
-            string avatarSrc = avatarConverter.GetAvatarSrc(user!.AvatarSource);
+            string avatarSrc = imageConverter.GetImageSrc(user!.AvatarSource);
 
             return View(new EditUserProfileViewModel
             {
@@ -113,18 +113,21 @@ namespace Web.MVC.Controllers
             });
         }
 
-        [RequestSizeLimit(2 * 1024 * 1024)] // При изменении изменить в EditUserProfile view "Размер файла превышает 2 мб" на актуальное значение
+        [RequestSizeLimit(2 * 1024 * 1024)]
         [Authorize]
         [Route("settings/update-avatar")]
         [HttpPost]
         public async Task<IActionResult> UpdateUserAvatar(UpdateAvatarDto model, string returnUrl)
         {
+            if(model == null)
+                return StatusCode((int)HttpStatusCode.BadRequest, "Размер файла превышает 2 мб");
+
             using MemoryStream memoryStream = new MemoryStream();
             await model.Image.CopyToAsync(memoryStream);
             if (memoryStream.Length > 2 * 1024 * 1024)
                 return StatusCode((int)HttpStatusCode.BadRequest, "Размер файла превышает 2 мб");
             
-            if (!availableFileExtensions.Any(x => x == Path.GetExtension(model.Image.FileName)))
+            if (!availableFileExtensions.Any(x => x == Path.GetExtension(model.Image.FileName).ToLower()))
                 return StatusCode((int)HttpStatusCode.BadRequest, "Неверный формат");
             
             byte[] avatarSource = memoryStream.ToArray();

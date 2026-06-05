@@ -1,0 +1,119 @@
+﻿@using Web.MVC.Constants
+@model Web.MVC.Models.View_models.Review.AddReviewViewModel
+<link rel="stylesheet" href="~/css/review/add-review.css"/>
+
+<div class="add-review-page-block">
+    <div style="margin-bottom: 35px;">
+        <h3>@Model.Item.Name</h3>
+        <img src="@Model.ItemImageSrc" style="max-width: 200px; max-height: 200px; object-fit: contain;"/>
+    </div>
+    
+    <div>
+        <input type="hidden" id="reviewTextMaxLength" value="@StringLengthDtoConstants.ReviewTextMax"/>
+        <input type="hidden" id="shortReviewMaxLength" value="@StringLengthDtoConstants.ShortReviewMax" />
+        <input type="hidden" id="picturesMaxSize" value="10"/>
+        <form id="addReviewForm" method="post" asp-controller="Review" asp-action="AddReview" enctype="multipart/form-data">
+            <div id="errorMessageContainer" class="hidden" style="color: red; margin-bottom: 3px;"></div>
+            <div>
+                <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+                <span class="model-error" asp-validation-for="AddReviewModel.ItemEstimation"></span>
+                <span class="model-error" asp-validation-for="AddReviewModel.Text"></span>
+                <span class="model-error" asp-validation-for="AddReviewModel.ShortReview"></span>
+            </div>
+            <input id="addReviewItemId" type="hidden" name="itemId" value="@Model.Item.Id"/>
+
+            <div class="add-review-form-block">
+                <h4 style="margin-bottom: 0;">Ваша оценка товара</h4>
+                <div style="margin: 0;">
+                    <input type="text" id="reviewItemEstimationInput" class="hidden" name="itemEstimation" value="0" />
+                    <span class="add-review-star" data-value="1">&#9733;</span>
+                    <span class="add-review-star" data-value="2">&#9733;</span>
+                    <span class="add-review-star" data-value="3">&#9733;</span>
+                    <span class="add-review-star" data-value="4">&#9733;</span>
+                    <span class="add-review-star" data-value="5">&#9733;</span>
+                </div>
+            </div>
+            <div class="add-review-form-block">
+                <h4>Отзыв</h4>
+                <div class="review-block" id="reviewBlock" contenteditable="true" placeholder="Введите отзыв"></div>
+                <input type="text" id="reviewTextInput" class="hidden" name="text" />
+            </div>
+            <div class="add-review-form-block">
+                <h4>Краткое резюме о товаре</h4>
+                <div class="review-block" id="shortReviewBlock" contenteditable="true" placeholder="Введите краткое резюме" style="min-height: 75px"></div>
+                <input type="text" id="shortReviewInput" class="hidden" name="shortReview" />
+            </div>
+            <div class="add-review-form-block">
+                <h4>Добавьте фотографии</h4>
+                <div id="reviewPicturesPreviewBlock" style="display: flex; flex-wrap: wrap;"></div>
+                <button id="selectReviewPicturesBtn" type="button" class="btn-wide-stretched">Выбрать изображение</button>
+                <input type="file" id="reviewPicturesInput" class="hidden" name="pictures" accept="image/*" multiple />
+            </div>
+
+            <input id="sendFormSubmit" class="btn" type="submit" value="Сохранить"/>
+        </form>
+    </div>
+</div>
+
+<script src="~/js/review/AddReview/addReviewVariablesDeclaration.js"></script>
+<script>
+    document.getElementById('addReviewForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const submitBtn = this.querySelector('[type="submit"]');
+        if (submitBtn.disabled) return;
+        submitBtn.disabled = true;
+
+        reviewTextInput.value = reviewBlock.innerText.trim();
+        shortReviewInput.value = shortReviewBlock.innerText.trim();
+
+        const dataTransfer = new DataTransfer();
+        filesArray.forEach(file => dataTransfer.items.add(file));
+        reviewPicturesInput.files = dataTransfer.files;
+
+        var formData = new FormData(document.getElementById('addReviewForm'));
+
+        try {
+            const itemId = document.getElementById('addReviewItemId').value;
+            const response = await fetch(`/items/${itemId}/reviews/add`,
+                {
+                    method: 'POST',
+                    body: formData
+                });
+
+            if (response.redirected)
+            {
+                window.location.href = response.url;
+            }
+            else if (response.status === 400)
+            {
+                const result = await response.json();
+
+                errorMessageContainer.textContent = '';
+
+                if (result.errors && result.errors.length > 0)
+                {
+                    result.errors.forEach(error => {
+                        const errorItem = document.createElement('div');
+                        errorItem.textContent = error;
+                        errorMessageContainer.appendChild(errorItem);
+                    });
+                    errorMessageContainer.style.display = 'block';
+                }
+            }
+            else
+            {
+                errorMessageContainer.textContent = 'Что-то пошло не так';
+                errorMessageContainer.style.display = 'block';
+            }
+        } catch (e) {
+            errorMessageContainer.textContent = 'Что-то пошло не так';
+            errorMessageContainer.style.display = 'block';
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
+</script>
+<script src="~/js/review/AddReview/addReviewStarsHighlight.js"></script>
+<script src="~/js/review/AddReview/addReviewInputTextBlock.js"></script>
+<script src="~/js/review/AddReview/addReviewSelectPictures.js"></script>

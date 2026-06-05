@@ -1,0 +1,93 @@
+﻿@using Web.MVC.Constants
+@model System.Collections.Generic.List<Web.MVC.Models.Api_responses.category.CategoryResponse>
+<link rel="stylesheet" href="~/css/category/all-categories.css" />
+<link rel="stylesheet" href="~/css/category/edit-categories.css"/>
+
+<div class="all-categories-page-block">
+    <div>
+        <h3>Каталог отзывов</h3>
+        <div class="flex" style="flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px;">
+            <button id="openAddCategoryModalBtn" class="btn">Добавить категорию</button>
+            <div class="modal-overlay" id="addCategoryModalOverlay">
+                <div class="modal-form">
+                    <div class="modal-error-block" id="addCategoryModalErrorBlock"></div>
+                    <form id="addCategoryForm" method="post" asp-controller="Category" asp-action="AddCategory">
+                        <input class="modal-input" name="name" maxlength="@StringLengthDtoConstants.CategoryNameMax"
+                               placeholder="Введите название категории" required/>
+                        <input id="addCategorySubmit" class="btn-green" type="submit" style="margin-top: 7px;" value="Добавить"/>
+                    </form>
+                </div>
+            </div>
+
+            <button id="openAddSubcategoryModalBtn" class="btn">Добавить подкатегорию</button>
+            <div class="modal-overlay" id="addSubcategoryModalOverlay">
+                <div class="modal-form">
+                    <div class="modal-error-block" id="addSubcategoryModalErrorBlock"></div>
+                    <form id="addSubcategoryForm" method="post" asp-controller="Category" asp-action="AddSubcategory">
+                        <div id="categorySelect" class="category-select" style="margin-bottom: 7px;">
+                            <div id="categorySelectSelected" class="category-select-selected">Выберите категорию</div>
+                            <div id="categorySelectItems" class="category-select-items">
+                                @foreach (var category in Model)
+                                {
+                                    <div data-value="@category.Id">@category.Name</div>
+                                }
+                            </div>
+                            <input id="categorySelectInput" type="hidden" name="categoryId" value="@Guid.Empty" />
+                        </div>
+
+                        <input class="modal-input" name="name" maxlength="@StringLengthDtoConstants.SubcategoryNameMax"
+                               placeholder="Введите название подкатегории" required/>
+
+                        <input id="addSubcategorySubmit" class="btn-green" type="submit" style="margin-top: 7px;" value="Добавить"/>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="categories-block">
+        @foreach (var category in Model)
+        {
+            <div class="category-block">
+                @if (category.ReviewsCount > 0)
+                {
+                    <h5>@category.Name</h5>
+                }
+                else
+                {
+                    <div class="flex" style="gap: 7px; align-items: center;">
+                        <h5>@category.Name</h5>
+                        <form method="post" asp-controller="Category" asp-action="RemoveCategory" asp-route-categoryId="@category.Id"
+                              onsubmit="return confirm('Вы действительно хотите удалить категорию @category.Name?');">
+                            <input class="remove-category-btn" type="submit" value="×" />
+                        </form>
+                    </div>
+                }
+                @foreach (var subcategory in category.Subcategories)
+                {
+                    if (subcategory.ReviewsCount > 0)
+                    {
+                        <p><a class="themed-link-on-hover" asp-controller="Category" asp-action="GetItemsBySubcategoryId" asp-route-subcategoryId="@subcategory.Id">
+                            @subcategory.Name
+                        </a></p>
+                    }
+                    else
+                    {
+                        <div class="flex" style="gap: 7px; align-items: center;">
+                            <p><a class="themed-link-on-hover" asp-controller="Category" asp-action="GetItemsBySubcategoryId" asp-route-subcategoryId="@subcategory.Id">
+                                @subcategory.Name
+                            </a></p>
+                            <form method="post" asp-controller="Category" asp-action="RemoveSubcategory" asp-route-subcategoryId="@subcategory.Id"
+                                  onsubmit="return confirm('Вы действительно хотите удалить подкатегорию @subcategory.Name?');">
+                                <input class="remove-category-btn" type="submit" value="×" />
+                            </form>
+                        </div>
+                    }
+                }
+            </div>
+        }
+    </div>
+</div>
+<script src="~/js/category/addSubcategory.js"></script>
+<script src="~/js/category/addCategory.js"></script>
+<script src="~/js/category/categorySelect.js"></script>

@@ -1,5 +1,4 @@
-﻿using System.Security.Claims;
-using CategoryMicroservice.Api.Constants;
+﻿using CategoryMicroservice.Api.Constants;
 using CategoryMicroservice.Api.DTOs.Subcategory;
 using CategoryMicroservice.Api.Models.Business;
 using CategoryMicroservice.Api.Services.UnitOfWork;
@@ -7,6 +6,8 @@ using MessageBus.Messages.Category;
 using MessageBus.Publisher;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using System.Text.RegularExpressions;
 
 namespace CategoryMicroservice.Api.Controllers
 {
@@ -15,6 +16,17 @@ namespace CategoryMicroservice.Api.Controllers
     public class SubcategoryController(IUnitOfWork unitOfWork, ILogger<SubcategoryController> logger, IMessagePublisher messagePublisher)
         : ControllerBase
     {
+        [HttpGet]
+        [Route("get-by-id/{subcategoryId}")]
+        public async Task<IActionResult> GetSubcategoryByIdAsync([FromRoute] Guid subcategoryId)
+        {
+            var subcategory = await unitOfWork.SubcategoryRepository.GetByIdAsync(subcategoryId);
+            if (subcategory == null)
+                return NotFound("Subcategory with current identifier does not exist");
+
+            return Ok(subcategory);
+        }
+
         [HttpGet]
         [Route("get-by-name")]
         public async Task<IActionResult> GetSubcategoryByNameAsync(string name)
@@ -41,6 +53,8 @@ namespace CategoryMicroservice.Api.Controllers
         [Route("add")]
         public async Task<IActionResult> AddSubcategoryAsync([FromBody] AddSubcategoryDto model)
         {
+            model.Name = Regex.Replace(model.Name.Trim(), @"\s+", " ");
+
             var subcategory = await unitOfWork.SubcategoryRepository.FindByNameAsync(model.Name);
             if (subcategory != null)
                 return Conflict("Subcategory with current name already exists");
@@ -48,7 +62,7 @@ namespace CategoryMicroservice.Api.Controllers
             if (await unitOfWork.CategoryRepository.GetByIdAsync(model.CategoryId) == null)
                 return BadRequest("Category with current identifier does not exist");
 
-            var subcategoryToAdd = new Subcategory { Id = Guid.NewGuid(), Name = model.Name, CategoryId = model.CategoryId };
+            var subcategoryToAdd = new Subcategory { Id = Guid.NewGuid(), Name = model.Name, CategoryId = model.CategoryId, ReviewsCount = 0};
             await unitOfWork.SubcategoryRepository.AddAsync(subcategoryToAdd);
             await unitOfWork.CompleteAsync();
 
@@ -93,7 +107,11 @@ namespace CategoryMicroservice.Api.Controllers
             if (subcategory == null)
                 return NotFound("Subcategory with current identifier does not exist");
 
-            var category = await unitOfWork.CategoryRepository.GetByIdAsync(subcategory.CategoryId);
+            if (subcategory.ReviewsCount > 0)
+                return BadRequest("Subcategory cannot be removed until it has at least 1 review on it");
+
+            List<Item> itemsToDelete = await unitOfWork.ItemRepository.GetAllBySubcategoryIdAsync(subcategoryId);
+            List<Guid> itemIdsToDelete = itemsToDelete.Select(x => x.Id).ToList();
 
             string subcategoryName = subcategory.Name;
             string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
@@ -101,14 +119,11 @@ namespace CategoryMicroservice.Api.Controllers
             {
                 await unitOfWork.BeginTransactionAsync();
 
-                category!.ReviewsCount -= subcategory.ReviewsCount;
-                unitOfWork.CategoryRepository.Update(category);
-
                 await unitOfWork.SubcategoryRepository.RemoveAsync(subcategoryId);
-
                 await unitOfWork.CompleteAsync();
 
-                await messagePublisher.PublishAsync(new SubcategoryRemovedEvent { SubcategoryId = subcategoryId });
+                await messagePublisher.PublishAsync(new SubcategoryRemovedEvent
+                    { SubcategoryId = subcategoryId, ItemIdsOfRemovedSubcategory = itemIdsToDelete });
 
                 await unitOfWork.CommitTransactionAsync();
             }

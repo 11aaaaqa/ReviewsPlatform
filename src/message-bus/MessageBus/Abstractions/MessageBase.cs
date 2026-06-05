@@ -2,6 +2,6 @@
 {
     public abstract class MessageBase
     {
-        public Guid MessageId { get; } = Guid.NewGuid();
+        public Guid MessageId { get; init; } = Guid.NewGuid();
     }
 }

@@ -57,6 +57,12 @@ namespace AccountMicroservice.Api.Controllers
         }
 
         [AllowAnonymous]
+        [HttpPost]
+        [Route("get-users-by-ids")]
+        public async Task<IActionResult> GetUserByIds([FromBody] List<Guid> userIds)
+            => Ok(await unitOfWork.UserService.GetUsersByUserIds(userIds));
+
+        [AllowAnonymous]
         [HttpGet]
         [Route("get-refresh-token/{userId}")]
         public async Task<IActionResult> GetRefreshToken([FromRoute] Guid userId, [FromQuery] string secret)

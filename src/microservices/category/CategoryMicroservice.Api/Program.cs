@@ -1,12 +1,19 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using CategoryMicroservice.Api.Database;
+using CategoryMicroservice.Api.MessageBus.Consumers;
 using CategoryMicroservice.Api.Models.Business;
+using CategoryMicroservice.Api.Services;
 using CategoryMicroservice.Api.Services.CategoryServices;
+using CategoryMicroservice.Api.Services.ItemServices;
 using CategoryMicroservice.Api.Services.UnitOfWork;
+using MessageBus.Extensions;
+using MessageBus.Messages.Review;
+using MessageBus.Messages.Saga.CreateItemWIthReview;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using RabbitMqMessageBus.Extensions;
+using RestrictionGrpcService;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,15 +42,26 @@ builder.Services.AddDbContext<ApplicationDbContext>(x =>
 
 builder.Services.AddScoped<ICategoryRepository<Category>, CategoryRepository>();
 builder.Services.AddScoped<ICategoryRepository<Subcategory>, SubcategoryRepository>();
+builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddSingleton<ImageValidator>();
 
 builder.Services.AddRabbitMqMessageBus(new RabbitMqOptions
+    {
+        UserName = builder.Configuration["RABBITMQ_DEFAULT_USER"]!,
+        Password = builder.Configuration["RABBITMQ_DEFAULT_PASS"]!,
+        HostName = builder.Configuration["RABBITMQ_HOSTNAME"]!,
+        VirtualHost = builder.Configuration["RABBITMQ_DEFAULT_VHOST"]!,
+        QueueName = "CategoryMicroservice"
+    }).AddMessageBusHandler<ReviewFailedToCreateSagaEvent, ReviewFailedToCreateSagaEventConsumer>()
+    .AddMessageBusHandler<ReviewCreatedSagaEvent, ReviewCreatedSagaEventConsumer>()
+    .AddMessageBusHandler<ReviewRemovedEvent, ReviewRemovedEventConsumer>()
+    .AddMessageBusHandler<ReviewAcceptedEvent, ReviewAcceptedEventConsumer>()
+    .AddMessageBusHandler<ReviewCreatedWithItemRejectedEvent, ReviewCreatedWithItemRejectedEventConsumer>();
+
+builder.Services.AddGrpcClient<RestrictionInfo.RestrictionInfoClient>(x =>
 {
-    UserName = builder.Configuration["RABBITMQ_DEFAULT_USER"]!,
-    Password = builder.Configuration["RABBITMQ_DEFAULT_PASS"]!,
-    HostName = builder.Configuration["RABBITMQ_HOSTNAME"]!,
-    VirtualHost = builder.Configuration["RABBITMQ_DEFAULT_VHOST"]!,
-    QueueName = "CategoryMicroservice"
+    x.Address = new Uri(builder.Configuration["Url:RestrictionMicroservice:Grpc"]!);
 });
 
 builder.Services.AddControllers();

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
+using Web.MVC.Constants;
 
 namespace Web.MVC.DTOs.account
 {
@@ -9,7 +10,7 @@ namespace Web.MVC.DTOs.account
 
         [Required(ErrorMessage = "Поле \"Имя пользователя\" обязательно")]
         [Display(Name = "Имя пользователя")]
-        [StringLength(30)]
+        [StringLength(StringLengthDtoConstants.UserNameMax)]
         public string UserName
         {
             get => userName;
@@ -19,20 +20,21 @@ namespace Web.MVC.DTOs.account
         [Required(ErrorMessage = "Поле \"Адрес эл. почты\" обязательно")]
         [Display(Name = "Адрес эл. почты")]
         [DataType(DataType.EmailAddress)]
-        [StringLength(200)]
+        [StringLength(StringLengthDtoConstants.EmailAddressMax)]
         public string Email { get; set; }
 
         [Required(ErrorMessage = "Поле \"Пароль\" обязательно")]
         [Display(Name = "Пароль")]
         [DataType(DataType.Password)]
-        [StringLength(100, MinimumLength = 8, ErrorMessage = "Минимальная длина пароля 8 символов")]
+        [StringLength(StringLengthDtoConstants.PasswordMax, MinimumLength = StringLengthDtoConstants.PasswordMin,
+            ErrorMessage = "Минимальная длина пароля 8 символов")]
         public string Password { get; set; }
 
         [Required(ErrorMessage = "Поле \"Подтвердите пароль\" обязательно")]
         [Display(Name = "Подтвердите пароль")]
         [DataType(DataType.Password)]
         [Compare(nameof(Password), ErrorMessage = "Пароли не совпадают")]
-        [StringLength(100)]
+        [StringLength(StringLengthDtoConstants.PasswordMax)]
         public string ConfirmPassword { get; set; }
 
         public string? ReturnUrl { get; set; }
