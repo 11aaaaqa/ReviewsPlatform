@@ -1,0 +1,134 @@
+﻿@model Web.MVC.Models.View_models.Review.ReviewDisplay
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
+<script src="https://cdn.jsdelivr.net/npm/@@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+
+<style>
+    .review-images-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 15px;
+        margin-bottom: 15px;
+    }
+
+    .review-img-wrapper {
+        width: 120px;
+        height: 120px;
+        overflow: hidden;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+
+    .review-img-wrapper:hover {
+        transform: scale(1.04);
+    }
+
+    .review-img-thumb {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .load-more-photos-btn {
+        background: none;
+        border: 1px dashed #007bff;
+        color: #007bff;
+        border-radius: 6px;
+        width: 120px;
+        height: 120px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.2s;
+    }
+
+    .load-more-photos-btn:hover {
+        background: rgba(0, 123, 255, 0.05);
+    }
+
+    .hidden-photo {
+        display: none !important;
+    }
+</style>
+
+<div>
+    <div>
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 5px;">
+            <img src="@Model.CreatedByUser.AvatarSrc" style="width: 50px; height: 50px; object-fit: cover;" />
+            <a asp-controller="User" asp-action="GetUserById" asp-route-userId="@Model.CreatedByUser.Id">
+                @Model.CreatedByUser.UserName
+            </a>
+        </div>
+        <p style="color: rgba(125, 125, 125, 0.7); font-size: 14px;">Опубликовано @Model.CreatedAt.ToString("dd.MM.yyyy")</p>
+        <div style="display: flex; align-items: center; gap: 7px;">
+            <h4 style="margin-top: 5px;">Оценка:</h4>
+            <div class="star-rating" style="font-size: 30px;">
+                <div class="star-rating-fill" style="width: @(Model.ItemEstimation * 20)%; font-size: 30px;">★★★★★</div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div>
+            @Model.Text
+        </div>
+
+        @if (Model.PicturesSrc.Any())
+        {
+            int maxVisiblePhotos = 4;
+
+            <div class="review-images-grid" id="review-gallery-grid">
+                @for (int i = 0; i < Model.PicturesSrc.Count; i++)
+                {
+                    bool isHidden = i >= maxVisiblePhotos;
+                    <div class="review-img-wrapper @(isHidden ? "hidden-photo" : "")">
+                        <a href="@Url.Content(Model.PicturesSrc[i])" data-fancybox="review-gallery">
+                            <img src="@Url.Content(Model.PicturesSrc[i])" class="review-img-thumb" alt="Фото отзыва" />
+                        </a>
+                    </div>
+                }
+
+                @if (Model.PicturesSrc.Count > maxVisiblePhotos)
+                {
+                    <button id="load-more-photos-btn" class="load-more-photos-btn">
+                        Еще +@(Model.PicturesSrc.Count - maxVisiblePhotos)
+                    </button>
+                }
+            </div>
+        }
+    </div>
+
+    <div>
+        <div style="display: flex; gap: 10px; font-size: 20px;">
+            <div class="get-reviews-flex">
+                <i class="fa-regular fa-thumbs-up"></i>
+                <span>@Model.LikesCount</span>
+            </div>
+            <div class="get-reviews-flex">
+                <i class="fa-regular fa-thumbs-down"></i>
+                <span>@Model.DislikesCount</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        Fancybox.bind("[data-fancybox='review-gallery']", {
+            Infinite: true,
+            Images: { Panzoom: { maxScale: 3 } }
+        });
+
+        const loadMoreBtn = document.getElementById("load-more-photos-btn");
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener("click", function () {
+                const hiddenPhotos = document.querySelectorAll("#review-gallery-grid .hidden-photo");
+                hiddenPhotos.forEach(photo => photo.classList.remove("hidden-photo"));
+                loadMoreBtn.remove();
+            });
+        }
+    });
+</script>
