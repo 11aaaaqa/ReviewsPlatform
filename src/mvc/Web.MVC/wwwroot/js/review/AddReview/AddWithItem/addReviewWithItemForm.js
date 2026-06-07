@@ -5,8 +5,8 @@
     if (submitBtn.disabled) return;
     submitBtn.disabled = true;
 
-    reviewTextInput.value = reviewBlock.innerText.trim();
-    shortReviewInput.value = shortReviewBlock.innerText.trim();
+    reviewTextInput.value = reviewBlock.innerHTML;
+    shortReviewInput.value = shortReviewBlock.innerHTML;
     document.getElementById('itemNameInput').value = document.getElementById('itemNameInput').value.trim();
     document.getElementById('itemBrandInput').value = document.getElementById('itemBrandInput').value.trim();
 

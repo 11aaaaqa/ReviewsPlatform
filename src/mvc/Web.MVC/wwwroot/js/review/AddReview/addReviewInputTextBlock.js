@@ -1,11 +1,11 @@
 ﻿if (reviewTextInput.value)
-    reviewBlock.innerText = reviewTextInput.value;
+    reviewBlock.innerHTML = reviewTextInput.value;
 
 if (shortReviewInput.value)
-    shortReviewBlock.innerText = shortReviewInput.value;
+    shortReviewBlock.innerHTML = shortReviewInput.value;
 
 reviewBlock.addEventListener('beforeinput', (e) => {
-    const currentLength = reviewBlock.innerText.length;
+    const currentLength = reviewBlock.innerHTML.length;
 
     const selection = window.getSelection();
     const selectedTextLength = selection.toString().length;
@@ -16,7 +16,7 @@ reviewBlock.addEventListener('beforeinput', (e) => {
 });
 
 shortReviewBlock.addEventListener('beforeinput', (e) => {
-    const currentLength = shortReviewBlock.innerText.length;
+    const currentLength = shortReviewBlock.innerHTML.length;
 
     const selection = window.getSelection();
     const selectedTextLength = selection.toString().length;
@@ -28,7 +28,7 @@ shortReviewBlock.addEventListener('beforeinput', (e) => {
 
 reviewBlock.addEventListener('paste', (e) => {
     const paste = (e.clipboardData || window.clipboardData).getData('text');
-    const currentLength = reviewBlock.innerText.length;
+    const currentLength = reviewBlock.innerHTML.length;
     const selection = window.getSelection().toString().length;
 
     if (currentLength - selection + paste.length > reviewTextMaxLength) {
@@ -42,7 +42,7 @@ reviewBlock.addEventListener('paste', (e) => {
 
 shortReviewBlock.addEventListener('paste', (e) => {
     const paste = (e.clipboardData || window.clipboardData).getData('text');
-    const currentLength = shortReviewBlock.innerText.length;
+    const currentLength = shortReviewBlock.innerHTML.length;
     const selection = window.getSelection().toString().length;
 
     if (currentLength - selection + paste.length > shortReviewMaxLength) {
