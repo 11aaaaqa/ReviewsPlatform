@@ -42,7 +42,7 @@ reviewBlock.addEventListener('paste', (e) => {
 
 shortReviewBlock.addEventListener('paste', (e) => {
     const paste = (e.clipboardData || window.clipboardData).getData('text');
-    const currentLength = reviewBlock.innerText.length;
+    const currentLength = shortReviewBlock.innerText.length;
     const selection = window.getSelection().toString().length;
 
     if (currentLength - selection + paste.length > shortReviewMaxLength) {
