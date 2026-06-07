@@ -1,9 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Ganss.Xss;
 
 namespace CategoryMicroservice.Api.DTOs.Items
 {
     public class AddItemAndReviewOnIt
     {
+        private static readonly HtmlSanitizer htmlSanitizer = new();
+
         [StringLength(100)]
         [Required]
         public string ItemName { get; set; }
@@ -21,11 +24,21 @@ namespace CategoryMicroservice.Api.DTOs.Items
 
         [Required]
         [StringLength(500)]
-        public string ShortReview { get; set; }
+        public string ShortReview
+        {
+            get => shortReview;
+            set => shortReview = htmlSanitizer.Sanitize(value);
+        }
+        private string shortReview;
 
         [Required]
         [StringLength(2000)]
-        public string ReviewText { get; set; }
+        public string ReviewText
+        {
+            get => reviewText;
+            set => reviewText = htmlSanitizer.Sanitize(value);
+        }
+        private string reviewText;
 
         [Required]
         public int ReviewItemEstimation { get; set; }
