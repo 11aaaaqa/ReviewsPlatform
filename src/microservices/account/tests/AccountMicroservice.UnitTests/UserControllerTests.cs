@@ -8,6 +8,7 @@ using AccountMicroservice.Api.Services.RolesServices;
 using AccountMicroservice.Api.Services.TokenServices;
 using AccountMicroservice.Api.Services.UnitOfWork;
 using AccountMicroservice.Api.Services.UserServices.AvatarServices;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -56,27 +57,11 @@ namespace AccountMicroservice.UnitTests
         }
 
         [Fact]
-        public async Task UpdateUserNameAsync_ReturnsNotFound()
-        {
-            Guid userId = Guid.NewGuid();
-            string newUserName = "newUserName";
-            UpdateUserNameDto model = new UpdateUserNameDto { NewUserName = newUserName };
-            var mock = new Mock<IUnitOfWork>();
-            mock.Setup(x => x.UserService.GetUserByIdAsync(userId)).ReturnsAsync((User?)null);
-            var controller = new UserController(new Mock<IPasswordService>().Object, mock.Object,
-                new Mock<IRoleService>().Object, new Mock<IAvatarService>().Object, new Mock<ILogger<UserController>>().Object,
-                new Mock<IConfiguration>().Object, new Mock<ITokenService>().Object, new Mock<IEmailService>().Object);
-
-            var result = await controller.UpdateUserNameAsync(userId, model);
-
-            Assert.IsType<NotFoundObjectResult>(result);
-            mock.Verify(x => x.UserService.GetUserByIdAsync(userId));
-        }
-
-        [Fact]
         public async Task UpdateUserNameAsync_ReturnsConflict()
         {
             Guid userId = Guid.NewGuid();
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+                { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }));
             string newUserName = "newUserName";
             string oldUserName = "oldUserName";
             UpdateUserNameDto model = new UpdateUserNameDto { NewUserName = newUserName };
@@ -87,8 +72,9 @@ namespace AccountMicroservice.UnitTests
             var controller = new UserController(new Mock<IPasswordService>().Object, mock.Object,
                 new Mock<IRoleService>().Object, new Mock<IAvatarService>().Object, new Mock<ILogger<UserController>>().Object,
                 new Mock<IConfiguration>().Object, new Mock<ITokenService>().Object, new Mock<IEmailService>().Object);
+            controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = user } };
 
-            var result = await controller.UpdateUserNameAsync(userId, model);
+            var result = await controller.UpdateUserNameAsync(model);
 
             Assert.IsType<ConflictObjectResult>(result);
             mock.Verify(x => x.UserService.GetUserByIdAsync(userId));
@@ -99,6 +85,8 @@ namespace AccountMicroservice.UnitTests
         public async Task UpdateUserNameAsync_ReturnsOkAvatarDefault()
         {
             Guid userId = Guid.NewGuid();
+            var userContext = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+                { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }));
             string newUserName = "newUserName";
             string oldUserName = "oldUserName";
             string returnedAccessToken = "accessToken";
@@ -118,8 +106,9 @@ namespace AccountMicroservice.UnitTests
             var controller = new UserController(new Mock<IPasswordService>().Object, uowMock.Object,
                 new Mock<IRoleService>().Object, avatarMock.Object, new Mock<ILogger<UserController>>().Object,
                 new Mock<IConfiguration>().Object, tokenMock.Object, new Mock<IEmailService>().Object);
-
-            var result = await controller.UpdateUserNameAsync(userId, model);
+            controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = userContext } };
+                    
+            var result = await controller.UpdateUserNameAsync(model);
 
             var methodResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(returnedAccessToken, methodResult.Value);
@@ -137,6 +126,8 @@ namespace AccountMicroservice.UnitTests
         public async Task UpdateUserNameAsync_ReturnsOkEqualUserNames()
         {
             Guid userId = Guid.NewGuid();
+            var userContext = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+                { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }));
             string newUserName = "newUserName";
             string returnedAccessToken = "accessToken";
             UpdateUserNameDto model = new UpdateUserNameDto { NewUserName = newUserName };
@@ -154,8 +145,9 @@ namespace AccountMicroservice.UnitTests
             var controller = new UserController(new Mock<IPasswordService>().Object, uowMock.Object,
                 new Mock<IRoleService>().Object, new Mock<IAvatarService>().Object, new Mock<ILogger<UserController>>().Object,
                 new Mock<IConfiguration>().Object, tokenMock.Object, new Mock<IEmailService>().Object);
+            controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = userContext } };
 
-            var result = await controller.UpdateUserNameAsync(userId, model);
+            var result = await controller.UpdateUserNameAsync(model);
 
             var methodResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(returnedAccessToken, methodResult.Value);

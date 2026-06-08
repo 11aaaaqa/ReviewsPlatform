@@ -5,6 +5,7 @@ using AccountMicroservice.Api.DTOs.Token;
 using AccountMicroservice.Api.Models.Business;
 using AccountMicroservice.Api.Services.TokenServices;
 using AccountMicroservice.Api.Services.UnitOfWork;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -14,24 +15,11 @@ namespace AccountMicroservice.UnitTests
     public class TokenControllerTests
     {
         [Fact]
-        public async Task RevokeAsync_ReturnsNotFound()
-        {
-            Guid userId = Guid.NewGuid();
-            var mock = new Mock<IUnitOfWork>();
-            mock.Setup(x => x.UserService.GetUserByIdAsync(userId)).ReturnsAsync((User?)null);
-            var controller = new TokenController(mock.Object, new Mock<ITokenService>().Object,
-                new Mock<ILogger<TokenController>>().Object);
-
-            var result = await controller.RevokeAsync(userId);
-
-            Assert.IsType<NotFoundResult>(result);
-            mock.VerifyAll();
-        }
-
-        [Fact]
         public async Task RevokeAsync_ReturnsOk()
         {
             Guid userId = Guid.NewGuid();
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+                { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }));
             var mock = new Mock<IUnitOfWork>();
             var userModel = new User
             {
@@ -43,8 +31,9 @@ namespace AccountMicroservice.UnitTests
             mock.Setup(x => x.CompleteAsync());
             var controller = new TokenController(mock.Object, new Mock<ITokenService>().Object,
                 new Mock<ILogger<TokenController>>().Object);
+            controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = user } };
 
-            var result = await controller.RevokeAsync(userId);
+            var result = await controller.RevokeAsync();
 
             Assert.IsType<OkResult>(result);
             mock.VerifyAll();

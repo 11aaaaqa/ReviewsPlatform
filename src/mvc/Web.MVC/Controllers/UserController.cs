@@ -131,12 +131,11 @@ namespace Web.MVC.Controllers
                 return StatusCode((int)HttpStatusCode.BadRequest, "Неверный формат");
             
             byte[] avatarSource = memoryStream.ToArray();
-            Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
             using StringContent jsonContent = new(JsonSerializer.Serialize(new
             { AvatarSource = avatarSource }), Encoding.UTF8, "application/json");
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
 
-            var response = await httpClient.PutAsync($"/api/User/set-avatar/{userId}", jsonContent);
+            var response = await httpClient.PutAsync("/api/User/set-avatar", jsonContent);
             response.EnsureSuccessStatusCode();
 
             if (string.IsNullOrEmpty(returnUrl) || !Url.IsLocalUrl(returnUrl))
@@ -150,10 +149,9 @@ namespace Web.MVC.Controllers
         [HttpPost]
         public async Task<IActionResult> SetDefaultUserAvatar(string returnUrl)
         {
-            Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
 
-            var response = await httpClient.GetAsync($"/api/User/reset-avatar/{userId}");
+            var response = await httpClient.GetAsync("/api/User/reset-avatar");
             response.EnsureSuccessStatusCode();
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -169,12 +167,11 @@ namespace Web.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
-                Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
                 HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
                 using StringContent jsonContent = new(JsonSerializer.Serialize(new 
                     { model.NewUserName}), Encoding.UTF8, "application/json");
 
-                var updateUserNameResponse = await httpClient.PutAsync($"/api/User/update-user-name/{userId}", jsonContent);
+                var updateUserNameResponse = await httpClient.PutAsync("/api/User/update-user-name", jsonContent);
 
                 if (updateUserNameResponse.StatusCode == HttpStatusCode.Conflict)
                     return Conflict("Пользователь с таким именем уже существует");
@@ -204,7 +201,7 @@ namespace Web.MVC.Controllers
                 {
                     Password = model.UserPassword
                 }), Encoding.UTF8, "application/json");
-                var checkPasswordResponse = await httpClient.PostAsync($"/api/User/check-password/{userId}", checkPasswordJsonContent);
+                var checkPasswordResponse = await httpClient.PostAsync("/api/User/check-password", checkPasswordJsonContent);
                 checkPasswordResponse.EnsureSuccessStatusCode();
                 bool checkPasswordResult = await checkPasswordResponse.Content.ReadFromJsonAsync<bool>();
                 if (!checkPasswordResult)
@@ -304,10 +301,9 @@ namespace Web.MVC.Controllers
         [HttpPost]
         public async Task<IActionResult> SignOutFromAllDevices()
         {
-            Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
 
-            var revokeResponse = await httpClient.GetAsync($"/api/Token/revoke/{userId}");
+            var revokeResponse = await httpClient.GetAsync("/api/Token/revoke");
             revokeResponse.EnsureSuccessStatusCode();
 
             Response.Cookies.Delete(CookieNames.AccessToken);
@@ -320,14 +316,13 @@ namespace Web.MVC.Controllers
         [HttpPost]
         public async Task<IActionResult> RequestEmailConfirmation(string returnUrl)
         {
-            Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
             using StringContent jsonContent = new(JsonSerializer.Serialize(new
             { 
                 Url = $"{configuration["CurrentUrl:Scheme"]}://{configuration["CurrentUrl:Domain"]}/settings/email/confirm?token="
             }), Encoding.UTF8, "application/json");
 
-            var sendTokenResponse = await httpClient.PostAsync($"/api/User/send-email-confirmation-token/{userId}",
+            var sendTokenResponse = await httpClient.PostAsync("/api/User/send-email-confirmation-token",
                 jsonContent);
             if (!sendTokenResponse.IsSuccessStatusCode)
             {
@@ -349,10 +344,9 @@ namespace Web.MVC.Controllers
         [HttpGet]
         public async Task<IActionResult> ConfirmEmail(string token)
         {
-            Guid userId = new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value);
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
 
-            var confirmEmailResponse = await httpClient.GetAsync($"/api/User/confirm-user-email/{userId}?token={token}");
+            var confirmEmailResponse = await httpClient.GetAsync($"/api/User/confirm-user-email?token={token}");
             confirmEmailResponse.EnsureSuccessStatusCode();
 
             return RedirectToAction("EditUserProfile");
