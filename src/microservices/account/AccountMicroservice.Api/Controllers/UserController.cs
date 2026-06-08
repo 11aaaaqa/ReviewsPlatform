@@ -1,6 +1,5 @@
 ﻿using AccountMicroservice.Api.Constants;
 using AccountMicroservice.Api.DTOs.User;
-using AccountMicroservice.Api.Filters.ActionFilters;
 using AccountMicroservice.Api.Models.Business;
 using AccountMicroservice.Api.Services.PasswordServices;
 using AccountMicroservice.Api.Services.RolesServices;
@@ -78,15 +77,15 @@ namespace AccountMicroservice.Api.Controllers
             return Ok(new { user.RefreshToken });
         }
 
-        [ValidatePassedUserIdActionFilter]
-        [Route("update-user-name/{userId}")]
+        [Route("update-user-name")]
         [HttpPut]
-        public async Task<IActionResult> UpdateUserNameAsync([FromRoute] Guid userId, [FromBody] UpdateUserNameDto model)
+        public async Task<IActionResult> UpdateUserNameAsync([FromBody] UpdateUserNameDto model)
         {
+            string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid userId = new Guid(userIdStr);
             var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
-            if(user == null) return NotFound("User not found");
 
-            string userName = user.UserName;
+            string userName = user!.UserName;
 
             if (await unitOfWork.UserService.GetUserByUserNameAsync(model.NewUserName) != null && model.NewUserName.ToLower() != userName.ToLower())
                 return Conflict("User with current name already exists");
@@ -105,15 +104,15 @@ namespace AccountMicroservice.Api.Controllers
             return Ok(tokenService.GenerateAccessToken(tokenService.GetClaims(user)));
         }
 
-        [ValidatePassedUserIdActionFilter]
-        [Route("check-password/{userId}")]
+        [Route("check-password")]
         [HttpPost]
-        public async Task<IActionResult> CheckUserPassword([FromRoute] Guid userId, [FromBody] CheckUserPasswordDto model)
+        public async Task<IActionResult> CheckUserPassword([FromBody] CheckUserPasswordDto model)
         {
+            string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid userId = new Guid(userIdStr);
             var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
-            if(user == null) return NotFound("User not found");
 
-            bool checkPasswordResult = passwordService.CheckPassword(Convert.FromBase64String(user.PasswordHash), 
+            bool checkPasswordResult = passwordService.CheckPassword(Convert.FromBase64String(user!.PasswordHash), 
                 Convert.FromBase64String(user.PasswordSalt), model.Password);
 
             return Ok(checkPasswordResult);
@@ -178,20 +177,19 @@ namespace AccountMicroservice.Api.Controllers
             return Ok();
         }
 
-        [ValidatePassedUserIdActionFilter]
         [RequestSizeLimit(2 * 1024 * 1024)]
-        [Route("set-avatar/{userId}")]
+        [Route("set-avatar")]
         [HttpPut]
-        public async Task<IActionResult> SetUserAvatar([FromRoute] Guid userId, [FromBody] SetUserAvatarDto model)
+        public async Task<IActionResult> SetUserAvatar([FromBody] SetUserAvatarDto model)
         {
+            string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid userId = new Guid(userIdStr);
             var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
-            if (user == null)
-                return NotFound("User not found");
 
             if (!avatarService.ValidateAvatar(model.AvatarSource))
                 return BadRequest("Incorrect file format");
 
-            user.AvatarSource = avatarService.CropCustomUserAvatar(model.AvatarSource);
+            user!.AvatarSource = avatarService.CropCustomUserAvatar(model.AvatarSource);
             user.IsAvatarDefault = false;
             unitOfWork.UserService.UpdateUser(user);
 
@@ -200,16 +198,15 @@ namespace AccountMicroservice.Api.Controllers
             return Ok();
         }
 
-        [ValidatePassedUserIdActionFilter]
-        [Route("reset-avatar/{userId}")]
+        [Route("reset-avatar")]
         [HttpGet]
-        public async Task<IActionResult> SetDefaultUserAvatar(Guid userId)
+        public async Task<IActionResult> SetDefaultUserAvatar()
         {
+            string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid userId = new Guid(userIdStr);
             var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
-            if (user == null)
-                return NotFound("User not found");
 
-            if (user.IsAvatarDefault)
+            if (user!.IsAvatarDefault)
                 return BadRequest("Avatar is already default");
 
             user.AvatarSource = avatarService.GetDefaultUserAvatar(user);
@@ -221,16 +218,15 @@ namespace AccountMicroservice.Api.Controllers
             return Ok();
         }
 
-        [ValidatePassedUserIdActionFilter]
-        [Route("send-email-confirmation-token/{userId}")]
+        [Route("send-email-confirmation-token")]
         [HttpPost]
-        public async Task<IActionResult> SendEmailConfirmationToken([FromRoute] Guid userId, [FromBody] ConfirmationTokenLink link)
+        public async Task<IActionResult> SendEmailConfirmationToken([FromBody] ConfirmationTokenLink link)
         {
+            string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid userId = new Guid(userIdStr);
             var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
-            if (user == null)
-                return NotFound("User not found");
 
-            if (user.IsEmailVerified)
+            if (user!.IsEmailVerified)
                 return BadRequest("Email is already confirmed");
 
             var emailConfirmationTokens = await unitOfWork.UserEmailTokenRepository
@@ -266,14 +262,13 @@ namespace AccountMicroservice.Api.Controllers
             return Ok();
         }
 
-        [ValidatePassedUserIdActionFilter]
-        [Route("confirm-user-email/{userId}")]
+        [Route("confirm-user-email")]
         [HttpGet]
-        public async Task<IActionResult> ConfirmUserEmail([FromRoute] Guid userId, [FromQuery] string token)
+        public async Task<IActionResult> ConfirmUserEmail([FromQuery] string token)
         {
+            string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid userId = new Guid(userIdStr);
             var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
-            if (user == null)
-                return NotFound("User not found");
 
             if (user.IsEmailVerified)
                 return Conflict("Email is already verified");
