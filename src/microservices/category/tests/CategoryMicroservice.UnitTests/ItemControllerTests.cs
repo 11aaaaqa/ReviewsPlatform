@@ -5,7 +5,6 @@ using CategoryMicroservice.Api.Enums;
 using CategoryMicroservice.Api.Models.Business;
 using CategoryMicroservice.Api.Services;
 using CategoryMicroservice.Api.Services.UnitOfWork;
-using Grpc.Core;
 using MessageBus.Abstractions;
 using MessageBus.Publisher;
 using Microsoft.AspNetCore.Http;
