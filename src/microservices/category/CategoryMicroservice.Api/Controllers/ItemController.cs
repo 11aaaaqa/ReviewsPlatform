@@ -190,6 +190,9 @@ namespace CategoryMicroservice.Api.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
+            string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            logger.LogInformation("User {UserId} removed item {ItemId} named as {ItemName}", userIdStr, item.Id, item.Name);
+
             return Ok();
         }
 
