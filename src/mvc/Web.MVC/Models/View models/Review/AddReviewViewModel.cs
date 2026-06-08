@@ -8,5 +8,6 @@ namespace Web.MVC.Models.View_models.Review
         public ItemResponse Item { get; set; }
         public string ItemImageSrc { get; set; }
         public AddReviewDto AddReviewModel { get; set; }
+        public bool ShowEmailConfirmationNotification { get; set; }
     }
 }

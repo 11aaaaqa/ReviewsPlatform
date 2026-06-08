@@ -125,7 +125,7 @@ namespace ReviewMicroservice.Api.Controllers
             return Ok();
         }
 
-        [Authorize]
+        [Authorize(Roles = RoleNames.Verified)]
         [HttpDelete]
         [Route("remove/{reviewId}")]
         public async Task<IActionResult> RemoveReviewAsync(Guid reviewId)
@@ -169,7 +169,7 @@ namespace ReviewMicroservice.Api.Controllers
         }
 
         [RequestSizeLimit(5 * 2 * 1024 * 1024)]
-        [Authorize]
+        [Authorize(Roles = RoleNames.Verified)]
         [HttpPost]
         [Route("add")]
         public async Task<IActionResult> SuggestReviewAsync([FromBody] AddReviewDto model)
