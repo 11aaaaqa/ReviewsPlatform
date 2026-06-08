@@ -1,6 +1,19 @@
-﻿@using Web.MVC.Constants
+﻿@using System.Security.Claims
+@using Web.MVC.Constants
 @model Web.MVC.Models.View_models.Review.AddReviewViewModel
 <link rel="stylesheet" href="~/css/review/add-review.css"/>
+
+@if (Model.ShowEmailConfirmationNotification)
+{
+    <link rel="stylesheet" href="~/css/email-confirmation-notification.css"/>
+    <div class="email-notification-modal">
+        <div class="email-notification-modal-content">
+            <h3 style="margin-bottom: 10px;">Подтвердите email, чтобы оставить отзыв</h3>
+            <p>Письмо отправлено на почту @User.Claims.Single(x => x.Type == ClaimTypes.Email).Value</p>
+            <p>Не получили? Отправить повторно можно в <a class="themed-link" asp-controller="User" asp-action="EditUserProfile">настройках профиля</a></p>
+        </div>
+    </div>
+}
 
 <div class="add-review-page-block">
     <div style="margin-bottom: 35px;">

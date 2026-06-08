@@ -75,7 +75,7 @@ namespace CategoryMicroservice.Api.Controllers
             return Ok(new ItemsResult { Items = items, IsNextPageExisted = isNextPageExisted });
         }
 
-        [Authorize]
+        [Authorize(Roles = RoleNames.Verified)]
         [RequestSizeLimit(6 * 2 * 1024 * 1024)]
         [HttpPost]
         [Route("suggest-item")]

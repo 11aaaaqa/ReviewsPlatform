@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -24,12 +25,16 @@ namespace Web.MVC.Controllers
         private readonly ImageConverter imageConverter;
         private readonly ILogger<ReviewController> logger;
         private readonly SortService sortService;
-        public ReviewController(IHttpClientFactory httpClientFactory, ImageConverter imageConverter, ILogger<ReviewController> logger, SortService sortService)
+        private readonly string emailUrl;
+
+        public ReviewController(IHttpClientFactory httpClientFactory, ImageConverter imageConverter, ILogger<ReviewController> logger, SortService sortService,
+            IConfiguration configuration)
         {
             this.httpClientFactory = httpClientFactory;
             this.imageConverter = imageConverter;
             this.logger = logger;
             this.sortService = sortService;
+            emailUrl = $"{configuration["CurrentUrl:Scheme"]}://{configuration["CurrentUrl:Domain"]}/settings/email/confirm?token=";
         }
 
         [Authorize]
@@ -45,7 +50,23 @@ namespace Web.MVC.Controllers
 
             string itemImageSrc = imageConverter.GetImageSrc(item!.Picture);
 
-            return View(new AddReviewViewModel { Item = item, AddReviewModel = new AddReviewDto(), ItemImageSrc = itemImageSrc });
+            var model = new AddReviewViewModel
+            {
+                Item = item, AddReviewModel = new AddReviewDto(), ItemImageSrc = itemImageSrc,
+                ShowEmailConfirmationNotification = false
+            };
+
+            if (!User.IsInRole(RoleNames.Verified))
+            {
+                using StringContent jsonContent = new(JsonSerializer.Serialize(new { Url = emailUrl }), Encoding.UTF8, "application/json");
+                var sendTokenResponse = await httpClient.PostAsync("/api/User/send-email-confirmation-token", jsonContent);
+                if (!sendTokenResponse.IsSuccessStatusCode && sendTokenResponse.StatusCode != HttpStatusCode.Conflict)
+                    sendTokenResponse.EnsureSuccessStatusCode();
+
+                model.ShowEmailConfirmationNotification = true;
+            }
+
+            return View(model);
         }
 
         [Authorize]
@@ -131,6 +152,17 @@ namespace Web.MVC.Controllers
 
             var subcategoryResponse = await httpClient.GetAsync($"/api/Subcategory/get-by-id/{subcategoryId}");
             subcategoryResponse.EnsureSuccessStatusCode();
+
+            ViewBag.ShowEmailConfirmationNotification = false;
+            if (!User.IsInRole(RoleNames.Verified))
+            {
+                using StringContent jsonContent = new(JsonSerializer.Serialize(new { Url = emailUrl }), Encoding.UTF8, "application/json");
+                var sendTokenResponse = await httpClient.PostAsync("/api/User/send-email-confirmation-token", jsonContent);
+                if (!sendTokenResponse.IsSuccessStatusCode && sendTokenResponse.StatusCode != HttpStatusCode.Conflict)
+                    sendTokenResponse.EnsureSuccessStatusCode();
+
+                ViewBag.ShowEmailConfirmationNotification = true;
+            }
 
             return View(new AddReviewWithItemDto { SubcategoryId = subcategoryId });
         }
