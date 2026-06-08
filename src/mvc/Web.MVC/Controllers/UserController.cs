@@ -348,6 +348,8 @@ namespace Web.MVC.Controllers
 
             var confirmEmailResponse = await httpClient.GetAsync($"/api/User/confirm-user-email?token={token}");
             confirmEmailResponse.EnsureSuccessStatusCode();
+            string accessToken = await confirmEmailResponse.Content.ReadAsStringAsync();
+            SaveAccessToken(accessToken);
 
             return RedirectToAction("EditUserProfile");
         }
