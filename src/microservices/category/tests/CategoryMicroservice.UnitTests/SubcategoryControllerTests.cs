@@ -95,6 +95,23 @@ namespace CategoryMicroservice.UnitTests
         }
 
         [Fact]
+        public async Task RemoveSubcategoryAsync_ReturnsBadRequest()
+        {
+            Guid subcategoryId = Guid.NewGuid();
+            int reviewsCount = 5;
+            var subcategory = new Subcategory { Id = subcategoryId, ReviewsCount = reviewsCount };
+            var uowMock = new Mock<IUnitOfWork>();
+            uowMock.Setup(x => x.SubcategoryRepository.GetByIdAsync(subcategoryId)).ReturnsAsync(subcategory);
+            var controller = new SubcategoryController(uowMock.Object,
+                new Mock<ILogger<SubcategoryController>>().Object, new Mock<IMessagePublisher>().Object);
+
+            var result = await controller.RemoveSubcategoryAsync(subcategoryId);
+
+            Assert.IsType<BadRequestObjectResult>(result);
+            uowMock.Verify(x => x.SubcategoryRepository.GetByIdAsync(subcategoryId));;
+        }
+
+        [Fact]
         public async Task RemoveSubcategoryAsync_ReturnsInternalServerErrorOnCompleting()
         {
             Guid userId = Guid.NewGuid();
@@ -102,15 +119,13 @@ namespace CategoryMicroservice.UnitTests
                 { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }));
             Guid subcategoryId = Guid.NewGuid();
             Guid categoryId = Guid.NewGuid();
-            int subcategoryReviewsCount = 5;
+            int subcategoryReviewsCount = 0;
             var subcategory = new Subcategory { Id = subcategoryId, CategoryId = categoryId, ReviewsCount = subcategoryReviewsCount};
-            int categoryReviewsCount = 10;
-            var category = new Category { Id = categoryId, ReviewsCount = categoryReviewsCount };
+            var itemsToDelete = new List<Item>();
             var uowMock = new Mock<IUnitOfWork>();
             uowMock.Setup(x => x.SubcategoryRepository.GetByIdAsync(subcategoryId)).ReturnsAsync(subcategory);
-            uowMock.Setup(x => x.CategoryRepository.GetByIdAsync(categoryId)).ReturnsAsync(category);
+            uowMock.Setup(x => x.ItemRepository.GetAllBySubcategoryIdAsync(subcategoryId)).ReturnsAsync(itemsToDelete);
             uowMock.Setup(x => x.BeginTransactionAsync());
-            uowMock.Setup(x => x.CategoryRepository.Update(category));
             uowMock.Setup(x => x.SubcategoryRepository.RemoveAsync(subcategoryId));
             uowMock.Setup(x => x.CompleteAsync()).Throws<Exception>();
             var controller = new SubcategoryController(uowMock.Object,
@@ -122,9 +137,8 @@ namespace CategoryMicroservice.UnitTests
             var methodResult = Assert.IsType<StatusCodeResult>(result);
             Assert.Equal(StatusCodes.Status500InternalServerError, methodResult.StatusCode);
             uowMock.Verify(x => x.SubcategoryRepository.GetByIdAsync(subcategoryId));
-            uowMock.Verify(x => x.CategoryRepository.GetByIdAsync(categoryId));
+            uowMock.Verify(x => x.ItemRepository.GetAllBySubcategoryIdAsync(subcategoryId));
             uowMock.Verify(x => x.BeginTransactionAsync());
-            uowMock.Verify(x => x.CategoryRepository.Update(category));
             uowMock.Verify(x => x.SubcategoryRepository.RemoveAsync(subcategoryId));
             uowMock.Verify(x => x.CompleteAsync());
             uowMock.Verify(x => x.RollbackTransactionAsync());
@@ -138,16 +152,14 @@ namespace CategoryMicroservice.UnitTests
                 { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }));
             Guid subcategoryId = Guid.NewGuid();
             Guid categoryId = Guid.NewGuid();
-            int subcategoryReviewsCount = 5;
+            int subcategoryReviewsCount = 0;
             var subcategory = new Subcategory { Id = subcategoryId, CategoryId = categoryId, ReviewsCount = subcategoryReviewsCount };
-            int categoryReviewsCount = 10;
-            var category = new Category { Id = categoryId, ReviewsCount = categoryReviewsCount };
+            var itemsToDelete = new List<Item>();
             var uowMock = new Mock<IUnitOfWork>();
             var messagePublisherMock = new Mock<IMessagePublisher>();
             uowMock.Setup(x => x.SubcategoryRepository.GetByIdAsync(subcategoryId)).ReturnsAsync(subcategory);
-            uowMock.Setup(x => x.CategoryRepository.GetByIdAsync(categoryId)).ReturnsAsync(category);
+            uowMock.Setup(x => x.ItemRepository.GetAllBySubcategoryIdAsync(subcategoryId)).ReturnsAsync(itemsToDelete);
             uowMock.Setup(x => x.BeginTransactionAsync());
-            uowMock.Setup(x => x.CategoryRepository.Update(category));
             uowMock.Setup(x => x.SubcategoryRepository.RemoveAsync(subcategoryId));
             uowMock.Setup(x => x.CompleteAsync());
             messagePublisherMock.Setup(x => x.PublishAsync(It.IsAny<MessageBase>())).Throws<Exception>();
@@ -160,9 +172,8 @@ namespace CategoryMicroservice.UnitTests
             var methodResult = Assert.IsType<StatusCodeResult>(result);
             Assert.Equal(StatusCodes.Status500InternalServerError, methodResult.StatusCode);
             uowMock.Verify(x => x.SubcategoryRepository.GetByIdAsync(subcategoryId));
-            uowMock.Verify(x => x.CategoryRepository.GetByIdAsync(categoryId));
+            uowMock.Verify(x => x.ItemRepository.GetAllBySubcategoryIdAsync(subcategoryId));
             uowMock.Verify(x => x.BeginTransactionAsync());
-            uowMock.Verify(x => x.CategoryRepository.Update(category));
             uowMock.Verify(x => x.SubcategoryRepository.RemoveAsync(subcategoryId));
             uowMock.Verify(x => x.CompleteAsync());
             messagePublisherMock.Verify(x => x.PublishAsync(It.IsAny<MessageBase>()));
@@ -177,16 +188,14 @@ namespace CategoryMicroservice.UnitTests
                 { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }));
             Guid subcategoryId = Guid.NewGuid();
             Guid categoryId = Guid.NewGuid();
-            int subcategoryReviewsCount = 5;
+            int subcategoryReviewsCount = 0;
             var subcategory = new Subcategory { Id = subcategoryId, CategoryId = categoryId, ReviewsCount = subcategoryReviewsCount };
-            int categoryReviewsCount = 10;
-            var category = new Category { Id = categoryId, ReviewsCount = categoryReviewsCount };
+            var itemsToDelete = new List<Item>();
             var uowMock = new Mock<IUnitOfWork>();
             var messagePublisherMock = new Mock<IMessagePublisher>();
             uowMock.Setup(x => x.SubcategoryRepository.GetByIdAsync(subcategoryId)).ReturnsAsync(subcategory);
-            uowMock.Setup(x => x.CategoryRepository.GetByIdAsync(categoryId)).ReturnsAsync(category);
+            uowMock.Setup(x => x.ItemRepository.GetAllBySubcategoryIdAsync(subcategoryId)).ReturnsAsync(itemsToDelete);
             uowMock.Setup(x => x.BeginTransactionAsync());
-            uowMock.Setup(x => x.CategoryRepository.Update(category));
             uowMock.Setup(x => x.SubcategoryRepository.RemoveAsync(subcategoryId));
             uowMock.Setup(x => x.CompleteAsync());
             messagePublisherMock.Setup(x => x.PublishAsync(It.IsAny<MessageBase>()));
@@ -199,9 +208,8 @@ namespace CategoryMicroservice.UnitTests
 
             Assert.IsType<OkResult>(result);
             uowMock.Verify(x => x.SubcategoryRepository.GetByIdAsync(subcategoryId));
-            uowMock.Verify(x => x.CategoryRepository.GetByIdAsync(categoryId));
+            uowMock.Verify(x => x.ItemRepository.GetAllBySubcategoryIdAsync(subcategoryId));
             uowMock.Verify(x => x.BeginTransactionAsync());
-            uowMock.Verify(x => x.CategoryRepository.Update(category));
             uowMock.Verify(x => x.SubcategoryRepository.RemoveAsync(subcategoryId));
             uowMock.Verify(x => x.CompleteAsync());
             messagePublisherMock.Verify(x => x.PublishAsync(It.IsAny<MessageBase>()));

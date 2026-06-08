@@ -59,7 +59,7 @@
 
         <div>
             <div>
-                @Model.Text
+                @Html.Raw(Model.Text)
             </div>
 
             @if (Model.PicturesSrc.Any())

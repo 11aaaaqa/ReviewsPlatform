@@ -64,8 +64,8 @@
         if (submitBtn.disabled) return;
         submitBtn.disabled = true;
 
-        reviewTextInput.value = reviewBlock.innerText.trim();
-        shortReviewInput.value = shortReviewBlock.innerText.trim();
+        reviewTextInput.value = reviewBlock.innerHTML;
+        shortReviewInput.value = shortReviewBlock.innerHTML;
 
         const dataTransfer = new DataTransfer();
         filesArray.forEach(file => dataTransfer.items.add(file));

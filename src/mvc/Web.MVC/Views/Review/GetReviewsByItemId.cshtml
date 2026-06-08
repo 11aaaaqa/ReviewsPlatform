@@ -103,7 +103,7 @@
                 </div>
                 <a asp-controller="Review" asp-action="GetReviewById" asp-route-reviewId="@review.Id"
                    class="block-link-colored" style="margin: 10px 0 15px 0;">
-                    <div>@review.ShortReview</div>
+                    <div>@Html.Raw(review.ShortReview)</div>
                 </a>
                 <div style="display: flex; gap: 10px;">
                     <div class="get-reviews-flex">
@@ -242,7 +242,7 @@
             block3.href = `/reviews/${review.id}`;
 
             const reviewText = document.createElement('div');
-            reviewText.textContent = review.shortReview;
+            reviewText.innerHTML = review.shortReview;
             block3.appendChild(reviewText);
             reviewBlock.appendChild(block3);
 
