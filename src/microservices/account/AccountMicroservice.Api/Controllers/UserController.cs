@@ -270,7 +270,7 @@ namespace AccountMicroservice.Api.Controllers
             Guid userId = new Guid(userIdStr);
             var user = await unitOfWork.UserService.GetUserByIdAsync(userId);
 
-            if (user.IsEmailVerified)
+            if (user!.IsEmailVerified)
                 return Conflict("Email is already verified");
 
             var emailToken = await unitOfWork.UserEmailTokenRepository.GetAsync(userId, token, EmailTokenPurpose.EmailConfirmation);
@@ -285,6 +285,8 @@ namespace AccountMicroservice.Api.Controllers
                 await unitOfWork.BeginTransactionAsync();
 
                 user.IsEmailVerified = true;
+                user.RefreshToken = tokenService.GenerateRefreshToken();
+                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMonths(1);
                 unitOfWork.UserService.UpdateUser(user);
 
                 await unitOfWork.UserRolesService.AddUserToRoleAsync(userId, new Guid(RoleIds.VerifiedId));
@@ -302,7 +304,8 @@ namespace AccountMicroservice.Api.Controllers
 
             logger.LogInformation("User {UserId} confirmed his email", userId);
 
-            return Ok();
+            user.Roles.Add(new Role { Id = new Guid(RoleIds.VerifiedId), Name = RoleNames.Verified });
+            return Ok(tokenService.GenerateAccessToken(tokenService.GetClaims(user)));
         }
 
         [AllowAnonymous]
