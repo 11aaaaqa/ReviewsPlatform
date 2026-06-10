@@ -1,5 +1,4 @@
-﻿using System.Security.Claims;
-using MessageBus.Messages.Review;
+﻿using MessageBus.Messages.Review;
 using MessageBus.Publisher;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,17 +7,20 @@ using ReviewMicroservice.Api.Constants;
 using ReviewMicroservice.Api.DTOs;
 using ReviewMicroservice.Api.DTOs.review;
 using ReviewMicroservice.Api.Enums;
+using ReviewMicroservice.Api.Exceptions;
 using ReviewMicroservice.Api.Models;
 using ReviewMicroservice.Api.Models.Business;
 using ReviewMicroservice.Api.Services;
+using ReviewMicroservice.Api.Services.ReviewServices.ReactionServices;
 using ReviewMicroservice.Api.Services.UnitOfWork;
+using System.Security.Claims;
 
 namespace ReviewMicroservice.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class ReviewController(IUnitOfWork unitOfWork, IMessagePublisher messagePublisher, ILogger<ReviewController> logger,
-        RestrictionInfo.RestrictionInfoClient restrictionInfoClient, ImageValidator imageValidator) : ControllerBase
+        RestrictionInfo.RestrictionInfoClient restrictionInfoClient, ImageValidator imageValidator, IReactionService reactionService) : ControllerBase
     {
         [HttpGet]
         [Route("get-by-id/{reviewId}")]
@@ -29,6 +31,20 @@ namespace ReviewMicroservice.Api.Controllers
                 return NotFound("Reviews with current identifier does not exist");
 
             return Ok(review);
+        }
+
+        [Authorize(Roles = RoleNames.Verified)]
+        [HttpGet]
+        [Route("get-review-reaction/{reviewId}")]
+        public async Task<IActionResult> GetReviewReactionAsync([FromRoute] Guid reviewId)
+        {
+            string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid userId = new Guid(userIdStr);
+
+            var reaction = await unitOfWork.ReactionRepository.GetByIdAsync(userId, reviewId);
+            if (reaction == null) return NotFound();
+
+            return Ok(reaction);
         }
 
         [Authorize(Roles = RoleNames.Admin + "," + RoleNames.Moderator)]
@@ -98,6 +114,35 @@ namespace ReviewMicroservice.Api.Controllers
                 await unitOfWork.ReviewRepository.GetByItemIdByActualityAsync(itemId, pagination.PageNumber + 1, pagination.PageSize);
 
             return Ok(new ReviewsResult { IsNextPageExisted = reviewsNextPage.Count > 0, Reviews = reviews });
+        }
+
+        [Authorize(Roles = RoleNames.Verified)]
+        [HttpGet]
+        [Route("react/{reviewId}")]
+        public async Task<IActionResult> ReactOnReviewAsync([FromRoute] Guid reviewId, [FromQuery] ReactionType reactionType)
+        {
+            var userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid userId = new Guid(userIdStr);
+
+            try
+            {
+                await reactionService.ReactAsync(userId, reviewId, reactionType);
+            }
+            catch (NotFoundException exc)
+            {
+                return NotFound(exc.Message);
+            }
+            catch (SelfReactionNotAllowedException)
+            {
+                return BadRequest("User cannot react on review created by him");
+            }
+            catch (Exception exc)
+            {
+                logger.LogError(exc, "An exception was thrown while processing react on review method");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+
+            return Ok();
         }
 
         [Authorize(Roles = RoleNames.Admin + "," + RoleNames.Moderator)]

@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using System.Web;
 using Web.MVC.Constants;
 using Web.MVC.DTOs.reivew;
 using Web.MVC.Models.Api_responses.account;
@@ -321,12 +322,63 @@ namespace Web.MVC.Controllers
                 PictureSrc = imageConverter.GetImageSrc(item.Picture)
             };
 
-            return View(new ReviewDisplay
+            bool showEmailConfirmationModalOnReaction = User.Identity.IsAuthenticated ? !User.IsInRole(RoleNames.Verified) : false;
+
+            ReactionType? reactionType = null;
+            if (User.Identity.IsAuthenticated && User.IsInRole(RoleNames.Verified))
+            {
+                HttpClient httpClientToken = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+                var reactionResponse = await httpClientToken.GetAsync($"/api/Review/get-review-reaction/{reviewId}");
+                if (reactionResponse.IsSuccessStatusCode)
+                {
+                    var reaction = await reactionResponse.Content.ReadFromJsonAsync<ReviewReactionResponse>();
+                    reactionType = reaction!.ReactionType;
+                }
+                else if (reactionResponse.StatusCode != HttpStatusCode.NotFound)
+                {
+                    reactionResponse.EnsureSuccessStatusCode();
+                }
+            }
+
+            bool isReviewCreatedByCurrentUser = false;
+            if (User.Identity.IsAuthenticated)
+            {
+                string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+                Guid userId = new Guid(userIdStr);
+                isReviewCreatedByCurrentUser = userId == review.UserId;
+            }
+
+            var reviewDisplay = new ReviewDisplay
             {
                 CreatedAt = review.CreatedAt, CreatedByUser = userDisplay, DislikesCount = review.DislikesCount, Id = review.Id,
-                Item = itemDisplay, ItemEstimation = review.ItemEstimation, LikesCount = review.LikesCount,
-                PicturesSrc = pictures, ShortReview = review.ShortReview, Text = review.Text
+                Item = itemDisplay, ItemEstimation = review.ItemEstimation, LikesCount = review.LikesCount, PicturesSrc = pictures, 
+                ShortReview = review.ShortReview, Text = review.Text
+            };
+
+            string currentUrl = HttpContext.Request.Path;
+            if (HttpContext.Request.QueryString.HasValue)
+                currentUrl += HttpContext.Request.QueryString;
+            string encodedCurrentUrl = HttpUtility.UrlEncode(currentUrl);
+
+            return View(new GetReviewByIdViewModel
+            {
+                ShowEmailConfirmationModalOnReaction = showEmailConfirmationModalOnReaction, ReactionType = reactionType, 
+                Review = reviewDisplay, IsReviewCreatedByCurrentUser = isReviewCreatedByCurrentUser,
+                EncodedCurrentUrl = encodedCurrentUrl
             });
+        }
+
+        [Authorize(Roles = RoleNames.Verified)]
+        [HttpPost]
+        [Route("reviews/{reviewId}/react")] //sensible GetReviewById view
+        public async Task<IActionResult> ReactOnReview([FromRoute] Guid reviewId, [FromQuery] ReactionType reactionType)
+        {
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+
+            var reactResponse = await httpClient.GetAsync($"/api/Review/react/{reviewId}?reactionType={reactionType}");
+            reactResponse.EnsureSuccessStatusCode();
+
+            return RedirectToAction("GetReviewById", new { reviewId });
         }
 
         private async Task<ReviewsResultResponse?> GetReviews(Guid itemId, OrderByDate? date, OrderByEstimation? estimation, int pageNumber,

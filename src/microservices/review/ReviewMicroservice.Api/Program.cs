@@ -12,7 +12,9 @@ using ReviewMicroservice.Api.Database;
 using ReviewMicroservice.Api.MessageBus.Consumers;
 using ReviewMicroservice.Api.Services;
 using ReviewMicroservice.Api.Services.ReviewServices;
+using ReviewMicroservice.Api.Services.ReviewServices.ReactionServices;
 using ReviewMicroservice.Api.Services.UnitOfWork;
+using ReviewMicroservice.Api.Services.ReviewServices.ReactionServices.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +55,8 @@ builder.Services.AddRabbitMqMessageBus(new RabbitMqOptions
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<IReactionRepository, ReactionRepository>();
+builder.Services.AddScoped<IReactionService, ReactionService>();
 builder.Services.AddSingleton<ImageValidator>();
 
 builder.Services.AddGrpcClient<RestrictionInfo.RestrictionInfoClient>(x =>
