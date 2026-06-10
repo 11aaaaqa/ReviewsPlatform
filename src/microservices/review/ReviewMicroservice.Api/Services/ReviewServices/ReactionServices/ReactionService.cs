@@ -22,57 +22,27 @@ namespace ReviewMicroservice.Api.Services.ReviewServices.ReactionServices
                 if (userReaction == null)
                 {
                     await unitOfWork.ReactionRepository.AddAsync(new ReviewReaction
-                        { ReactionType = reactionType, ReviewId = reviewId, UserId = userId });
-
-                    switch (reactionType)
-                    {
-                        case ReactionType.Like:
-                            review.LikesCount++;
-                            break;
-                        case ReactionType.Dislike:
-                            review.DislikesCount++;
-                            break;
-                        default: throw new ArgumentOutOfRangeException(nameof(reactionType));
-                    }
+                       { ReactionType = reactionType, ReviewId = reviewId, UserId = userId });
                 }
                 else
                 {
                     if (userReaction.ReactionType == reactionType)
                     {
                         await unitOfWork.ReactionRepository.RemoveAsync(userId, reviewId);
-
-                        switch (reactionType)
-                        {
-                            case ReactionType.Like:
-                                review.LikesCount--;
-                                break;
-                            case ReactionType.Dislike:
-                                review.DislikesCount--;
-                                break;
-                            default: throw new ArgumentOutOfRangeException(nameof(reactionType));
-                        }
                     }
                     else
                     {
                         userReaction.ReactionType = reactionType;
                         unitOfWork.ReactionRepository.Update(userReaction);
-
-                        switch (reactionType)
-                        {
-                            case ReactionType.Like:
-                                review.LikesCount++;
-                                review.DislikesCount--;
-                                break;
-                            case ReactionType.Dislike:
-                                review.DislikesCount++;
-                                review.LikesCount--;
-                                break;
-                            default: throw new ArgumentOutOfRangeException(nameof(reactionType));
-                        }
                     }
                 }
 
+                await unitOfWork.CompleteAsync();
+
+                review.LikesCount = await unitOfWork.ReactionRepository.CountReactionsAsync(review.Id, ReactionType.Like);
+                review.DislikesCount = await unitOfWork.ReactionRepository.CountReactionsAsync(review.Id, ReactionType.Dislike);
                 unitOfWork.ReviewRepository.Update(review);
+
                 await unitOfWork.CompleteAsync();
 
                 await unitOfWork.CommitTransactionAsync();
