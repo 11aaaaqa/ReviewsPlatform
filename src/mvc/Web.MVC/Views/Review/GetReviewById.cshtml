@@ -107,11 +107,11 @@
                 <div style="display: flex; gap: 12px; font-size: 20px;">
                     <div class="get-reviews-flex">
                         <i id="likeI" class="fa-regular fa-thumbs-up"></i>
-                        <span id="likesCountSpan">@Model.Review.LikesCount</span>
+                        <span id="likesCountSpan" style="font-size: 16px;">@Model.Review.LikesCount</span>
                     </div>
                     <div class="get-reviews-flex">
                         <i id="dislikeI" class="fa-regular fa-thumbs-down"></i>
-                        <span id="dislikesCountSpan">@Model.Review.DislikesCount</span>
+                        <span id="dislikesCountSpan" style="font-size: 16px;">@Model.Review.DislikesCount</span>
                     </div>
                 </div>
             }
@@ -126,14 +126,14 @@
                                     data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Like">
                                 <div class="get-reviews-flex">
                                     <i id="likeI" class="fa-solid fa-thumbs-up"></i>
-                                    <span id="likesCountSpan">@Model.Review.LikesCount</span>
+                                    <span id="likesCountSpan" style="font-size: 16px;">@Model.Review.LikesCount</span>
                                 </div>
                             </button>
                             <button id="dislikeBtn" class="review-reaction-btn btn-dislike"
                                     data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Dislike">
                                 <div class="get-reviews-flex">
                                     <i id="dislikeI" class="fa-regular fa-thumbs-down"></i>
-                                    <span id="dislikesCountSpan">@Model.Review.DislikesCount</span>
+                                    <span id="dislikesCountSpan" style="font-size: 16px;">@Model.Review.DislikesCount</span>
                                 </div>
                             </button>
                         }
@@ -143,14 +143,14 @@
                                     data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Like">
                                 <div class="get-reviews-flex">
                                     <i id="likeI" class="fa-regular fa-thumbs-up"></i>
-                                    <span id="likesCountSpan">@Model.Review.LikesCount</span>
+                                    <span id="likesCountSpan" style="font-size: 16px;">@Model.Review.LikesCount</span>
                                 </div>
                             </button>
                             <button id="dislikeBtn" class="review-reaction-btn btn-dislike is-active"
                                     data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Dislike">
                                 <div class="get-reviews-flex">
                                     <i id="dislikeI" class="fa-solid fa-thumbs-down"></i>
-                                    <span id="dislikesCountSpan">@Model.Review.DislikesCount</span>
+                                    <span id="dislikesCountSpan" style="font-size: 16px;">@Model.Review.DislikesCount</span>
                                 </div>
                             </button>
                         }
@@ -161,14 +161,14 @@
                                 data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Like">
                             <div class="get-reviews-flex">
                                 <i id="likeI" class="fa-regular fa-thumbs-up"></i>
-                                <span id="likesCountSpan">@Model.Review.LikesCount</span>
+                                <span id="likesCountSpan" style="font-size: 16px;">@Model.Review.LikesCount</span>
                             </div>
                         </button>
                         <button id="dislikeBtn" class="review-reaction-btn btn-dislike"
                                 data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Dislike">
                             <div class="get-reviews-flex">
                                 <i id="dislikeI" class="fa-regular fa-thumbs-down"></i>
-                                <span id="dislikesCountSpan">@Model.Review.DislikesCount</span>
+                                <span id="dislikesCountSpan" style="font-size: 16px;">@Model.Review.DislikesCount</span>
                             </div>
                         </button>
                     }
