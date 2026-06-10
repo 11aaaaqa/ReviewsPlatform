@@ -314,7 +314,7 @@ namespace Web.MVC.Controllers
         [Authorize]
         [Route("settings/email/request-confirmation")]
         [HttpPost]
-        public async Task<IActionResult> RequestEmailConfirmation(string returnUrl)
+        public async Task<IActionResult> RequestEmailConfirmation(string? returnUrl)
         {
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
             using StringContent jsonContent = new(JsonSerializer.Serialize(new
