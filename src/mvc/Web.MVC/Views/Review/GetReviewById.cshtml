@@ -1,4 +1,6 @@
-﻿@model Web.MVC.Models.View_models.Review.ReviewDisplay
+﻿@using System.Security.Claims
+@using Web.MVC.Models.Api_responses.review.enums
+@model Web.MVC.Models.View_models.Review.GetReviewByIdViewModel
 <link rel="stylesheet" href="~/css/review/get-review-by-id.css"/>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,24 +19,38 @@
     }
 }
 
+@if (Model.ShowEmailConfirmationModalOnReaction)
+{
+    <link rel="stylesheet" href="~/css/email-confirmation-notification.css" />
+    <div id="emailNotificationModal" class="email-notification-modal" style="display: none;">
+        <div class="email-notification-modal-content">
+            <span id="closeEmailNotificationModalBtn" class="close-email-notification-modal-btn">&times;</span>
+            <h3 style="margin-bottom: 10px;">Подтвердите email, чтобы оставить реакцию</h3>
+            <p>Письмо отправлено на почту @User.Claims.Single(x => x.Type == ClaimTypes.Email).Value</p>
+            <p>Не получили? Отправить повторно можно в <a class="themed-link" asp-controller="User" asp-action="EditUserProfile">настройках профиля</a></p>
+        </div>
+    </div>
+}
+<input class="hidden" id="encodedCurrentUrl" value="@Model.EncodedCurrentUrl" />
+<input class="hidden" id="showEmailConfirmationModalOnReaction" value="@Model.ShowEmailConfirmationModalOnReaction.ToString().ToLower()" />
 <div class="get-review-by-id-page-block">
     <div class="item-info-block">
-        <h3 style="margin-bottom: 18px;">@Model.Item.Name</h3>
+        <h3 style="margin-bottom: 18px;">@Model.Review.Item.Name</h3>
         <div style="display: flex; gap: 15px; align-items: center;">
-            <img src="@Model.Item.PictureSrc" style="max-width: 220px; max-height: 220px;" />
+            <img src="@Model.Review.Item.PictureSrc" style="max-width: 220px; max-height: 220px;" />
             <div>
                 <div class="star-rating" style="font-size: 30px;">
-                    <div class="star-rating-fill" style="width: @(Model.Item.GeneralEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                    <div class="star-rating-fill" style="width: @(Model.Review.Item.GeneralEstimation * 20)%; font-size: 30px;">★★★★★</div>
                 </div>
                 <p style="color: gray; font-size: 14px; font-weight: 700;">
-                    Среднее: @Model.Item.GeneralEstimation (@Model.Item.ReviewsCount @GetReviewWord(Model.Item.ReviewsCount))
+                    Среднее: @Model.Review.Item.GeneralEstimation (@Model.Review.Item.ReviewsCount @GetReviewWord(Model.Review.Item.ReviewsCount))
                 </p>
-                <a style="margin: 10px 0 10px 0;" class="btn-wide-stretched" asp-controller="Review" asp-action="AddReview" asp-route-itemId="@Model.Item.Id">
+                <a style="margin: 10px 0 10px 0;" class="btn-wide-stretched" asp-controller="Review" asp-action="AddReview" asp-route-itemId="@Model.Review.Item.Id">
                     Написать отзыв
                 </a>
-                @if (Model.Item.Brand != null)
+                @if (Model.Review.Item.Brand != null)
                 {
-                    <p style="font-size: 15px;">Бренд: @Model.Item.Brand</p>
+                    <p style="font-size: 15px;">Бренд: @Model.Review.Item.Brand</p>
                 }
             </div>
         </div>
@@ -43,29 +59,29 @@
     <div class="review-block">
         <div>
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 5px;">
-                <img src="@Model.CreatedByUser.AvatarSrc" style="width: 50px; height: 50px; object-fit: cover;" />
-                <a class="user-name-link" asp-controller="User" asp-action="GetUserById" asp-route-userId="@Model.CreatedByUser.Id">
-                    @Model.CreatedByUser.UserName
+                <img src="@Model.Review.CreatedByUser.AvatarSrc" style="width: 50px; height: 50px; object-fit: cover;" />
+                <a class="user-name-link" asp-controller="User" asp-action="GetUserById" asp-route-userId="@Model.Review.CreatedByUser.Id">
+                    @Model.Review.CreatedByUser.UserName
                 </a>
             </div>
-            <p style="color: rgba(125, 125, 125, 0.7); font-size: 14px;">Опубликовано @Model.CreatedAt.ToString("dd.MM.yyyy")</p>
+            <p style="color: rgba(125, 125, 125, 0.7); font-size: 14px;">Опубликовано @Model.Review.CreatedAt.ToString("dd.MM.yyyy")</p>
             <div style="display: flex; align-items: center; gap: 7px; margin: 12px 0 12px 0;">
                 <h4 style="margin-top: 8px;">Оценка:</h4>
                 <div class="star-rating" style="font-size: 30px;">
-                    <div class="star-rating-fill" style="width: @(Model.ItemEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                    <div class="star-rating-fill" style="width: @(Model.Review.ItemEstimation * 20)%; font-size: 30px;">★★★★★</div>
                 </div>
             </div>
         </div>
 
         <div>
             <div>
-                @Html.Raw(Model.Text)
+                @Html.Raw(Model.Review.Text)
             </div>
 
-            @if (Model.PicturesSrc.Any())
+            @if (Model.Review.PicturesSrc.Any())
             {
                 int maxVisiblePhotos = 4;
-                int totalPhotos = Model.PicturesSrc.Count;
+                int totalPhotos = Model.Review.PicturesSrc.Count;
 
                 <div class="review-images-grid" id="review-gallery-grid">
                     @for (int i = 0; i < totalPhotos; i++)
@@ -76,8 +92,8 @@
                         <div class="review-img-wrapper @(isHidden ? "hidden-photo" : "") @(isLastVisibleWithMore ? "has-more" : "")"
                              @(isLastVisibleWithMore ? $"data-more-text=+{totalPhotos - maxVisiblePhotos + 1}" : "")>
 
-                            <a href="@Url.Content(Model.PicturesSrc[i])" data-fancybox="review-gallery">
-                                <img src="@Url.Content(Model.PicturesSrc[i])" class="review-img-thumb" alt="Фото отзыва" />
+                            <a href="@Url.Content(Model.Review.PicturesSrc[i])" data-fancybox="review-gallery">
+                                <img src="@Url.Content(Model.Review.PicturesSrc[i])" class="review-img-thumb" alt="Фото отзыва" />
                             </a>
                         </div>
                     }
@@ -86,16 +102,78 @@
         </div>
 
         <div>
-            <div style="display: flex; gap: 10px; font-size: 20px;">
-                <div class="get-reviews-flex">
-                    <i class="fa-regular fa-thumbs-up"></i>
-                    <span>@Model.LikesCount</span>
+            @if (Model.IsReviewCreatedByCurrentUser)
+            {
+                <div style="display: flex; gap: 12px; font-size: 20px;">
+                    <div class="get-reviews-flex">
+                        <i id="likeI" class="fa-regular fa-thumbs-up"></i>
+                        <span id="likesCountSpan">@Model.Review.LikesCount</span>
+                    </div>
+                    <div class="get-reviews-flex">
+                        <i id="dislikeI" class="fa-regular fa-thumbs-down"></i>
+                        <span id="dislikesCountSpan">@Model.Review.DislikesCount</span>
+                    </div>
                 </div>
-                <div class="get-reviews-flex">
-                    <i class="fa-regular fa-thumbs-down"></i>
-                    <span>@Model.DislikesCount</span>
+            }
+            else
+            {
+                <div style="display: flex; gap: 8px; font-size: 20px;">
+                    @if (Model.ReactionType != null)
+                    {
+                        if (Model.ReactionType == ReactionType.Like)
+                        {
+                            <button id="likeBtn" class="review-reaction-btn btn-like is-active"
+                                    data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Like">
+                                <div class="get-reviews-flex">
+                                    <i id="likeI" class="fa-solid fa-thumbs-up"></i>
+                                    <span id="likesCountSpan">@Model.Review.LikesCount</span>
+                                </div>
+                            </button>
+                            <button id="dislikeBtn" class="review-reaction-btn btn-dislike"
+                                    data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Dislike">
+                                <div class="get-reviews-flex">
+                                    <i id="dislikeI" class="fa-regular fa-thumbs-down"></i>
+                                    <span id="dislikesCountSpan">@Model.Review.DislikesCount</span>
+                                </div>
+                            </button>
+                        }
+                        else if (Model.ReactionType == ReactionType.Dislike)
+                        {
+                            <button id="likeBtn" class="review-reaction-btn btn-like"
+                                    data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Like">
+                                <div class="get-reviews-flex">
+                                    <i id="likeI" class="fa-regular fa-thumbs-up"></i>
+                                    <span id="likesCountSpan">@Model.Review.LikesCount</span>
+                                </div>
+                            </button>
+                            <button id="dislikeBtn" class="review-reaction-btn btn-dislike is-active"
+                                    data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Dislike">
+                                <div class="get-reviews-flex">
+                                    <i id="dislikeI" class="fa-solid fa-thumbs-down"></i>
+                                    <span id="dislikesCountSpan">@Model.Review.DislikesCount</span>
+                                </div>
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        <button id="likeBtn" class="review-reaction-btn btn-like"
+                                data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Like">
+                            <div class="get-reviews-flex">
+                                <i id="likeI" class="fa-regular fa-thumbs-up"></i>
+                                <span id="likesCountSpan">@Model.Review.LikesCount</span>
+                            </div>
+                        </button>
+                        <button id="dislikeBtn" class="review-reaction-btn btn-dislike"
+                                data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Dislike">
+                            <div class="get-reviews-flex">
+                                <i id="dislikeI" class="fa-regular fa-thumbs-down"></i>
+                                <span id="dislikesCountSpan">@Model.Review.DislikesCount</span>
+                            </div>
+                        </button>
+                    }
                 </div>
-            </div>
+            }
         </div>
     </div>
 </div>
@@ -108,3 +186,8 @@
         });
     });
 </script>
+
+@if (!Model.IsReviewCreatedByCurrentUser)
+{
+    <script src="~/js/review/get-review-reactions.js"></script>
+}
