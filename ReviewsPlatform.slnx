@@ -31,6 +31,9 @@
   <Folder Name="/src/microservices/review/">
     <Project Path="src/microservices/review/ReviewMicroservice.Api/ReviewMicroservice.Api.csproj" Id="db0b8cec-404c-4a5c-bc4f-94d13369e457" />
   </Folder>
+  <Folder Name="/src/microservices/review/test/">
+    <Project Path="src/microservices/review/tests/ReviewMicroservice.UnitTests/ReviewMicroservice.UnitTests.csproj" Id="3570e800-e130-433d-ab7b-b29b50e76d16" />
+  </Folder>
   <Folder Name="/src/mvc/">
     <Project Path="src/mvc/Web.MVC/Web.MVC.csproj" Id="39c39cf2-87e0-45c4-9151-21646c326053" />
   </Folder>
