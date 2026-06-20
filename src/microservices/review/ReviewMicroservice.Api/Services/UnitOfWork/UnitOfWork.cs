@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage;
 using ReviewMicroservice.Api.Database;
 using ReviewMicroservice.Api.Exceptions;
+using ReviewMicroservice.Api.Services.CommentServices;
 using ReviewMicroservice.Api.Services.ReviewServices;
 using ReviewMicroservice.Api.Services.ReviewServices.ReactionServices.Repository;
 
@@ -10,15 +11,18 @@ namespace ReviewMicroservice.Api.Services.UnitOfWork
     {
         public IReviewRepository ReviewRepository { get; }
         public IReactionRepository ReactionRepository { get; }
+        public ICommentRepository CommentRepository { get; }
 
         private readonly ApplicationDbContext context;
         private IDbContextTransaction? transaction;
 
-        public UnitOfWork(ApplicationDbContext context, IReviewRepository reviewRepository, IReactionRepository reactionRepository)
+        public UnitOfWork(ApplicationDbContext context, IReviewRepository reviewRepository, IReactionRepository reactionRepository,
+            ICommentRepository commentRepository)
         {
             this.context = context;
             ReviewRepository = reviewRepository;
             ReactionRepository = reactionRepository;
+            CommentRepository = commentRepository;
         }
         public async Task CompleteAsync()
         {
