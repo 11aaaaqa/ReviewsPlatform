@@ -26,6 +26,12 @@ namespace ReviewMicroservice.Api.Database
                 .WithMany()
                 .HasForeignKey(x => x.ReviewId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Comment>()
+                .HasOne<Comment>()
+                .WithMany()
+                .HasForeignKey(x => x.ReplyToCommentId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
