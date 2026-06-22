@@ -15,6 +15,8 @@ namespace ReviewMicroservice.Api.Services.CommentServices
             return await context.Comments
                 .Where(x => x.ReviewId == reviewId)
                 .Where(x => x.ReplyToCommentId == null)
+                .OrderByDescending(x => x.CreatedAt)
+                .ThenByDescending(x => x.Id)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -24,6 +26,8 @@ namespace ReviewMicroservice.Api.Services.CommentServices
         {
             return await context.Comments
                 .Where(x => x.ReplyToCommentId == replyCommentId)
+                .OrderByDescending(x => x.CreatedAt)
+                .ThenByDescending(x => x.Id)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize).ToListAsync();
         }
@@ -32,6 +36,8 @@ namespace ReviewMicroservice.Api.Services.CommentServices
         {
             return await context.Comments
                 .Where(x => x.UserId == userId)
+                .OrderByDescending(x => x.CreatedAt)
+                .ThenByDescending(x => x.Id)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
