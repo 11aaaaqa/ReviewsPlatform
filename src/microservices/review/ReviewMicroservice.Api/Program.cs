@@ -12,6 +12,7 @@ using ReviewMicroservice.Api.Database;
 using ReviewMicroservice.Api.MessageBus.Consumers;
 using ReviewMicroservice.Api.Services;
 using ReviewMicroservice.Api.Services.CommentServices;
+using ReviewMicroservice.Api.Services.CommentServices.CommentReplyServices;
 using ReviewMicroservice.Api.Services.ReviewServices;
 using ReviewMicroservice.Api.Services.ReviewServices.ReactionServices;
 using ReviewMicroservice.Api.Services.UnitOfWork;
@@ -57,6 +58,7 @@ builder.Services.AddRabbitMqMessageBus(new RabbitMqOptions
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+builder.Services.AddScoped<ICommentReplyRepository, CommentReplyRepository>();
 builder.Services.AddScoped<IReactionRepository, ReactionRepository>();
 builder.Services.AddScoped<IReactionService, ReactionService>();
 builder.Services.AddSingleton<ImageValidator>();

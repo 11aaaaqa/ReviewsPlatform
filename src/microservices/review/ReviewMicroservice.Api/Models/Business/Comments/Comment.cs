@@ -6,7 +6,8 @@
         public Guid UserId { get; set; }
         public DateTime CreatedAt { get; set; }
         public string Text { get; set; }
-        public Guid? ReplyToCommentId { get; set; }
+        public int RepliesCount { get; set; }
+        public Guid? ParentCommentId { get; set; }
         public Guid ReviewId { get; set; }
 
         public CommentStatus CommentStatus { get; set; }

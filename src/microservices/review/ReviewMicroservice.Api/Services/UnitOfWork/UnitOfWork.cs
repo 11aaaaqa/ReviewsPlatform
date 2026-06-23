@@ -2,6 +2,7 @@
 using ReviewMicroservice.Api.Database;
 using ReviewMicroservice.Api.Exceptions;
 using ReviewMicroservice.Api.Services.CommentServices;
+using ReviewMicroservice.Api.Services.CommentServices.CommentReplyServices;
 using ReviewMicroservice.Api.Services.ReviewServices;
 using ReviewMicroservice.Api.Services.ReviewServices.ReactionServices.Repository;
 
@@ -12,17 +13,19 @@ namespace ReviewMicroservice.Api.Services.UnitOfWork
         public IReviewRepository ReviewRepository { get; }
         public IReactionRepository ReactionRepository { get; }
         public ICommentRepository CommentRepository { get; }
+        public ICommentReplyRepository CommentReplyRepository { get; }
 
         private readonly ApplicationDbContext context;
         private IDbContextTransaction? transaction;
 
         public UnitOfWork(ApplicationDbContext context, IReviewRepository reviewRepository, IReactionRepository reactionRepository,
-            ICommentRepository commentRepository)
+            ICommentRepository commentRepository, ICommentReplyRepository commentReplyRepository)
         {
             this.context = context;
             ReviewRepository = reviewRepository;
             ReactionRepository = reactionRepository;
             CommentRepository = commentRepository;
+            CommentReplyRepository = commentReplyRepository;
         }
         public async Task CompleteAsync()
         {

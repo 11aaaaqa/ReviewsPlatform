@@ -10,6 +10,7 @@ namespace ReviewMicroservice.Api.Database
 
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<CommentReply> CommentReplies { get; set; }
         public DbSet<ReviewReaction> ReviewReactions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -27,11 +28,7 @@ namespace ReviewMicroservice.Api.Database
                 .HasForeignKey(x => x.ReviewId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.Entity<Comment>()
-                .HasOne<Comment>()
-                .WithMany()
-                .HasForeignKey(x => x.ReplyToCommentId)
-                .OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<CommentReply>().HasKey(x => new { x.ParentId, x.RepliedId });
         }
     }
 }

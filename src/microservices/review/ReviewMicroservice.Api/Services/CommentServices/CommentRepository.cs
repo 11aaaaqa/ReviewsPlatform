@@ -14,22 +14,23 @@ namespace ReviewMicroservice.Api.Services.CommentServices
         {
             return await context.Comments
                 .Where(x => x.ReviewId == reviewId)
-                .Where(x => x.ReplyToCommentId == null)
+                .Where(x => x.ParentCommentId == null)
                 .OrderByDescending(x => x.CreatedAt)
-                .ThenByDescending(x => x.Id)
+                .ThenBy(x => x.Id)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
         }
 
-        public async Task<List<Comment>> GetByReplyToCommentIdAsync(Guid replyCommentId, int pageSize, int pageNumber)
+        public async Task<List<Comment>> GetCommentRepliesAsync(Guid parentCommentId, int pageNumber, int pageSize)
         {
             return await context.Comments
-                .Where(x => x.ReplyToCommentId == replyCommentId)
-                .OrderByDescending(x => x.CreatedAt)
-                .ThenByDescending(x => x.Id)
+                .Where(x => x.ParentCommentId == parentCommentId)
+                .OrderBy(x => x.CreatedAt)
+                .ThenBy(x => x.Id)
                 .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize).ToListAsync();
+                .Take(pageSize)
+                .ToListAsync();
         }
 
         public async Task<List<Comment>> GetByUserIdAsync(Guid userId, int pageSize, int pageNumber)
@@ -37,7 +38,7 @@ namespace ReviewMicroservice.Api.Services.CommentServices
             return await context.Comments
                 .Where(x => x.UserId == userId)
                 .OrderByDescending(x => x.CreatedAt)
-                .ThenByDescending(x => x.Id)
+                .ThenBy(x => x.Id)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

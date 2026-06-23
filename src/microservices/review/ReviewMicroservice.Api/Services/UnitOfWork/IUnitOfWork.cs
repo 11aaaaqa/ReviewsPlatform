@@ -1,4 +1,5 @@
 ﻿using ReviewMicroservice.Api.Services.CommentServices;
+using ReviewMicroservice.Api.Services.CommentServices.CommentReplyServices;
 using ReviewMicroservice.Api.Services.ReviewServices;
 using ReviewMicroservice.Api.Services.ReviewServices.ReactionServices.Repository;
 
@@ -9,6 +10,7 @@ namespace ReviewMicroservice.Api.Services.UnitOfWork
         IReviewRepository ReviewRepository { get; }
         IReactionRepository ReactionRepository { get; }
         ICommentRepository CommentRepository { get; }
+        ICommentReplyRepository CommentReplyRepository { get; }
 
         Task CompleteAsync();
         Task BeginTransactionAsync();
