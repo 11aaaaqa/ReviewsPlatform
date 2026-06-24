@@ -8,7 +8,7 @@ namespace ReviewMicroservice.Api.DTOs.comment
         [StringLength(500)]
         public string Text { get; set; }
 
-        public Guid? ReplyToCommentId { get; set; }
+        public Guid? ParentCommentId { get; set; }
 
         [Required]
         public Guid ReviewId { get; set; }
