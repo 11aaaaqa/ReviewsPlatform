@@ -22,7 +22,7 @@ namespace ReviewMicroservice.Api.Services.CommentServices
                 .ToListAsync();
         }
 
-        public async Task<List<Comment>> GetCommentRepliesAsync(Guid parentCommentId, int pageNumber, int pageSize)
+        public async Task<List<Comment>> GetCommentRepliesAsync(Guid parentCommentId, int pageSize, int pageNumber)
         {
             return await context.Comments
                 .Where(x => x.ParentCommentId == parentCommentId)

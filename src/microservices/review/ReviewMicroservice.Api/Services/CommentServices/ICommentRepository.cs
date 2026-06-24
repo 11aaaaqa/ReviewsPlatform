@@ -6,7 +6,7 @@ namespace ReviewMicroservice.Api.Services.CommentServices
     {
         Task<Comment?> GetByIdAsync(Guid commentId);
         Task<List<Comment>> GetByReviewIdAsync(Guid reviewId, int pageSize, int pageNumber);
-        Task<List<Comment>> GetCommentRepliesAsync(Guid parentCommentId, int pageNumber, int pageSize);
+        Task<List<Comment>> GetCommentRepliesAsync(Guid parentCommentId, int pageSize, int pageNumber);
         Task<List<Comment>> GetByUserIdAsync(Guid userId, int pageSize, int pageNumber);
         Task AddAsync(Comment model);
         void Update(Comment model);
