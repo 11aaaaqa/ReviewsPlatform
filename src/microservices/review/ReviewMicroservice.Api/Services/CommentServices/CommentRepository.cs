@@ -44,6 +44,14 @@ namespace ReviewMicroservice.Api.Services.CommentServices
                 .ToListAsync();
         }
 
+        public async Task ExecuteRepliesCountUpdateAsync(List<Guid> commentIds, int delta)
+        {
+            await context.Comments
+                .Where(x => commentIds.Contains(x.Id))
+                .ExecuteUpdateAsync(x =>
+                    x.SetProperty(y => y.RepliesCount, y => y.RepliesCount + delta));
+        }
+
         public async Task AddAsync(Comment model)
         {
             await context.Comments.AddAsync(model);
