@@ -52,6 +52,18 @@ namespace ReviewMicroservice.Api.Services.CommentServices
                     x.SetProperty(y => y.RepliesCount, y => y.RepliesCount + delta));
         }
 
+        public async Task ExecuteDeleteCommentsByIdsAsync(List<Guid> commentIds)
+        {
+            await context.Comments.Where(x => commentIds.Contains(x.Id)).ExecuteDeleteAsync();
+        }
+
+        public async Task ExecuteDeleteCommentsByParentIds(List<Guid> parentIds)
+        {
+            await context.Comments
+                .Where(x => x.ParentCommentId != null && parentIds.Contains(x.ParentCommentId.Value))
+                .ExecuteDeleteAsync();
+        }
+
         public async Task AddAsync(Comment model)
         {
             await context.Comments.AddAsync(model);

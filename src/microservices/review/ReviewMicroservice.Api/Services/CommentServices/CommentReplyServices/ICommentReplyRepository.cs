@@ -4,7 +4,9 @@ namespace ReviewMicroservice.Api.Services.CommentServices.CommentReplyServices
 {
     public interface ICommentReplyRepository
     {
-        Task<List<CommentReply>> GetCommentAncestorsAsync(Guid commentId);
+        Task<List<Guid>> GetCommentAncestorIdsAsync(Guid commentId);
+        Task<List<Guid>> GetCommentDescendantIdsAsync(Guid commentId);
+        Task ExecuteDeleteAllRelationshipsByIdsAsync(List<Guid>  commentIds);
         Task AddAsync(CommentReply model);
         Task AddRangeAsync(List<CommentReply> commentReplies);
         Task RemoveAsync(Guid parentCommentId, Guid repliedCommentId);

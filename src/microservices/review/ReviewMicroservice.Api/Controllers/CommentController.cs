@@ -43,14 +43,14 @@ namespace ReviewMicroservice.Api.Controllers
         }
 
         [HttpGet]
-        [Route("get-by-reply-to-comment-id/{replyCommentId}")]
-        public async Task<IActionResult> GetCommentsByReplyToCommentIdAsync([FromRoute] Guid replyCommentId, [FromQuery] Pagination pagination)
+        [Route("get-replies/{parentCommentId}")]
+        public async Task<IActionResult> GetCommentRepliesAsync([FromRoute] Guid parentCommentId, [FromQuery] Pagination pagination)
         {
             var comments = await unitOfWork.CommentRepository
-                .GetByReplyToCommentIdAsync(replyCommentId, pagination.PageSize, pagination.PageNumber);
+                .GetCommentRepliesAsync(parentCommentId, pagination.PageSize, pagination.PageNumber);
 
             var commentsNextPage = await unitOfWork.CommentRepository
-                .GetByReplyToCommentIdAsync(replyCommentId, pagination.PageSize, pagination.PageNumber + 1);
+                .GetCommentRepliesAsync(parentCommentId, pagination.PageSize, pagination.PageNumber + 1);
 
             return Ok(new CommentsResult { Comments = comments, IsNextPageExisted = commentsNextPage.Count > 0 });
         }
@@ -75,10 +75,10 @@ namespace ReviewMicroservice.Api.Controllers
             var review = await unitOfWork.ReviewRepository.GetByIdAsync(model.ReviewId);
             if (review == null) return NotFound("Review with current identifier does not exist");
 
-            if (model.ReplyToCommentId != null)
+            if (model.ParentCommentId != null)
             {
-                var replyToComment = await unitOfWork.CommentRepository.GetByIdAsync(new Guid(model.ReplyToCommentId.ToString()!));
-                if (replyToComment == null) return NotFound("Comment you are trying to reply to does not exist");
+                var parentComment = await unitOfWork.CommentRepository.GetByIdAsync(model.ParentCommentId.Value);
+                if (parentComment == null) return NotFound("Comment you are trying to reply to does not exist");
             }
 
             string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
@@ -87,7 +87,7 @@ namespace ReviewMicroservice.Api.Controllers
             {
                 var restrictionInfoReply = await restrictionInfoClient.GetRestrictionInfoAsync(
                     new GetRestrictionInfoRequest { UserId = userIdStr });
-                if(restrictionInfoReply.RestrictionType == RestrictionType.All || restrictionInfoReply.RestrictionType == RestrictionType.Commenting)
+                if (restrictionInfoReply.RestrictionType == RestrictionType.All || restrictionInfoReply.RestrictionType == RestrictionType.Commenting)
                     return Forbid();
             }
             catch (Exception e)
@@ -98,9 +98,16 @@ namespace ReviewMicroservice.Api.Controllers
 
             await unitOfWork.CommentRepository.AddAsync(new Comment
             {
-                Id = Guid.NewGuid(), CreatedAt = DateTime.UtcNow, CommentStatus = CommentStatus.UnderConsideration, 
-                UserId = userId, ConsideredByUserId = null, RejectionReason = null,
-                ReplyToCommentId = model.ReplyToCommentId, ReviewId = model.ReviewId, Text = model.Text
+                Id = Guid.NewGuid(),
+                CreatedAt = DateTime.UtcNow,
+                CommentStatus = CommentStatus.UnderConsideration,
+                UserId = userId,
+                RepliesCount = 0,
+                ConsideredByUserId = null,
+                RejectionReason = null,
+                ParentCommentId = model.ParentCommentId,
+                ReviewId = model.ReviewId,
+                Text = model.Text,
             });
             await unitOfWork.CompleteAsync();
 
@@ -124,17 +131,25 @@ namespace ReviewMicroservice.Api.Controllers
             {
                 await unitOfWork.BeginTransactionAsync();
 
-                await unitOfWork.CommentRepository.RemoveAsync(comment.Id);
-                await unitOfWork.CompleteAsync();
+                if (comment.ParentCommentId != null)
+                {
+                    List<Guid> commentIdsToUpdateRepliesCount = await unitOfWork.CommentReplyRepository.GetCommentAncestorIdsAsync(comment.Id);
+                    await unitOfWork.CommentRepository.ExecuteRepliesCountUpdateAsync(commentIdsToUpdateRepliesCount, -(comment.RepliesCount + 1));
+                }
+                List<Guid> commentIdsToDelete = await unitOfWork.CommentReplyRepository.GetCommentDescendantIdsAsync(comment.Id);
+                commentIdsToDelete.Add(comment.Id);
+                await unitOfWork.CommentReplyRepository.ExecuteDeleteAllRelationshipsByIdsAsync(commentIdsToDelete);
 
-                await messagePublisher.PublishAsync(new CommentRemovedEvent { CommentId = comment.Id });
+                await unitOfWork.CommentRepository.ExecuteDeleteCommentsByIdsAsync(commentIdsToDelete);
+                await unitOfWork.CommentRepository.ExecuteDeleteCommentsByParentIds(commentIdsToDelete);
+
+                await messagePublisher.PublishAsync(new CommentRemovedEvent { CommentIds = commentIdsToDelete });
 
                 await unitOfWork.CommitTransactionAsync();
             }
             catch (Exception e)
             {
                 await unitOfWork.RollbackTransactionAsync();
-
                 logger.LogCritical(e, "An exception was thrown while processing comment removing method");
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
@@ -151,13 +166,44 @@ namespace ReviewMicroservice.Api.Controllers
             if (comment == null)
                 return NotFound("Comment with current identifier does not exist");
 
+            if (comment.CommentStatus != CommentStatus.UnderConsideration)
+                return BadRequest("Comment is not in Under consideration status");
+
             string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
             Guid userId = new Guid(userIdStr);
+            try
+            {
+                await unitOfWork.BeginTransactionAsync();
 
-            comment.CommentStatus = CommentStatus.Verified;
-            comment.ConsideredByUserId = userId;
-            unitOfWork.CommentRepository.Update(comment);
-            await unitOfWork.CompleteAsync();
+                comment.CommentStatus = CommentStatus.Verified;
+                comment.ConsideredByUserId = userId;
+                unitOfWork.CommentRepository.Update(comment);
+                await unitOfWork.CompleteAsync();
+
+                if (comment.ParentCommentId != null)
+                {
+                    Guid parentCommentId = comment.ParentCommentId.Value;
+                    List<Guid> commentAncestorIds = await unitOfWork.CommentReplyRepository.GetCommentAncestorIdsAsync(parentCommentId);
+                    commentAncestorIds.Add(parentCommentId);
+                    List<CommentReply> commentRepliesToAdd = new();
+                    foreach (Guid ancestorId in commentAncestorIds)
+                    {
+                        commentRepliesToAdd.Add(new CommentReply { ParentId = ancestorId, RepliedId = comment.Id });
+                    }
+                    await unitOfWork.CommentReplyRepository.AddRangeAsync(commentRepliesToAdd);
+                    await unitOfWork.CompleteAsync();
+
+                    await unitOfWork.CommentRepository.ExecuteRepliesCountUpdateAsync(commentAncestorIds, 1);
+                }
+
+                await unitOfWork.CommitTransactionAsync();
+            }
+            catch (Exception e)
+            {
+                await unitOfWork.RollbackTransactionAsync();
+                logger.LogCritical(e, "Exception was thrown while processing accept comment method");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
 
             return Ok();
         }
@@ -170,6 +216,9 @@ namespace ReviewMicroservice.Api.Controllers
             var comment = await unitOfWork.CommentRepository.GetByIdAsync(model.CommentId);
             if (comment == null)
                 return NotFound("Comment with current identifier does not exist");
+
+            if (comment.CommentStatus != CommentStatus.UnderConsideration)
+                return BadRequest("Comment is not in Under consideration status");
 
             model.Reason = model.Reason.Trim();
 

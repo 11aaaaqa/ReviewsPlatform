@@ -7,12 +7,17 @@ namespace ReviewMicroservice.Api.Services.CommentServices.CommentReplyServices
 {
     public class CommentReplyRepository(ApplicationDbContext context) : ICommentReplyRepository
     {
-        public async Task<List<CommentReply>> GetCommentAncestorsAsync(Guid commentId)
+        public async Task<List<Guid>> GetCommentAncestorIdsAsync(Guid commentId)
+            => await context.CommentReplies.Where(x => x.RepliedId == commentId).Select(x => x.ParentId).ToListAsync();
+
+        public async Task<List<Guid>> GetCommentDescendantIdsAsync(Guid commentId)
+            => await context.CommentReplies.Where(x => x.ParentId == commentId).Select(x => x.RepliedId).ToListAsync();
+
+        public async Task ExecuteDeleteAllRelationshipsByIdsAsync(List<Guid> commentIds)
         {
-            return await context.CommentReplies
-                .Where(x => x.RepliedId == commentId)
-                .Select(x => new CommentReply { ParentId = x.ParentId, RepliedId = commentId })
-                .ToListAsync();
+            await context.CommentReplies
+                .Where(x => commentIds.Contains(x.ParentId) || commentIds.Contains(x.RepliedId))
+                .ExecuteDeleteAsync();
         }
 
         public async Task AddAsync(CommentReply model)

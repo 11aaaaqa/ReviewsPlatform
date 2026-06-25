@@ -9,6 +9,8 @@ namespace ReviewMicroservice.Api.Services.CommentServices
         Task<List<Comment>> GetCommentRepliesAsync(Guid parentCommentId, int pageSize, int pageNumber);
         Task<List<Comment>> GetByUserIdAsync(Guid userId, int pageSize, int pageNumber);
         Task ExecuteRepliesCountUpdateAsync(List<Guid> commentIds, int delta);
+        Task ExecuteDeleteCommentsByIdsAsync(List<Guid> commentIds);
+        Task ExecuteDeleteCommentsByParentIds(List<Guid> parentIds);
         Task AddAsync(Comment model);
         void Update(Comment model);
         Task RemoveAsync(Guid commentId);
