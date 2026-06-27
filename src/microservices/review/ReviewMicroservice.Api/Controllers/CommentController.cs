@@ -131,10 +131,11 @@ namespace ReviewMicroservice.Api.Controllers
             {
                 await unitOfWork.BeginTransactionAsync();
 
+                int commentsCountToDecrease = -(comment.RepliesCount + 1);
                 if (comment.ParentCommentId != null)
                 {
                     List<Guid> commentIdsToUpdateRepliesCount = await unitOfWork.CommentReplyRepository.GetCommentAncestorIdsAsync(comment.Id);
-                    await unitOfWork.CommentRepository.ExecuteRepliesCountUpdateAsync(commentIdsToUpdateRepliesCount, -(comment.RepliesCount + 1));
+                    await unitOfWork.CommentRepository.ExecuteRepliesCountUpdateAsync(commentIdsToUpdateRepliesCount, commentsCountToDecrease);
                 }
                 List<Guid> commentIdsToDelete = await unitOfWork.CommentReplyRepository.GetCommentDescendantIdsAsync(comment.Id);
                 commentIdsToDelete.Add(comment.Id);
@@ -142,6 +143,8 @@ namespace ReviewMicroservice.Api.Controllers
 
                 await unitOfWork.CommentRepository.ExecuteDeleteCommentsByIdsAsync(commentIdsToDelete);
                 await unitOfWork.CommentRepository.ExecuteDeleteCommentsByParentIds(commentIdsToDelete);
+
+                await unitOfWork.ReviewRepository.ExecuteCommentsCountUpdateAsync(comment.ReviewId, commentsCountToDecrease);
 
                 await messagePublisher.PublishAsync(new CommentRemovedEvent { CommentIds = commentIdsToDelete });
 
@@ -195,6 +198,8 @@ namespace ReviewMicroservice.Api.Controllers
 
                     await unitOfWork.CommentRepository.ExecuteRepliesCountUpdateAsync(commentAncestorIds, 1);
                 }
+
+                await unitOfWork.ReviewRepository.ExecuteCommentsCountUpdateAsync(comment.ReviewId, 1);
 
                 await unitOfWork.CommitTransactionAsync();
             }
