@@ -250,7 +250,7 @@ namespace ReviewMicroservice.Api.Controllers
                 Id = Guid.NewGuid(), UserId = userId, ItemId = model.ItemId, CreatedAt = DateOnly.FromDateTime(DateTime.UtcNow),
                 IsCreatedWithItem = false, DislikesCount = 0, LikesCount = 0, ItemEstimation = model.ItemEstimation,
                 RejectionReason = null, ReviewStatus = ReviewStatus.UnderConsideration, ShortReview = model.ShortReview,
-                Text = model.Text, Pictures = model.Pictures
+                Text = model.Text, Pictures = model.Pictures, CommentsCount = 0
             };
 
             await unitOfWork.ReviewRepository.AddAsync(reviewToAdd);
