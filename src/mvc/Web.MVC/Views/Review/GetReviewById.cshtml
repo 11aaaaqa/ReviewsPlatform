@@ -20,20 +20,21 @@
     }
 }
 
-@if (Model.ShowEmailConfirmationModalOnReaction)
+@if (Model.ShowEmailConfirmationModal)
 {
     <link rel="stylesheet" href="~/css/email-confirmation-notification.css" />
     <div id="emailNotificationModal" class="email-notification-modal" style="display: none;">
         <div class="email-notification-modal-content">
             <span id="closeEmailNotificationModalBtn" class="close-email-notification-modal-btn">&times;</span>
-            <h3 style="margin-bottom: 10px;">Подтвердите email, чтобы оставить реакцию</h3>
+            <h3 style="margin-bottom: 10px;">Подтвердите email, чтобы оставить комментарий или реакцию</h3>
             <p>Письмо отправлено на почту @User.Claims.Single(x => x.Type == ClaimTypes.Email).Value</p>
             <p>Не получили? Отправить повторно можно в <a class="themed-link" asp-controller="User" asp-action="EditUserProfile">настройках профиля</a></p>
         </div>
     </div>
+
 }
 <input class="hidden" id="encodedCurrentUrl" value="@Model.EncodedCurrentUrl" />
-<input class="hidden" id="showEmailConfirmationModalOnReaction" value="@Model.ShowEmailConfirmationModalOnReaction.ToString().ToLower()" />
+<input class="hidden" id="showEmailConfirmationModal" value="@Model.ShowEmailConfirmationModal.ToString().ToLower()" />
 <div class="get-review-by-id-page-block">
     <div class="item-info-block">
         <h3 style="margin-bottom: 18px;">@Model.Review.Item.Name</h3>
@@ -225,12 +226,12 @@
     <input class="hidden" id="reviewId" value="@Model.Review.Id" />
     <form style="margin-top: 20px;" id="addCommentForm" class="add-comment-form" data-parent-id="">
         <div id="commentErrorMessageContainer" class="comment-error" style="display: none; color: red; margin-bottom: 3px;"></div>
-        <div class="add-comment-block" contenteditable="true" data-placeholder="Введите комментарий"></div>
-        <button type="submit" class="btn">Отправить</button>
+        <div class="add-comment-block" contenteditable="true" placeholder="Введите комментарий"></div>
+        <button type="submit" style="margin-top: 5px;" class="btn-small">Отправить</button>
     </form>
     
     <div class="comments-block">
-        <h4>Комментарии: @Model.Review.CommentsCount</h4>
+        <h6>Комментарии: @Model.Review.CommentsCount</h6>
 
         <div id="rootCommentsContainer" class="comments-list"
              data-page-number="0"
@@ -261,8 +262,8 @@
 
             <form class="add-comment-form reply-form hidden" data-parent-id="">
                 <div class="comment-error" style="display: none; color: red; margin-bottom: 3px;"></div>
-                <div class="add-comment-block" contenteditable="true" data-placeholder="Введите комментарий"></div>
-                <button type="submit" class="btn">Ответить</button>
+                <div class="add-comment-block" contenteditable="true" placeholder="Введите комментарий"></div>
+                <button type="submit" class="btn-small">Ответить</button>
                 <button type="button" class="btn-red reply-cancel-btn">Отмена</button>
             </form>
 
@@ -280,17 +281,28 @@
 </div>
 
 <script>
+    const showEmailConfirmationModalOnComment = document.getElementById('showEmailConfirmationModal').value === 'true';
+
     const commentTextMaxLength = parseInt(document.getElementById('commentTextMaxLength').value, 10);
     const reviewId = document.getElementById('reviewId').value;
     const rootPageSize = 30;
 
-    const REPLY_MAX_INDENT_LEVEL = 3;
+    const REPLY_MAX_INDENT_LEVEL = 5;
     const REPLY_REPLIES_PAGE_SIZE = 10;
 
     const rootContainer = document.getElementById('rootCommentsContainer');
     const rootLoader = document.getElementById('loadSpinnerContainer');
     const rootLoadErrorMessageContainer = document.getElementById('rootLoadErrorMessageContainer');
     const commentNodeTemplate = document.getElementById('commentNodeTemplate');
+
+    let emailConfirmationCanBeSent = true;
+    const emailNotificationModal = document.getElementById('emailNotificationModal');
+    if (emailNotificationModal) {
+        document.getElementById('closeEmailNotificationModalBtn').addEventListener('click', () => {
+            emailNotificationModal.style.display = 'none';
+            emailConfirmationCanBeSent = true;
+        });
+    }
 
     function formatDate(isoString) {
         const date = new Date(isoString);
@@ -300,8 +312,18 @@
         return `${datePart} в ${hours}:${minutes}`;
     }
 
-    function attachInputLimiters(editableDiv) {
-        editableDiv.addEventListener('beforeinput', function (e) {
+    async function attachInputLimiters(editableDiv) {
+        editableDiv.addEventListener('beforeinput', async function (e) {
+            if (showEmailConfirmationModalOnComment) {
+                e.preventDefault();
+                emailNotificationModal.style.display = 'flex';
+                if (emailConfirmationCanBeSent) {
+                    await fetch('/settings/email/request-confirmation', { method: 'POST' });
+                    emailConfirmationCanBeSent = false;
+                }
+                return;
+            }
+
             const currentLength = editableDiv.innerHTML.length;
             const selectedTextLength = window.getSelection().toString().length;
             if (currentLength - selectedTextLength >= commentTextMaxLength && e.inputType.startsWith('insert')) {
@@ -309,7 +331,17 @@
             }
         });
 
-        editableDiv.addEventListener('paste', function (e) {
+        editableDiv.addEventListener('paste', async function (e) {
+            if (showEmailConfirmationModalOnComment) {
+                e.preventDefault();
+                emailNotificationModal.style.display = 'flex';
+                if (emailConfirmationCanBeSent) {
+                    await fetch('/settings/email/request-confirmation', { method: 'POST' });
+                    emailConfirmationCanBeSent = false;
+                }
+                return;
+            }
+
             const paste = (e.clipboardData || window.clipboardData).getData('text');
             const currentLength = editableDiv.innerHTML.length;
             const selection = window.getSelection().toString().length;
@@ -323,12 +355,21 @@
         });
     }
 
-    function attachFormSubmit(form) {
+    async function attachFormSubmit(form) {
         const editableDiv = form.querySelector('.add-comment-block');
-        attachInputLimiters(editableDiv);
+        await attachInputLimiters(editableDiv);
         const errorContainer = form.querySelector('.comment-error');
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
+            if (showEmailConfirmationModalOnComment) {
+                e.preventDefault();
+                emailNotificationModal.style.display = 'flex';
+                if (emailConfirmationCanBeSent) {
+                    await fetch('/settings/email/request-confirmation', { method: 'POST' });
+                    emailConfirmationCanBeSent = false;
+                }
+                return;
+            }
 
             const submitBtn = form.querySelector('[type="submit"]');
             if (submitBtn.disabled) return;
@@ -394,16 +435,17 @@
 
     attachFormSubmit(document.getElementById('addCommentForm'));
 
-    function createCommentNode(comment, level) {
+    async function createCommentNode(comment, level) {
         const fragment = commentNodeTemplate.content.cloneNode(true);
         const block = fragment.querySelector('.comment-block');
 
         block.dataset.commentId = comment.id;
         block.dataset.level = level;
 
-        const indentLevel = Math.min(level, REPLY_MAX_INDENT_LEVEL);
-        if (indentLevel > 0) {
-            block.style.marginLeft = (indentLevel * 24) + 'px';
+        if (level > 0 && level <= REPLY_MAX_INDENT_LEVEL) {
+            block.style.marginLeft = '24px';
+        } else if (level > REPLY_MAX_INDENT_LEVEL) {
+            block.style.marginLeft = '0';
         }
 
         const avatar = block.querySelector('.comment-avatar');
@@ -415,7 +457,7 @@
 
         const replyForm = block.querySelector('.reply-form');
         replyForm.dataset.parentId = comment.id;
-        attachFormSubmit(replyForm);
+        await attachFormSubmit(replyForm);
 
         const replyToggleBtn = block.querySelector('.reply-toggle-btn');
         const replyCancelBtn = block.querySelector('.reply-cancel-btn');
@@ -476,10 +518,10 @@
             const response = await fetch(url);
             const result = await response.json();
 
-            result.comments.forEach(function (reply) {
-                const node = createCommentNode(reply, level);
+            for (const reply of result.comments) {
+                const node = await createCommentNode(reply, level);
                 container.appendChild(node);
-            });
+            }
 
             container.dataset.pageNumber = nextPageNumber;
             container.dataset.hasNext = result.isNextPageExisted ? 'true' : 'false';
@@ -510,10 +552,10 @@
             const response = await fetch(url);
             const result = await response.json();
 
-            result.comments.forEach(function (comment) {
-                const node = createCommentNode(comment, 0);
+            for (const comment of result.comments) {
+                const node = await createCommentNode(comment, 0);
                 rootContainer.appendChild(node);
-            });
+            }
 
             rootContainer.dataset.pageNumber = pageNumber;
             rootContainer.dataset.hasNext = result.isNextPageExisted ? 'true' : 'false';
@@ -523,7 +565,6 @@
         } finally {
             rootLoadInProgress = false;
             rootLoader.classList.add('hidden');
-            rootLoadErrorMessageContainer.style.display = 'none';
         }
     }
 
@@ -539,93 +580,6 @@
     observer.observe(sentinel);
 
     loadRootComments(1);
-
-
-
-
-
-
-
-    // const commentTextMaxLength = document.getElementById('commentTextMaxLength').value;
-    // const addCommentDiv = document.getElementById('addCommentDiv');
-    // const commentTextInput = document.getElementById('commentTextInput');
-    // const commentErrorMessageContainer = document.getElementById('errorMessageContainer');
-
-    // document.getElementById('addCommentForm').addEventListener('submit', async function(e) {
-    //     e.preventDefault();
-
-    //     const submitBtn = this.querySelector('[type="submit"]');
-    //     if (submitBtn.disabled) return;
-    //     submitBtn.disabled = true;
-
-    //     commentTextInput.value = addCommentDiv.innerHTML;
-
-    //     var formData = new FormData(document.getElementById('addCommentForm'));
-
-    //     try {
-    //         const response = await fetch(`/comments/add`,
-    //             {
-    //                 method: 'POST',
-    //                 body: formData
-    //             });
-
-    //         if (response.redirected)
-    //         {
-    //             window.location.href = response.url;
-    //         }
-    //         else if (response.status === 400)
-    //         {
-    //             const result = await response.json();
-
-    //             commentErrorMessageContainer.textContent = '';
-
-    //             if (result.errors && result.errors.length > 0)
-    //             {
-    //                 result.errors.forEach(error => {
-    //                     const errorItem = document.createElement('div');
-    //                     errorItem.textContent = error;
-    //                     commentErrorMessageContainer.appendChild(errorItem);
-    //                 });
-    //                 commentErrorMessageContainer.style.display = 'block';
-    //             }
-    //         }
-    //         else
-    //         {
-    //             commentErrorMessageContainer.textContent = 'Что-то пошло не так';
-    //             commentErrorMessageContainer.style.display = 'block';
-    //         }
-    //     } catch (e) {
-    //         commentErrorMessageContainer.textContent = 'Что-то пошло не так';
-    //         commentErrorMessageContainer.style.display = 'block';
-    //     } finally {
-    //         submitBtn.disabled = false;
-    //     }
-    // });
-
-    // addCommentDiv.addEventListener('beforeinput', (e) => {
-    //     const currentLength = addCommentDiv.innerHTML.length;
-
-    //     const selection = window.getSelection();
-    //     const selectedTextLength = selection.toString().length;
-
-    //     if (currentLength - selectedTextLength >= commentTextMaxLength && e.inputType.startsWith('insert')) {
-    //         e.preventDefault();
-    //     }
-    // });
-
-    // addCommentDiv.addEventListener('paste', (e) => {
-    //     const paste = (e.clipboardData || window.clipboardData).getData('text');
-    //     const currentLength = addCommentDiv.innerHTML.length;
-    //     const selection = window.getSelection().toString().length;
-
-    //     if (currentLength - selection + paste.length > commentTextMaxLength) {
-    //         e.preventDefault();
-    //         const allowedLength = commentTextMaxLength - (currentLength - selection);
-    //         if (allowedLength > 0) {
-    //             document.execCommand('insertText', false, paste.substring(0, allowedLength));
-    //         }
-    //     }
-    // });
 </script>
 
 <script>

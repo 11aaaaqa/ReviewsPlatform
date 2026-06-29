@@ -1,4 +1,30 @@
-﻿.get-reviews-flex {
+﻿.add-comment-block {
+    width: 100%;
+    min-height: 70px;
+    border: 1px solid salmon;
+    border-radius: 8px;
+    padding: 6px 12px;
+    background-color: white;
+    word-break: break-word;
+    outline: none;
+}
+
+.add-comment-block:empty:before {
+    content: attr(placeholder);
+    color: #aaa;
+    pointer-events: none;
+}
+
+.add-comment-block:focus {
+    box-shadow: 0 0 8px salmon;
+    transition: box-shadow 0.1s;
+}
+
+.comments-block {
+    margin-top: 25px;
+}
+
+.get-reviews-flex {
     display: flex;
     gap: 8px;
     align-items: center;
