@@ -178,52 +178,10 @@
             }
         </div>
     </div>
-    
-    @* <input class="hidden" id="commentTextMaxLength" value="@StringLengthDtoConstants.CommentTextMax" />
-    <form style="margin-top: 20px;" id="addCommentForm" class="add-comment-form" method="post" asp-action="AddComment" asp-controller="Comment">
-        <div id="commentErrorMessageContainer" class="hidden" style="color: red; margin-bottom: 3px;"></div>
 
-        <input type="hidden" name="reviewId" value="@Model.Review.Id"/>
-
-        <input id="commentTextInput" type="hidden" name="text"/>
-        <div class="add-comment-block" id="addCommentDiv" contenteditable="true" placeholder="Введите комментарий"></div>
-
-        <input type="submit" class="btn" value="Отправить"/>
-    </form>
-    <div class="comments-block">
-        <h4>Комментарии: @Model.Review.CommentsCount</h4>
-        @foreach (var comment in Model.CommentsResult.Comments)
-        {
-            <div class="comment-block">
-                <div>
-                    <img src="@comment.User.AvatarSrc" style="width: 30px; height: 30px; object-fit: cover;"/>
-                    <p>@comment.User.UserName</p>
-                    <p>@comment.CreatedAt.ToLocalTime().Date в @(comment.CreatedAt.ToLocalTime().Hour):@(comment.CreatedAt.ToLocalTime().Minute)</p>
-                </div>
-                <div>@Html.Raw(comment.Text)</div>
-                <div>
-                    <button>Ответить</button>
-                    <form method="post" asp-action="AddComment" asp-controller="Comment">
-                        <input type="hidden" name="parentCommentId" value="@comment.Id"/>
-                        <input type="hidden" name="reviewId" value="@Model.Review.Id"/>
-                        <input type="hidden" name="text"/>
-                        <div class="add-comment-block" contenteditable="true" placeholder="Введите комментарий"></div>
-                        <input type="submit" class="btn" value="Отправить"/>
-                    </form>
-                </div>
-                @if (comment.RepliesCount > 0)
-                {
-
-                }
-            </div>
-        }
-    </div> *@
-    
-    
-    
-    
     <input class="hidden" id="commentTextMaxLength" value="@StringLengthDtoConstants.CommentTextMax" />
     <input class="hidden" id="reviewId" value="@Model.Review.Id" />
+    <input class="hidden" id="currentUserId" value="@Model.CurrentUserId" />
     <form style="margin-top: 20px;" id="addCommentForm" class="add-comment-form" data-parent-id="">
         <div id="commentErrorMessageContainer" class="comment-error" style="display: none; color: red; margin-bottom: 3px;"></div>
         <div class="add-comment-block" contenteditable="true" placeholder="Введите комментарий"></div>
@@ -231,7 +189,7 @@
     </form>
     
     <div class="comments-block">
-        <h6>Комментарии: @Model.Review.CommentsCount</h6>
+        <h6 style="margin-bottom: 10px;">Комментарии: @Model.Review.CommentsCount</h6>
 
         <div id="rootCommentsContainer" class="comments-list"
              data-page-number="0"
@@ -258,6 +216,10 @@
                 <button type="button" class="btn-link replies-toggle-btn hidden">
                     <span class="replies-toggle-label"></span>
                 </button>
+                <form class="remove-comment-form hidden" data-comment-id="">
+                    <div class="remove-comment-error" style="display: none; color: red;"></div>
+                    <button type="submit" class="btn-red">Удалить</button>
+                </form>
             </div>
 
             <form class="add-comment-form reply-form hidden" data-parent-id="">
@@ -282,6 +244,9 @@
 
 <script>
     const showEmailConfirmationModalOnComment = document.getElementById('showEmailConfirmationModal').value === 'true';
+
+    const currentUrl = document.getElementById('encodedCurrentUrl').value;
+    const currentUserId = document.getElementById('currentUserId').value;
 
     const commentTextMaxLength = parseInt(document.getElementById('commentTextMaxLength').value, 10);
     const reviewId = document.getElementById('reviewId').value;
@@ -355,7 +320,7 @@
         });
     }
 
-    async function attachFormSubmit(form) {
+    async function attachCommentFormSubmit(form) {
         const editableDiv = form.querySelector('.add-comment-block');
         await attachInputLimiters(editableDiv);
         const errorContainer = form.querySelector('.comment-error');
@@ -419,6 +384,8 @@
                         });
                         errorContainer.style.display = 'block';
                     }
+                } else if (response.status === 401) {
+                    window.location.href = `/account/signin?returnUrl=${currentUrl}`;
                 } else
                 {
                     errorContainer.textContent = 'Что-то пошло не так';
@@ -433,7 +400,40 @@
         });
     }
 
-    attachFormSubmit(document.getElementById('addCommentForm'));
+    attachCommentFormSubmit(document.getElementById('addCommentForm'));
+
+    async function attachRemoveCommentFormSubmit(form) {
+        const errorContainer = form.querySelector('.remove-comment-error');
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const submitBtn = form.querySelector('[type="submit"]');
+            if (submitBtn.disabled) return;
+
+            submitBtn.disabled = true;
+
+            try {
+                const commentId = form.dataset.commentId;
+
+                const response = await fetch(`/comments/${commentId}/remove`, { method: 'POST' });
+
+                if (response.ok) {
+                    const block = form.closest('.comment-block');
+                    if (block) {
+                        block.remove();
+                    }
+                } else {
+                    errorContainer.textContent = 'Что-то пошло не так';
+                    errorContainer.style.display = 'block';
+                }
+            } catch (err) {
+                errorContainer.textContent = 'Что-то пошло не так';
+                errorContainer.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+    }
 
     async function createCommentNode(comment, level) {
         const fragment = commentNodeTemplate.content.cloneNode(true);
@@ -457,7 +457,14 @@
 
         const replyForm = block.querySelector('.reply-form');
         replyForm.dataset.parentId = comment.id;
-        await attachFormSubmit(replyForm);
+        await attachCommentFormSubmit(replyForm);
+
+        if (currentUserId && comment.user.id === currentUserId) {
+            const removeCommentForm = block.querySelector('.remove-comment-form');
+            removeCommentForm.classList.remove('hidden');
+            removeCommentForm.dataset.commentId = comment.id;
+            await attachRemoveCommentFormSubmit(removeCommentForm);
+        }
 
         const replyToggleBtn = block.querySelector('.reply-toggle-btn');
         const replyCancelBtn = block.querySelector('.reply-cancel-btn');
