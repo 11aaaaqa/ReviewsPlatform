@@ -382,6 +382,19 @@ namespace Web.MVC.Controllers
             return RedirectToAction("GetReviewById", new { reviewId });
         }
 
+        [Authorize]
+        [HttpPost]
+        [Route("reviews/{reviewId}/remove")]
+        public async Task<IActionResult> RemoveReview([FromRoute] Guid reviewId)
+        {
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+
+            var removeResponse = await httpClient.DeleteAsync($"/api/Review/remove/{reviewId}");
+            removeResponse.EnsureSuccessStatusCode();
+
+            return RedirectToAction("Index","Home");
+        }
+
         private async Task<ReviewsResultResponse?> GetReviews(Guid itemId, OrderByDate? date, OrderByEstimation? estimation, int pageNumber,
             int pageSize)
         {
