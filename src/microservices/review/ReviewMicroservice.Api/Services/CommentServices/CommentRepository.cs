@@ -47,6 +47,9 @@ namespace ReviewMicroservice.Api.Services.CommentServices
                 .ToListAsync();
         }
 
+        public async Task<List<Guid>> GetAllCommentIdsByReviewIdAsync(Guid reviewId)
+            => await context.Comments.Where(x => x.ReviewId == reviewId).Select(x => x.Id).ToListAsync();
+
         public async Task ExecuteRepliesCountUpdateAsync(List<Guid> commentIds, int delta)
         {
             await context.Comments
@@ -60,11 +63,16 @@ namespace ReviewMicroservice.Api.Services.CommentServices
             await context.Comments.Where(x => commentIds.Contains(x.Id)).ExecuteDeleteAsync();
         }
 
-        public async Task ExecuteDeleteCommentsByParentIds(List<Guid> parentIds)
+        public async Task ExecuteDeleteCommentsByParentIdsAsync(List<Guid> parentIds)
         {
             await context.Comments
                 .Where(x => x.ParentCommentId != null && parentIds.Contains(x.ParentCommentId.Value))
                 .ExecuteDeleteAsync();
+        }
+
+        public async Task ExecuteDeleteCommentsByReviewIdAsync(Guid reviewId)
+        {
+            await context.Comments.Where(x => x.ReviewId == reviewId).ExecuteDeleteAsync();
         }
 
         public async Task AddAsync(Comment model)

@@ -142,7 +142,7 @@ namespace ReviewMicroservice.Api.Controllers
                 await unitOfWork.CommentReplyRepository.ExecuteDeleteAllRelationshipsByIdsAsync(commentIdsToDelete);
 
                 await unitOfWork.CommentRepository.ExecuteDeleteCommentsByIdsAsync(commentIdsToDelete);
-                await unitOfWork.CommentRepository.ExecuteDeleteCommentsByParentIds(commentIdsToDelete);
+                await unitOfWork.CommentRepository.ExecuteDeleteCommentsByParentIdsAsync(commentIdsToDelete);
 
                 await unitOfWork.ReviewRepository.ExecuteCommentsCountUpdateAsync(comment.ReviewId, commentsCountToDecrease);
 

@@ -195,6 +195,10 @@ namespace ReviewMicroservice.Api.Controllers
                 await unitOfWork.ReviewRepository.RemoveAsync(reviewId);
                 await unitOfWork.CompleteAsync();
 
+                var commentIdsToDelete = await unitOfWork.CommentRepository.GetAllCommentIdsByReviewIdAsync(reviewId);
+                await unitOfWork.CommentReplyRepository.ExecuteDeleteAllRelationshipsByIdsAsync(commentIdsToDelete);
+                await unitOfWork.CommentRepository.ExecuteDeleteCommentsByReviewIdAsync(reviewId);
+
                 await messagePublisher.PublishAsync(new ReviewRemovedEvent
                     { ItemId = itemId, IsReviewVerified = reviewStatus == ReviewStatus.Verified, ItemEstimation = itemEstimation});
 
