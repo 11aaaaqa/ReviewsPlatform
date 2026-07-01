@@ -261,32 +261,6 @@ h1, h2, h3, h4, h5, h6, p {
     box-shadow: none !important;
 }
 
-.btn-small {
-    display: block;
-    border: none;
-    cursor: pointer;
-    background: salmon;
-    color: white;
-    padding: 5px 13px;
-    border-radius: 10px;
-    text-decoration: none;
-    transition: background 0.2s;
-}
-
-.btn-small:hover {
-    background: #C46256;
-    color: white;
-}
-
-.btn-small:active {
-    background: #C46256 !important;
-    color: white !important;
-}
-
-.btn-small:focus {
-    box-shadow: none !important;
-}
-
 .btn-wide-stretched {
     display: block;
     border: none;

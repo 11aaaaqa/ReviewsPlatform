@@ -182,14 +182,14 @@
     <input class="hidden" id="commentTextMaxLength" value="@StringLengthDtoConstants.CommentTextMax" />
     <input class="hidden" id="reviewId" value="@Model.Review.Id" />
     <input class="hidden" id="currentUserId" value="@Model.CurrentUserId" />
-    <form style="margin-top: 20px;" id="addCommentForm" class="add-comment-form" data-parent-id="">
+    <form style="margin-top: 20px;" id="addCommentForm" data-parent-id="">
         <div id="commentErrorMessageContainer" class="comment-error" style="display: none; color: red; margin-bottom: 3px;"></div>
         <div class="add-comment-block" contenteditable="true" placeholder="Введите комментарий"></div>
-        <button type="submit" style="margin-top: 5px;" class="btn-small">Отправить</button>
+        <button type="submit" style="margin-top: 5px;" class="send-reply-btn">Отправить</button>
     </form>
     
     <div class="comments-block">
-        <h6 style="margin-bottom: 10px;">Комментарии: @Model.Review.CommentsCount</h6>
+        <h6 style="margin-bottom: 25px;">Комментарии: @Model.Review.CommentsCount</h6>
 
         <div id="rootCommentsContainer" class="comments-list"
              data-page-number="0"
@@ -205,36 +205,40 @@
     
     <template id="commentNodeTemplate">
         <div class="comment-block">
-            <div class="comment-header">
-                <img class="comment-avatar" src="" style="width: 30px; height: 30px; object-fit: cover;" />
-                <p class="comment-username"></p>
-                <p class="comment-date"></p>
-            </div>
-            <div class="comment-text"></div>
-            <div class="comment-actions">
-                <button type="button" class="btn-link reply-toggle-btn">Ответить</button>
-                <button type="button" class="btn-link replies-toggle-btn hidden">
-                    <span class="replies-toggle-label"></span>
-                </button>
-                <form class="remove-comment-form hidden" data-comment-id="">
-                    <div class="remove-comment-error" style="display: none; color: red;"></div>
-                    <button type="submit" class="btn-red">Удалить</button>
+            <div class="comment">
+                <div class="comment-header">
+                    <img class="comment-avatar" src="" style="width: 30px; height: 30px; object-fit: cover;" />
+                    <a class="comment-username"></a>
+                    <p class="comment-date"></p>
+                </div>
+                <div class="comment-text"></div>
+                <div class="comment-actions">
+                    <button type="button" class="reply-toggle-btn">Ответить</button>
+                    <button type="button" class="replies-toggle-btn hidden">
+                        <span class="replies-toggle-label"></span>
+                    </button>
+                    <form class="remove-comment-form hidden" data-comment-id="">
+                        <div class="remove-comment-error" style="display: none; color: red;"></div>
+                        <button type="submit" class="cancel-delete-btn">Удалить</button>
+                    </form>
+                </div>
+
+                <form class="reply-form hidden" data-parent-id="">
+                    <div class="comment-error" style="display: none; color: red; margin-bottom: 3px;"></div>
+                    <div class="add-comment-block" contenteditable="true" placeholder="Введите комментарий"></div>
+                    <div class="reply-form-actions">
+                        <button type="submit" class="send-reply-btn">Ответить</button>
+                        <button type="button" class="cancel-delete-btn reply-cancel-btn">Отмена</button>
+                    </div>
                 </form>
             </div>
-
-            <form class="add-comment-form reply-form hidden" data-parent-id="">
-                <div class="comment-error" style="display: none; color: red; margin-bottom: 3px;"></div>
-                <div class="add-comment-block" contenteditable="true" placeholder="Введите комментарий"></div>
-                <button type="submit" class="btn-small">Ответить</button>
-                <button type="button" class="btn-red reply-cancel-btn">Отмена</button>
-            </form>
 
             <div class="replies-container hidden"
                  data-page-number="0"
                  data-has-next="false"
                  data-loaded="false"></div>
 
-            <button type="button" class="btn-link load-more-replies-btn hidden">Показать ещё ответы</button>
+            <button type="button" class="load-more-replies-btn hidden">Показать ещё ответы</button>
             <div class="load-spinner-container replies-loader hidden">
                 <div class="load-spinner"></div>
             </div>
@@ -452,6 +456,7 @@
         avatar.src = comment.user.avatarSrc;
 
         block.querySelector('.comment-username').textContent = comment.user.userName;
+        block.querySelector('.comment-username').href = `/users/${comment.user.id}`;
         block.querySelector('.comment-date').textContent = formatDate(comment.createdAt);
         block.querySelector('.comment-text').innerHTML = comment.text;
 
