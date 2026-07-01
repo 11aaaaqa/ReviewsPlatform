@@ -102,32 +102,68 @@
                 </div>
             }
         </div>
-
-        <div>
-            @if (Model.IsReviewCreatedByCurrentUser)
-            {
-                <div style="display: flex; gap: 12px; font-size: 20px;">
-                    <div class="get-reviews-flex">
-                        <i id="likeI" class="fa-regular fa-thumbs-up"></i>
-                        <span id="likesCountSpan" style="font-size: 16px;">@Model.Review.LikesCount</span>
+        
+        <div style="display: flex; margin-top: 10px; justify-content: space-between; align-items: center;">
+            <div>
+                @if (Model.IsReviewCreatedByCurrentUser)
+                {
+                    <div style="display: flex; gap: 12px; font-size: 20px;">
+                        <div class="get-reviews-flex">
+                            <i id="likeI" class="fa-regular fa-thumbs-up"></i>
+                            <span id="likesCountSpan" style="font-size: 16px;">@Model.Review.LikesCount</span>
+                        </div>
+                        <div class="get-reviews-flex">
+                            <i id="dislikeI" class="fa-regular fa-thumbs-down"></i>
+                            <span id="dislikesCountSpan" style="font-size: 16px;">@Model.Review.DislikesCount</span>
+                        </div>
                     </div>
-                    <div class="get-reviews-flex">
-                        <i id="dislikeI" class="fa-regular fa-thumbs-down"></i>
-                        <span id="dislikesCountSpan" style="font-size: 16px;">@Model.Review.DislikesCount</span>
-                    </div>
-                </div>
-            }
-            else
-            {
-                <div style="display: flex; gap: 8px; font-size: 20px;">
-                    @if (Model.ReactionType != null)
-                    {
-                        if (Model.ReactionType == ReactionType.Like)
+                }
+                else
+                {
+                    <div style="display: flex; gap: 8px; font-size: 20px;">
+                        @if (Model.ReactionType != null)
                         {
-                            <button id="likeBtn" class="review-reaction-btn btn-like is-active"
+                            if (Model.ReactionType == ReactionType.Like)
+                            {
+                                <button id="likeBtn" class="review-reaction-btn btn-like is-active"
+                                        data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Like">
+                                    <div class="get-reviews-flex">
+                                        <i id="likeI" class="fa-solid fa-thumbs-up"></i>
+                                        <span id="likesCountSpan" style="font-size: 16px;">@Model.Review.LikesCount</span>
+                                    </div>
+                                </button>
+                                <button id="dislikeBtn" class="review-reaction-btn btn-dislike"
+                                        data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Dislike">
+                                    <div class="get-reviews-flex">
+                                        <i id="dislikeI" class="fa-regular fa-thumbs-down"></i>
+                                        <span id="dislikesCountSpan" style="font-size: 16px;">@Model.Review.DislikesCount</span>
+                                    </div>
+                                </button>
+                            }
+                            else if (Model.ReactionType == ReactionType.Dislike)
+                            {
+                                <button id="likeBtn" class="review-reaction-btn btn-like"
+                                        data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Like">
+                                    <div class="get-reviews-flex">
+                                        <i id="likeI" class="fa-regular fa-thumbs-up"></i>
+                                        <span id="likesCountSpan" style="font-size: 16px;">@Model.Review.LikesCount</span>
+                                    </div>
+                                </button>
+                                <button id="dislikeBtn" class="review-reaction-btn btn-dislike is-active"
+                                        data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Dislike">
+                                    <div class="get-reviews-flex">
+                                        <i id="dislikeI" class="fa-solid fa-thumbs-down"></i>
+                                        <span id="dislikesCountSpan" style="font-size: 16px;">@Model.Review.DislikesCount</span>
+                                    </div>
+                                </button>
+                            }
+                        }
+                        else
+                        {
+                            <button id="likeBtn" class="review-reaction-btn btn-like"
                                     data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Like">
                                 <div class="get-reviews-flex">
-                                    <i id="likeI" class="fa-solid fa-thumbs-up"></i>
+                                    <i id="likeI" class="fa-regular fa-thumbs-up"></i>
                                     <span id="likesCountSpan" style="font-size: 16px;">@Model.Review.LikesCount</span>
                                 </div>
                             </button>
@@ -139,41 +175,15 @@
                                 </div>
                             </button>
                         }
-                        else if (Model.ReactionType == ReactionType.Dislike)
-                        {
-                            <button id="likeBtn" class="review-reaction-btn btn-like"
-                                    data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Like">
-                                <div class="get-reviews-flex">
-                                    <i id="likeI" class="fa-regular fa-thumbs-up"></i>
-                                    <span id="likesCountSpan" style="font-size: 16px;">@Model.Review.LikesCount</span>
-                                </div>
-                            </button>
-                            <button id="dislikeBtn" class="review-reaction-btn btn-dislike is-active"
-                                    data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Dislike">
-                                <div class="get-reviews-flex">
-                                    <i id="dislikeI" class="fa-solid fa-thumbs-down"></i>
-                                    <span id="dislikesCountSpan" style="font-size: 16px;">@Model.Review.DislikesCount</span>
-                                </div>
-                            </button>
-                        }
-                    }
-                    else
-                    {
-                        <button id="likeBtn" class="review-reaction-btn btn-like"
-                                data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Like">
-                            <div class="get-reviews-flex">
-                                <i id="likeI" class="fa-regular fa-thumbs-up"></i>
-                                <span id="likesCountSpan" style="font-size: 16px;">@Model.Review.LikesCount</span>
-                            </div>
-                        </button>
-                        <button id="dislikeBtn" class="review-reaction-btn btn-dislike"
-                                data-reviewId="@Model.Review.Id" data-reactionType="@ReactionType.Dislike">
-                            <div class="get-reviews-flex">
-                                <i id="dislikeI" class="fa-regular fa-thumbs-down"></i>
-                                <span id="dislikesCountSpan" style="font-size: 16px;">@Model.Review.DislikesCount</span>
-                            </div>
-                        </button>
-                    }
+                    </div>
+                }
+            </div>
+            @if (Model.CurrentUserId != null && Model.CurrentUserId == Model.Review.CreatedByUser.Id)
+            {
+                <div>
+                    <form method="post" asp-controller="Review" asp-action="RemoveReview" asp-route-reviewId="@Model.Review.Id">
+                        <input type="submit" class="btn-red" value="Удалить" onclick="return confirm('Вы уверены, что хотите удалить этот отзыв?');" />
+                    </form>
                 </div>
             }
         </div>
