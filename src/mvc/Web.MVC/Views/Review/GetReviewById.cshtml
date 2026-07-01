@@ -502,6 +502,8 @@
                     if (repliesContainer.dataset.loaded !== 'true') {
                         await loadReplies(repliesContainer, loadMoreRepliesBtn, repliesLoader, comment.id, level + 1, true);
                         repliesContainer.dataset.loaded = 'true';
+                    } else {
+                        loadMoreRepliesBtn.classList.toggle('hidden', repliesContainer.dataset.hasNext !== 'true');
                     }
                 } else {
                     repliesToggleLabel.textContent = `Показать ответы (${comment.repliesCount})`;
