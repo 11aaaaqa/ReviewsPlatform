@@ -11,6 +11,7 @@ namespace ReviewMicroservice.Api.Models
         public DateOnly CreatedAt { get; set; }
         public int LikesCount { get; set; }
         public int DislikesCount { get; set; }
+        public int CommentsCount { get; set; }
 
         public Guid ItemId { get; set; }
 

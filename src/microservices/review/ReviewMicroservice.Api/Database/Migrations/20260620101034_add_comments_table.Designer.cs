@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ReviewMicroservice.Api.Database;
@@ -12,9 +13,11 @@ using ReviewMicroservice.Api.Database;
 namespace ReviewMicroservice.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260620101034_add_comments_table")]
+    partial class add_comments_table
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -38,14 +41,11 @@ namespace ReviewMicroservice.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("ParentCommentId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("RejectionReason")
                         .HasColumnType("text");
 
-                    b.Property<int>("RepliesCount")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("ReplyToCommentId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("ReviewId")
                         .HasColumnType("uuid");
@@ -59,22 +59,11 @@ namespace ReviewMicroservice.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ReplyToCommentId");
+
                     b.HasIndex("ReviewId");
 
                     b.ToTable("Comments");
-                });
-
-            modelBuilder.Entity("ReviewMicroservice.Api.Models.Business.Comments.CommentReply", b =>
-                {
-                    b.Property<Guid>("ParentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("RepliedId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("ParentId", "RepliedId");
-
-                    b.ToTable("CommentReplies");
                 });
 
             modelBuilder.Entity("ReviewMicroservice.Api.Models.Business.Review", b =>
@@ -82,9 +71,6 @@ namespace ReviewMicroservice.Api.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<int>("CommentsCount")
-                        .HasColumnType("integer");
 
                     b.Property<DateOnly>("CreatedAt")
                         .HasColumnType("date");
@@ -148,6 +134,11 @@ namespace ReviewMicroservice.Api.Migrations
 
             modelBuilder.Entity("ReviewMicroservice.Api.Models.Business.Comments.Comment", b =>
                 {
+                    b.HasOne("ReviewMicroservice.Api.Models.Business.Comments.Comment", null)
+                        .WithMany()
+                        .HasForeignKey("ReplyToCommentId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("ReviewMicroservice.Api.Models.Business.Review", null)
                         .WithMany()
                         .HasForeignKey("ReviewId")

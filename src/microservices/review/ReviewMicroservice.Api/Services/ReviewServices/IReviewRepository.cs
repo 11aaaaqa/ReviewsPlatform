@@ -14,6 +14,7 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
         Task<List<Review>> GetByItemIdAsync(Guid itemId);
         Task<List<ReviewNoPictures>> GetByItemIdByActualityAsync(Guid itemId, int pageNumber, int pageSize);
         Task<List<Review>> GetByItemIdAsync(List<Guid> itemIds);
+        Task ExecuteCommentsCountUpdateAsync(Guid reviewId, int delta);
         Task AddAsync(Review review);
         void Update(Review review);
         Task RemoveAsync(Guid reviewId);

@@ -1,15 +1,8 @@
-﻿const emailNotificationModal = document.getElementById('emailNotificationModal');
-if (emailNotificationModal) {
-    document.getElementById('closeEmailNotificationModalBtn').addEventListener('click', () => {
-        emailNotificationModal.style.display = 'none';
-    });
-}
-
-const likeI = document.getElementById('likeI');
+﻿const likeI = document.getElementById('likeI');
 const dislikeI = document.getElementById('dislikeI');
 const likeBtn = document.getElementById('likeBtn');
 const dislikeBtn = document.getElementById('dislikeBtn');
-const showEmailConfirmationModalOnReaction = document.getElementById('showEmailConfirmationModalOnReaction').value === 'true';
+const showEmailConfirmationModalOnReaction = document.getElementById('showEmailConfirmationModal').value === 'true';
 if (showEmailConfirmationModalOnReaction) {
     likeBtn.addEventListener('click', async function () {
         emailNotificationModal.style.display = 'flex';

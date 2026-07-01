@@ -13,5 +13,6 @@
         public const int ItemBrandMax = 100;
         public const int ShortReviewMax = 500;
         public const int ReviewTextMax = 2000;
+        public const int CommentTextMax = 500;
     }
 }

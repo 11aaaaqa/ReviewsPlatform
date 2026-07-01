@@ -18,7 +18,8 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
                 {
                     Id = x.Id, ReviewStatus = x.ReviewStatus, UserId = x.UserId, ItemId = x.ItemId, ItemEstimation = x.ItemEstimation,
                     IsCreatedWithItem = x.IsCreatedWithItem, CreatedAt = x.CreatedAt, DislikesCount = x.DislikesCount,
-                    LikesCount = x.LikesCount, RejectionReason = x.RejectionReason, ShortReview = x.ShortReview, Text = x.Text
+                    LikesCount = x.LikesCount, RejectionReason = x.RejectionReason, ShortReview = x.ShortReview, Text = x.Text,
+                    CommentsCount = x.CommentsCount
                 });
             switch (orderByDate)
             {
@@ -43,7 +44,8 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
                 {
                     Id = x.Id, ReviewStatus = x.ReviewStatus, UserId = x.UserId, ItemId = x.ItemId, ItemEstimation = x.ItemEstimation,
                     IsCreatedWithItem = x.IsCreatedWithItem, CreatedAt = x.CreatedAt, DislikesCount = x.DislikesCount,
-                    LikesCount = x.LikesCount, RejectionReason = x.RejectionReason, ShortReview = x.ShortReview, Text = x.Text
+                    LikesCount = x.LikesCount, RejectionReason = x.RejectionReason, ShortReview = x.ShortReview, Text = x.Text,
+                    CommentsCount = x.CommentsCount
                 });
             switch (orderByDate)
             {
@@ -67,7 +69,8 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
                 {
                     Id = x.Id, ReviewStatus = x.ReviewStatus, UserId = x.UserId, ItemId = x.ItemId, ItemEstimation = x.ItemEstimation,
                     IsCreatedWithItem = x.IsCreatedWithItem, CreatedAt = x.CreatedAt, DislikesCount = x.DislikesCount,
-                    LikesCount = x.LikesCount, RejectionReason = x.RejectionReason, ShortReview = x.ShortReview, Text = x.Text
+                    LikesCount = x.LikesCount, RejectionReason = x.RejectionReason, ShortReview = x.ShortReview, Text = x.Text,
+                    CommentsCount = x.CommentsCount
                 });
             switch (orderByDate)
             {
@@ -94,7 +97,8 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
                     {
                         Id = x.Id, ReviewStatus = x.ReviewStatus, UserId = x.UserId, ItemId = x.ItemId, ItemEstimation = x.ItemEstimation,
                         IsCreatedWithItem = x.IsCreatedWithItem, CreatedAt = x.CreatedAt, DislikesCount = x.DislikesCount,
-                        LikesCount = x.LikesCount, RejectionReason = x.RejectionReason, ShortReview = x.ShortReview, Text = x.Text
+                        LikesCount = x.LikesCount, RejectionReason = x.RejectionReason, ShortReview = x.ShortReview, Text = x.Text,
+                        CommentsCount = x.CommentsCount
                     })
                 .OrderByDescending(x => x.LikesCount)
                 .Skip((pageNumber - 1) * pageSize)
@@ -104,6 +108,14 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
         public async Task<List<Review>> GetByItemIdAsync(List<Guid> itemIds)
             => await context.Reviews.Where(x => itemIds.Contains(x.ItemId)).ToListAsync();
 
+        public async Task ExecuteCommentsCountUpdateAsync(Guid reviewId, int delta)
+        {
+            await context.Reviews
+                .Where(x => x.Id == reviewId)
+                .ExecuteUpdateAsync(x => 
+                    x.SetProperty(y => y.CommentsCount, y => y.CommentsCount + delta));
+        }
+
         public async Task<List<ReviewNoPictures>> GetByItemIdAsync(Guid itemId, OrderByEstimation orderByEstimation, int pageNumber, int pageSize)
         {
             var reviews = context.Reviews.Where(x => x.ItemId == itemId && x.ReviewStatus == ReviewStatus.Verified)
@@ -112,7 +124,8 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
                     {
                         Id = x.Id, ReviewStatus = x.ReviewStatus, UserId = x.UserId, ItemId = x.ItemId, ItemEstimation = x.ItemEstimation,
                         IsCreatedWithItem = x.IsCreatedWithItem, CreatedAt = x.CreatedAt, DislikesCount = x.DislikesCount,
-                        LikesCount = x.LikesCount, RejectionReason = x.RejectionReason, ShortReview = x.ShortReview, Text = x.Text
+                        LikesCount = x.LikesCount, RejectionReason = x.RejectionReason, ShortReview = x.ShortReview, Text = x.Text,
+                        CommentsCount = x.CommentsCount
                     });
             switch (orderByEstimation)
             {

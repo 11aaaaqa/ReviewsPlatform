@@ -1,4 +1,5 @@
 ﻿@using System.Security.Claims
+@using Web.MVC.Constants
 @using Web.MVC.Models.Api_responses.review.enums
 @model Web.MVC.Models.View_models.Review.GetReviewByIdViewModel
 <link rel="stylesheet" href="~/css/review/get-review-by-id.css"/>
@@ -19,20 +20,21 @@
     }
 }
 
-@if (Model.ShowEmailConfirmationModalOnReaction)
+@if (Model.ShowEmailConfirmationModal)
 {
     <link rel="stylesheet" href="~/css/email-confirmation-notification.css" />
     <div id="emailNotificationModal" class="email-notification-modal" style="display: none;">
         <div class="email-notification-modal-content">
             <span id="closeEmailNotificationModalBtn" class="close-email-notification-modal-btn">&times;</span>
-            <h3 style="margin-bottom: 10px;">Подтвердите email, чтобы оставить реакцию</h3>
+            <h3 style="margin-bottom: 10px;">Подтвердите email, чтобы оставить комментарий или реакцию</h3>
             <p>Письмо отправлено на почту @User.Claims.Single(x => x.Type == ClaimTypes.Email).Value</p>
             <p>Не получили? Отправить повторно можно в <a class="themed-link" asp-controller="User" asp-action="EditUserProfile">настройках профиля</a></p>
         </div>
     </div>
+
 }
 <input class="hidden" id="encodedCurrentUrl" value="@Model.EncodedCurrentUrl" />
-<input class="hidden" id="showEmailConfirmationModalOnReaction" value="@Model.ShowEmailConfirmationModalOnReaction.ToString().ToLower()" />
+<input class="hidden" id="showEmailConfirmationModal" value="@Model.ShowEmailConfirmationModal.ToString().ToLower()" />
 <div class="get-review-by-id-page-block">
     <div class="item-info-block">
         <h3 style="margin-bottom: 18px;">@Model.Review.Item.Name</h3>
@@ -176,7 +178,423 @@
             }
         </div>
     </div>
+
+    <input class="hidden" id="commentTextMaxLength" value="@StringLengthDtoConstants.CommentTextMax" />
+    <input class="hidden" id="reviewId" value="@Model.Review.Id" />
+    <input class="hidden" id="currentUserId" value="@Model.CurrentUserId" />
+    <form style="margin-top: 20px;" id="addCommentForm" data-parent-id="">
+        <div id="commentErrorMessageContainer" class="comment-error" style="display: none; color: red; margin-bottom: 3px;"></div>
+        <div class="add-comment-block" contenteditable="true" placeholder="Введите комментарий"></div>
+        <button type="submit" style="margin-top: 5px;" class="send-reply-btn">Отправить</button>
+    </form>
+    
+    <div class="comments-block">
+        <h6 style="margin-bottom: 25px;">Комментарии: @Model.Review.CommentsCount</h6>
+
+        <div id="rootCommentsContainer" class="comments-list"
+             data-page-number="0"
+             data-has-next="true">
+        </div>
+
+        <div id="getCommentsSentinel" style="height: 10px;"></div>
+        <div id="loadSpinnerContainer" class="load-spinner-container hidden">
+            <div class="load-spinner"></div>
+        </div>
+        <div id="rootLoadErrorMessageContainer" style="display: none; color: red; margin-bottom: 3px;"></div>
+    </div>
+    
+    <template id="commentNodeTemplate">
+        <div class="comment-block">
+            <div class="comment">
+                <div class="comment-header">
+                    <img class="comment-avatar" src="" style="width: 30px; height: 30px; object-fit: cover;" />
+                    <a class="comment-username"></a>
+                    <p class="comment-date"></p>
+                </div>
+                <div class="comment-text"></div>
+                <div class="comment-actions">
+                    <button type="button" class="reply-toggle-btn">Ответить</button>
+                    <button type="button" class="replies-toggle-btn hidden">
+                        <span class="replies-toggle-label"></span>
+                    </button>
+                    <form class="remove-comment-form hidden" data-comment-id="">
+                        <div class="remove-comment-error" style="display: none; color: red;"></div>
+                        <button type="submit" class="cancel-delete-btn">Удалить</button>
+                    </form>
+                </div>
+
+                <form class="reply-form hidden" data-parent-id="">
+                    <div class="comment-error" style="display: none; color: red; margin-bottom: 3px;"></div>
+                    <div class="add-comment-block" contenteditable="true" placeholder="Введите комментарий"></div>
+                    <div class="reply-form-actions">
+                        <button type="submit" class="send-reply-btn">Ответить</button>
+                        <button type="button" class="cancel-delete-btn reply-cancel-btn">Отмена</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="replies-container hidden"
+                 data-page-number="0"
+                 data-has-next="false"
+                 data-loaded="false"></div>
+
+            <button type="button" class="load-more-replies-btn hidden">Показать ещё ответы</button>
+            <div class="load-spinner-container replies-loader hidden">
+                <div class="load-spinner"></div>
+            </div>
+        </div>
+    </template>
 </div>
+
+<script>
+    const showEmailConfirmationModalOnComment = document.getElementById('showEmailConfirmationModal').value === 'true';
+
+    const currentUrl = document.getElementById('encodedCurrentUrl').value;
+    const currentUserId = document.getElementById('currentUserId').value;
+
+    const commentTextMaxLength = parseInt(document.getElementById('commentTextMaxLength').value, 10);
+    const reviewId = document.getElementById('reviewId').value;
+    const rootPageSize = 30;
+
+    const REPLY_MAX_INDENT_LEVEL = 5;
+    const REPLY_REPLIES_PAGE_SIZE = 10;
+
+    const rootContainer = document.getElementById('rootCommentsContainer');
+    const rootLoader = document.getElementById('loadSpinnerContainer');
+    const rootLoadErrorMessageContainer = document.getElementById('rootLoadErrorMessageContainer');
+    const commentNodeTemplate = document.getElementById('commentNodeTemplate');
+
+    let emailConfirmationCanBeSent = true;
+    const emailNotificationModal = document.getElementById('emailNotificationModal');
+    if (emailNotificationModal) {
+        document.getElementById('closeEmailNotificationModalBtn').addEventListener('click', () => {
+            emailNotificationModal.style.display = 'none';
+            emailConfirmationCanBeSent = true;
+        });
+    }
+
+    function formatDate(isoString) {
+        const date = new Date(isoString);
+        const datePart = date.toLocaleDateString();
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${datePart} в ${hours}:${minutes}`;
+    }
+
+    async function attachInputLimiters(editableDiv) {
+        editableDiv.addEventListener('beforeinput', async function (e) {
+            if (showEmailConfirmationModalOnComment) {
+                e.preventDefault();
+                emailNotificationModal.style.display = 'flex';
+                if (emailConfirmationCanBeSent) {
+                    await fetch('/settings/email/request-confirmation', { method: 'POST' });
+                    emailConfirmationCanBeSent = false;
+                }
+                return;
+            }
+
+            const currentLength = editableDiv.innerHTML.length;
+            const selectedTextLength = window.getSelection().toString().length;
+            if (currentLength - selectedTextLength >= commentTextMaxLength && e.inputType.startsWith('insert')) {
+                e.preventDefault();
+            }
+        });
+
+        editableDiv.addEventListener('paste', async function (e) {
+            if (showEmailConfirmationModalOnComment) {
+                e.preventDefault();
+                emailNotificationModal.style.display = 'flex';
+                if (emailConfirmationCanBeSent) {
+                    await fetch('/settings/email/request-confirmation', { method: 'POST' });
+                    emailConfirmationCanBeSent = false;
+                }
+                return;
+            }
+
+            const paste = (e.clipboardData || window.clipboardData).getData('text');
+            const currentLength = editableDiv.innerHTML.length;
+            const selection = window.getSelection().toString().length;
+            if (currentLength - selection + paste.length > commentTextMaxLength) {
+                e.preventDefault();
+                const allowedLength = commentTextMaxLength - (currentLength - selection);
+                if (allowedLength > 0) {
+                    document.execCommand('insertText', false, paste.substring(0, allowedLength));
+                }
+            }
+        });
+    }
+
+    async function attachCommentFormSubmit(form) {
+        const editableDiv = form.querySelector('.add-comment-block');
+        await attachInputLimiters(editableDiv);
+        const errorContainer = form.querySelector('.comment-error');
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            if (showEmailConfirmationModalOnComment) {
+                e.preventDefault();
+                emailNotificationModal.style.display = 'flex';
+                if (emailConfirmationCanBeSent) {
+                    await fetch('/settings/email/request-confirmation', { method: 'POST' });
+                    emailConfirmationCanBeSent = false;
+                }
+                return;
+            }
+
+            const submitBtn = form.querySelector('[type="submit"]');
+            if (submitBtn.disabled) return;
+
+            submitBtn.disabled = true;
+
+            const text = editableDiv.innerHTML.trim();
+            errorContainer.textContent = '';
+            errorContainer.style.display = 'none';
+
+            if (!text) {
+                errorContainer.textContent = 'Комментарий не может быть пустым';
+                errorContainer.style.display = 'block';
+                submitBtn.disabled = false;
+                return;
+            }
+            try {
+                const parentCommentId = form.dataset.parentId || null;
+                const payload = {
+                    text: text,
+                    reviewId: reviewId,
+                    parentCommentId: parentCommentId
+                };
+
+                const response = await fetch('/comments/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+
+                if (response.redirected)
+                {
+                    window.location.href = response.url;
+                } else if (response.status === 400)
+                {
+                    const result = await response.json();
+
+                    errorContainer.textContent = '';
+
+                    if (result.errors && result.errors.length > 0)
+                    {
+                        result.errors.forEach(error => {
+                            const errorItem = document.createElement('div');
+                            errorItem.textContent = error;
+                            errorContainer.appendChild(errorItem);
+                        });
+                        errorContainer.style.display = 'block';
+                    }
+                } else if (response.status === 401) {
+                    window.location.href = `/account/signin?returnUrl=${currentUrl}`;
+                } else
+                {
+                    errorContainer.textContent = 'Что-то пошло не так';
+                    errorContainer.style.display = 'block';
+                }
+            } catch (err) {
+                errorContainer.textContent = 'Что-то пошло не так';
+                errorContainer.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+    }
+
+    attachCommentFormSubmit(document.getElementById('addCommentForm'));
+
+    async function attachRemoveCommentFormSubmit(form) {
+        const errorContainer = form.querySelector('.remove-comment-error');
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const submitBtn = form.querySelector('[type="submit"]');
+            if (submitBtn.disabled) return;
+
+            submitBtn.disabled = true;
+
+            try {
+                const commentId = form.dataset.commentId;
+
+                const response = await fetch(`/comments/${commentId}/remove`, { method: 'POST' });
+
+                if (response.ok) {
+                    const block = form.closest('.comment-block');
+                    if (block) {
+                        block.remove();
+                    }
+                } else {
+                    errorContainer.textContent = 'Что-то пошло не так';
+                    errorContainer.style.display = 'block';
+                }
+            } catch (err) {
+                errorContainer.textContent = 'Что-то пошло не так';
+                errorContainer.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+    }
+
+    async function createCommentNode(comment, level) {
+        const fragment = commentNodeTemplate.content.cloneNode(true);
+        const block = fragment.querySelector('.comment-block');
+
+        block.dataset.commentId = comment.id;
+        block.dataset.level = level;
+
+        if (level > 0 && level <= REPLY_MAX_INDENT_LEVEL) {
+            block.style.marginLeft = '24px';
+        } else if (level > REPLY_MAX_INDENT_LEVEL) {
+            block.style.marginLeft = '0';
+        }
+
+        const avatar = block.querySelector('.comment-avatar');
+        avatar.src = comment.user.avatarSrc;
+
+        block.querySelector('.comment-username').textContent = comment.user.userName;
+        block.querySelector('.comment-username').href = `/users/${comment.user.id}`;
+        block.querySelector('.comment-date').textContent = formatDate(comment.createdAt);
+        block.querySelector('.comment-text').innerHTML = comment.text;
+
+        const replyForm = block.querySelector('.reply-form');
+        replyForm.dataset.parentId = comment.id;
+        await attachCommentFormSubmit(replyForm);
+
+        if (currentUserId && comment.user.id === currentUserId) {
+            const removeCommentForm = block.querySelector('.remove-comment-form');
+            removeCommentForm.classList.remove('hidden');
+            removeCommentForm.dataset.commentId = comment.id;
+            await attachRemoveCommentFormSubmit(removeCommentForm);
+        }
+
+        const replyToggleBtn = block.querySelector('.reply-toggle-btn');
+        const replyCancelBtn = block.querySelector('.reply-cancel-btn');
+        replyToggleBtn.addEventListener('click', function () {
+            replyForm.classList.toggle('hidden');
+            if (!replyForm.classList.contains('hidden')) {
+                replyForm.querySelector('.add-comment-block').focus();
+            }
+        });
+        replyCancelBtn.addEventListener('click', function () {
+            replyForm.classList.add('hidden');
+        });
+
+        const repliesToggleBtn = block.querySelector('.replies-toggle-btn');
+        const repliesToggleLabel = block.querySelector('.replies-toggle-label');
+        const repliesContainer = block.querySelector('.replies-container');
+        const loadMoreRepliesBtn = block.querySelector('.load-more-replies-btn');
+        const repliesLoader = block.querySelector('.replies-loader');
+
+        if (comment.repliesCount > 0) {
+            repliesToggleBtn.classList.remove('hidden');
+            repliesToggleLabel.textContent = `Показать ответы (${comment.repliesCount})`;
+
+            let repliesOpen = false;
+            repliesToggleBtn.addEventListener('click', async function () {
+                repliesOpen = !repliesOpen;
+                if (repliesOpen) {
+                    repliesToggleLabel.textContent = 'Скрыть ответы';
+                    repliesContainer.classList.remove('hidden');
+                    if (repliesContainer.dataset.loaded !== 'true') {
+                        await loadReplies(repliesContainer, loadMoreRepliesBtn, repliesLoader, comment.id, level + 1, true);
+                        repliesContainer.dataset.loaded = 'true';
+                    } else {
+                        loadMoreRepliesBtn.classList.toggle('hidden', repliesContainer.dataset.hasNext !== 'true');
+                    }
+                } else {
+                    repliesToggleLabel.textContent = `Показать ответы (${comment.repliesCount})`;
+                    repliesContainer.classList.add('hidden');
+                    loadMoreRepliesBtn.classList.add('hidden');
+                }
+            });
+        }
+
+        loadMoreRepliesBtn.addEventListener('click', function () {
+            loadReplies(repliesContainer, loadMoreRepliesBtn, repliesLoader, comment.id, level + 1, false);
+        });
+
+        return block;
+    }
+
+    async function loadReplies(container, loadMoreBtn, loader, commentId, level, isFirstLoad) {
+        const pageSize = REPLY_REPLIES_PAGE_SIZE;
+        const nextPageNumber = isFirstLoad ? 1 : (parseInt(container.dataset.pageNumber, 10) || 0) + 1;
+
+        loadMoreBtn.disabled = true;
+        loader.classList.remove('hidden');
+
+        try {
+            const url = `/comments/${commentId}/replies?pageSize=${pageSize}&pageNumber=${nextPageNumber}`;
+            const response = await fetch(url);
+            const result = await response.json();
+
+            for (const reply of result.comments) {
+                const node = await createCommentNode(reply, level);
+                container.appendChild(node);
+            }
+
+            container.dataset.pageNumber = nextPageNumber;
+            container.dataset.hasNext = result.isNextPageExisted ? 'true' : 'false';
+            loadMoreBtn.classList.toggle('hidden', !result.isNextPageExisted);
+        } catch (err) {
+            loader.textContent = 'Не удалось загрузить ответы';
+        } finally {
+            loadMoreBtn.disabled = false;
+            loader.classList.add('hidden');
+            loader.innerHTML = '<div class="load-spinner"></div>';
+        }
+    }
+
+    let rootLoadInProgress = false;
+
+    function hasMoreRootComments() {
+        return rootContainer.dataset.hasNext === 'true';
+    }
+
+    async function loadRootComments(pageNumber) {
+        if (rootLoadInProgress) return;
+        rootLoadInProgress = true;
+        rootLoader.classList.remove('hidden');
+        rootLoadErrorMessageContainer.style.display = 'none';
+
+        try {
+            const url = `/reviews/${reviewId}/comments?pageSize=${rootPageSize}&pageNumber=${pageNumber}`;
+            const response = await fetch(url);
+            const result = await response.json();
+
+            for (const comment of result.comments) {
+                const node = await createCommentNode(comment, 0);
+                rootContainer.appendChild(node);
+            }
+
+            rootContainer.dataset.pageNumber = pageNumber;
+            rootContainer.dataset.hasNext = result.isNextPageExisted ? 'true' : 'false';
+        } catch (err) {
+            rootLoadErrorMessageContainer.textContent = 'Не удалось загрузить комментарии';
+            rootLoadErrorMessageContainer.style.display = 'block';
+        } finally {
+            rootLoadInProgress = false;
+            rootLoader.classList.add('hidden');
+        }
+    }
+
+    const sentinel = document.getElementById('getCommentsSentinel');
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMoreRootComments() && !rootLoadInProgress) {
+            const nextPage = parseInt(rootContainer.dataset.pageNumber, 10) + 1;
+            loadRootComments(nextPage);
+        }
+    }, {
+        rootMargin: '100px'
+    });
+    observer.observe(sentinel);
+
+    loadRootComments(1);
+</script>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {

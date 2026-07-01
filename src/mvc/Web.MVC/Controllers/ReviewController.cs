@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
-using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -293,7 +292,7 @@ namespace Web.MVC.Controllers
             var reviewResponse = await httpClient.GetAsync($"/api/Review/get-by-id/{reviewId}");
             reviewResponse.EnsureSuccessStatusCode();
             var review = await reviewResponse.Content.ReadFromJsonAsync<ReviewResponse>();
-            
+
             var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{review!.UserId}");
             userResponse.EnsureSuccessStatusCode();
             var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
@@ -322,7 +321,7 @@ namespace Web.MVC.Controllers
                 PictureSrc = imageConverter.GetImageSrc(item.Picture)
             };
 
-            bool showEmailConfirmationModalOnReaction = User.Identity.IsAuthenticated ? !User.IsInRole(RoleNames.Verified) : false;
+            bool showEmailConfirmationModal = User.Identity.IsAuthenticated ? !User.IsInRole(RoleNames.Verified) : false;
 
             ReactionType? reactionType = null;
             if (User.Identity.IsAuthenticated && User.IsInRole(RoleNames.Verified))
@@ -341,18 +340,20 @@ namespace Web.MVC.Controllers
             }
 
             bool isReviewCreatedByCurrentUser = false;
+            Guid? currentUserId = null;
             if (User.Identity.IsAuthenticated)
             {
                 string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
                 Guid userId = new Guid(userIdStr);
                 isReviewCreatedByCurrentUser = userId == review.UserId;
+                currentUserId = userId;
             }
 
             var reviewDisplay = new ReviewDisplay
             {
                 CreatedAt = review.CreatedAt, CreatedByUser = userDisplay, DislikesCount = review.DislikesCount, Id = review.Id,
                 Item = itemDisplay, ItemEstimation = review.ItemEstimation, LikesCount = review.LikesCount, PicturesSrc = pictures, 
-                ShortReview = review.ShortReview, Text = review.Text
+                ShortReview = review.ShortReview, Text = review.Text, CommentsCount = review.CommentsCount
             };
 
             string currentUrl = HttpContext.Request.Path;
@@ -362,9 +363,9 @@ namespace Web.MVC.Controllers
 
             return View(new GetReviewByIdViewModel
             {
-                ShowEmailConfirmationModalOnReaction = showEmailConfirmationModalOnReaction, ReactionType = reactionType, 
+                ShowEmailConfirmationModal = showEmailConfirmationModal, ReactionType = reactionType, 
                 Review = reviewDisplay, IsReviewCreatedByCurrentUser = isReviewCreatedByCurrentUser,
-                EncodedCurrentUrl = encodedCurrentUrl
+                EncodedCurrentUrl = encodedCurrentUrl, CurrentUserId = currentUserId
             });
         }
 
@@ -436,7 +437,7 @@ namespace Web.MVC.Controllers
                     CreatedAt = review.CreatedAt, DislikesCount = review.DislikesCount, Id = review.Id, IsCreatedWithItem = review.IsCreatedWithItem,
                     ItemEstimation = review.ItemEstimation, ItemId = review.ItemId, LikesCount = review.LikesCount,
                     RejectionReason = review.RejectionReason, ReviewStatus = review.ReviewStatus, ShortReview = review.ShortReview,
-                    Text = review.Text, User = userDisplay
+                    Text = review.Text, User = userDisplay, CommentsCount = review.CommentsCount
                 });
             }
 

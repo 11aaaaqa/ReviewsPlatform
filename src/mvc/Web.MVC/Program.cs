@@ -38,6 +38,7 @@ builder.Services.AddDataProtection()
 
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddTransient<DisplayConverter>();
 builder.Services.AddTransient<AuthHandler>();
 builder.Services.AddSingleton<ImageConverter>();
 builder.Services.AddSingleton<SortService>();
