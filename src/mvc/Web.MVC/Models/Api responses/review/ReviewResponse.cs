@@ -11,6 +11,7 @@ namespace Web.MVC.Models.Api_responses.review
         public DateOnly CreatedAt { get; set; }
         public int LikesCount { get; set; }
         public int DislikesCount { get; set; }
+        public int CommentsCount { get; set; }
         public List<byte[]> Pictures { get; set; } = new();
 
         public Guid ItemId { get; set; }

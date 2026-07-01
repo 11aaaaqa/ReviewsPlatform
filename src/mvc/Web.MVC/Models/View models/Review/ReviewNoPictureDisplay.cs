@@ -12,6 +12,7 @@ namespace Web.MVC.Models.View_models.Review
         public DateOnly CreatedAt { get; set; }
         public int LikesCount { get; set; }
         public int DislikesCount { get; set; }
+        public int CommentsCount { get; set; }
 
         public Guid ItemId { get; set; }
 
