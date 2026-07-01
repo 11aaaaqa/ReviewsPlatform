@@ -114,6 +114,10 @@
                         <i class="fa-regular fa-thumbs-down"></i>
                         <span>@review.DislikesCount</span>
                     </div>
+                    <div>
+                        <i class="fa-regular fa-comment"></i>
+                        <span>@review.CommentsCount</span>
+                    </div>
                 </div>
             </div>
         }
@@ -258,8 +262,13 @@
             dislikesFlex.classList.add('get-reviews-flex');
             dislikesFlex.innerHTML = `<i class="fa-regular fa-thumbs-down"></i><span>${review.dislikesCount}</span>`;
 
+            const commentsFlex = document.createElement('div');
+            commentsFlex.classList.add('get-reviews-flex');
+            commentsFlex.innerHTML = `<i class="fa-regular fa-comment"></i><span>${review.commentsCount}</span>`;
+
             block4.appendChild(likesFlex);
             block4.appendChild(dislikesFlex);
+            block4.appendChild(commentsFlex);
             reviewBlock.appendChild(block4);
 
             document.getElementById('reviewsBlock').appendChild(reviewBlock);
