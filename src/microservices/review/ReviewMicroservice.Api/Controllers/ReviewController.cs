@@ -14,13 +14,14 @@ using ReviewMicroservice.Api.Services;
 using ReviewMicroservice.Api.Services.ReviewServices.ReactionServices;
 using ReviewMicroservice.Api.Services.UnitOfWork;
 using System.Security.Claims;
+using ReviewMicroservice.Api.Filters.AuthorizationFilters;
 
 namespace ReviewMicroservice.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class ReviewController(IUnitOfWork unitOfWork, IMessagePublisher messagePublisher, ILogger<ReviewController> logger,
-        RestrictionInfo.RestrictionInfoClient restrictionInfoClient, ImageValidator imageValidator, IReactionService reactionService) : ControllerBase
+        ImageValidator imageValidator, IReactionService reactionService) : ControllerBase
     {
         [HttpGet]
         [Route("get-by-id/{reviewId}")]
@@ -217,6 +218,7 @@ namespace ReviewMicroservice.Api.Controllers
             return Ok();
         }
 
+        [UserRestrictionFilter(RestrictionType.All, RestrictionType.ReviewPosting)]
         [RequestSizeLimit(5 * 2 * 1024 * 1024)]
         [Authorize(Roles = RoleNames.Verified)]
         [HttpPost]
@@ -236,18 +238,6 @@ namespace ReviewMicroservice.Api.Controllers
 
             string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
             Guid userId = new Guid(userIdStr);
-            try
-            {
-                var restrictionInfoReply = await restrictionInfoClient.GetRestrictionInfoAsync(
-                    new GetRestrictionInfoRequest { UserId = userIdStr });
-                if (restrictionInfoReply.RestrictionType == RestrictionType.All || restrictionInfoReply.RestrictionType == RestrictionType.ReviewPosting)
-                    return Forbid();
-            }
-            catch (Exception e)
-            {
-                logger.LogCritical(e, "Rpc call threw an exception while trying to reach Restriction microservice");
-                return StatusCode(StatusCodes.Status503ServiceUnavailable);
-            }
 
             var reviewToAdd = new Review
             {
