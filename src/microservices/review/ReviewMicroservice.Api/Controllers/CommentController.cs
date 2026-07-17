@@ -7,6 +7,7 @@ using RestrictionGrpcService;
 using ReviewMicroservice.Api.Constants;
 using ReviewMicroservice.Api.DTOs;
 using ReviewMicroservice.Api.DTOs.comment;
+using ReviewMicroservice.Api.Filters.AuthorizationFilters;
 using ReviewMicroservice.Api.Models;
 using ReviewMicroservice.Api.Models.Business.Comments;
 using ReviewMicroservice.Api.Services.UnitOfWork;
@@ -15,8 +16,8 @@ namespace ReviewMicroservice.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CommentController(IUnitOfWork unitOfWork, RestrictionInfo.RestrictionInfoClient restrictionInfoClient,
-        ILogger<CommentController> logger, IMessagePublisher messagePublisher) : ControllerBase
+    public class CommentController(IUnitOfWork unitOfWork, ILogger<CommentController> logger, IMessagePublisher messagePublisher)
+        : ControllerBase
     {
         [HttpGet]
         [Route("get-by-id/{commentId}")]
@@ -67,6 +68,7 @@ namespace ReviewMicroservice.Api.Controllers
             return Ok(new CommentsResult { Comments = comments, IsNextPageExisted = commentsNextPage.Count > 0 });
         }
 
+        [UserRestrictionFilter(RestrictionType.All, RestrictionType.Commenting)]
         [Authorize(Roles = RoleNames.Verified)]
         [HttpPost]
         [Route("add")]
@@ -83,19 +85,7 @@ namespace ReviewMicroservice.Api.Controllers
 
             string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
             Guid userId = new Guid(userIdStr);
-            try
-            {
-                var restrictionInfoReply = await restrictionInfoClient.GetRestrictionInfoAsync(
-                    new GetRestrictionInfoRequest { UserId = userIdStr });
-                if (restrictionInfoReply.RestrictionType == RestrictionType.All || restrictionInfoReply.RestrictionType == RestrictionType.Commenting)
-                    return Forbid();
-            }
-            catch (Exception e)
-            {
-                logger.LogCritical(e, "Rpc call threw an exception while trying to reach Restriction microservice");
-                return StatusCode(StatusCodes.Status503ServiceUnavailable);
-            }
-
+            
             await unitOfWork.CommentRepository.AddAsync(new Comment
             {
                 Id = Guid.NewGuid(),
