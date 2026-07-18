@@ -1,5 +1,6 @@
 ﻿using AccountMicroservice.Api.Database;
 using AccountMicroservice.Api.Models.Business;
+using AccountMicroservice.Api.Models.ReturnModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace AccountMicroservice.Api.Services.UserServices
@@ -18,6 +19,59 @@ namespace AccountMicroservice.Api.Services.UserServices
 
         public async Task<List<User>> GetUsersByUserIds(List<Guid> userIds)
             => await context.Users.Where(x => userIds.Contains(x.Id)).ToListAsync();
+
+        public async Task<List<UserReturnModel>> GetUsersByRoleAsync(Role role, int pageSize, int pageNumber)
+        {
+            var users = await context.UserRoles
+                .Where(x => x.RoleId == role.Id)
+                .Join(
+                    context.Users,
+                    ur => ur.UserId,
+                    u => u.Id, (userRole, user) => new UserReturnModel
+                    {
+                        Id = user.Id, Email = user.Email, Roles = user.Roles, AvatarSource = user.AvatarSource,
+                        IsAvatarDefault = user.IsAvatarDefault, IsEmailVerified = user.IsEmailVerified,
+                        RegistrationDate = user.RegistrationDate, UserName = user.UserName
+                    })
+                .Include(x => x.Roles)
+                .OrderBy(x => x.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return users;
+        }
+
+        public async Task<List<UserReturnModel>> GetUsersByRoleAsync(List<Role> roles, int pageSize, int pageNumber)
+        {
+            List<Guid> roleIds = roles.Select(x => x.Id).ToList();
+            var users = await context.UserRoles
+                .Where(x => roleIds.Contains(x.RoleId))
+                .Join(
+                    context.Users,
+                    ur => ur.UserId,
+                    u => u.Id, (userRole, user) => new UserReturnModel
+                    {
+                        Id = user.Id,
+                        Email = user.Email,
+                        Roles = user.Roles,
+                        AvatarSource = user.AvatarSource,
+                        IsAvatarDefault = user.IsAvatarDefault,
+                        IsEmailVerified = user.IsEmailVerified,
+                        RegistrationDate = user.RegistrationDate,
+                        UserName = user.UserName
+                    })
+                .Distinct()
+                .Include(x => x.Roles)
+                .OrderBy(x => x.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return users;
+        }
 
         public async Task AddUserAsync(User user)
         {

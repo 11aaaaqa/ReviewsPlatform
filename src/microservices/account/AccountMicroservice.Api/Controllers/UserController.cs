@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Security.Claims;
 using AccountMicroservice.Api.Enums;
+using AccountMicroservice.Api.Models;
 using AccountMicroservice.Api.Models.ReturnModels;
 using AccountMicroservice.Api.Services.EmailServices;
 using AccountMicroservice.Api.Services.TokenServices;
@@ -389,6 +390,18 @@ namespace AccountMicroservice.Api.Controllers
             logger.LogInformation("User {UserId} updated his password", user.Id);
 
             return Ok();
+        }
+
+        [Authorize(Roles = RoleNames.Admin + "," + RoleNames.Moderator)]
+        [HttpPost]
+        [Route("get-users-by-roles")]
+        public async Task<IActionResult> GetUsersByRolesAsync([FromBody] List<Role> roles, [FromQuery] Pagination pagination)
+        {
+            var users = await unitOfWork.UserService.GetUsersByRoleAsync(roles, pagination.PageSize, pagination.PageNumber);
+            var usersNextPage = 
+                await unitOfWork.UserService.GetUsersByRoleAsync(roles, pagination.PageSize, pagination.PageNumber + 1);
+
+            return Ok(new UsersResult { Users = users, IsNextPageExisted = usersNextPage.Count > 0 });
         }
     }
 }
