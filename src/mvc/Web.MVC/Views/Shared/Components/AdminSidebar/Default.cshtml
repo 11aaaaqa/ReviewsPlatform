@@ -1,0 +1,15 @@
+﻿@model List<AdminMenuItem>
+
+<ul class="nav-list">
+    @foreach (var item in Model)
+    {
+        if (item.IsActive)
+        {
+            <li><a asp-controller="@item.Controller" asp-action="@item.Action" class="active">@item.Title</a></li>
+        }
+        else
+        {
+            <li><a asp-controller="@item.Controller" asp-action="@item.Action">@item.Title</a></li>
+        }
+    }
+</ul>

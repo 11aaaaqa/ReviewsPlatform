@@ -1,0 +1,94 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Web.MVC.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-layout.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+<body>
+    <button class="panel-btn" id="panelBtn" aria-label="Открыть меню">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="overlay" id="overlay"></div>
+    
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a asp-controller="Admin" asp-action="GetAdminPanel"><h2><i class="fas fa-cube"></i> Admin</h2></a>
+        </div>
+
+        @await Component.InvokeAsync("AdminSidebar")
+
+        <div class="sidebar-footer">
+            <a asp-controller="Home" asp-action="Index"><i class="fas fa-sign-out-alt"></i> Выход</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        @RenderBody()
+    </div>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const panelBtn = document.getElementById('panelBtn');
+        const overlay = document.getElementById('overlay');
+
+        function toggleSidebar() {
+            const isOpen = sidebar.classList.contains('open');
+            if (isOpen) {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('show');
+                panelBtn.innerHTML = '<i class="fas fa-bars"></i>';
+            } else {
+                sidebar.classList.add('open');
+                overlay.classList.add('show');
+                panelBtn.innerHTML = '<i class="fas fa-times"></i>';
+            }
+        }
+
+        panelBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleSidebar();
+        });
+
+        overlay.addEventListener('click', function() {
+            if (sidebar.classList.contains('open')) {
+                toggleSidebar();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+                toggleSidebar();
+            }
+        });
+
+        window.addEventListener('resize', function() {
+            const width = window.innerWidth;
+            if (width > 768) {
+                if (sidebar.classList.contains('open')) {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('show');
+                    panelBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                }
+            }
+        });
+
+        const navLinks = document.querySelectorAll('.nav-list a, .sidebar-footer a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768 && sidebar.classList.contains('open')) {
+                    setTimeout(() => {
+                        toggleSidebar();
+                    }, 80);
+                }
+            });
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
