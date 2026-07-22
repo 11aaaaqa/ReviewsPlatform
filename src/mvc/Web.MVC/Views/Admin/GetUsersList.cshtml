@@ -1,0 +1,219 @@
+﻿@model Web.MVC.Models.View_models.Admin.GetUsersListViewModel
+<link rel="stylesheet" href="~/css/admin/get-users-list.css"/>
+
+<div class="container">
+    <input class="hidden" id="usersPageSize" value="@Model.PageSize" />
+    <div class="filters">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Поиск"/>
+        </div>
+
+        <div>
+            <span class="filter-label">Сортировка:</span>
+            <select id="sortSelect">
+                <option value="None">По умолчанию</option>
+                <option value="UserNameAsc">Имя по возрастанию</option>
+                <option value="UserNameDesc">Имя по убыванию</option>
+                <option value="EmailAsc">Email по возрастанию</option>
+                <option value="EmailDesc">Email по убыванию</option>
+                <option value="RegistrationDateAsc">Дата регистрации (сначала новые)</option>
+                <option value="RegistrationDateDesc">Дата регистрации (сначала старые)</option>
+            </select>
+        </div>
+        
+        
+        <div class="roles-filter">
+            <span class="filter-label">Роли:</span>
+            <button type="button" class="roles-dropdown-toggle" id="rolesDropdownToggle">
+                Выбрать роли <span id="rolesSelectedCount"></span>
+            </button>
+            <div class="roles-checkboxes" id="rolesCheckboxes">
+                @foreach (var role in Model.Roles)
+                {
+                    <label class="role-checkbox">
+                        <input type="checkbox" class="role-checkbox-input" value="@role.Id" />
+                        <span>@role.Name</span>
+                    </label>
+                }
+            </div>
+        </div>
+
+        <button class="find-btn" id="findBtn">Найти</button>
+    </div>
+
+    <div>
+        <table class="users-table">
+            <thead>
+            <tr>
+                <th>Имя пользователя</th>
+                <th>Email</th>
+                <th>Email подтверждён</th>
+                <th>Дата регистрации</th>
+                <th>Роли</th>
+            </tr>
+            </thead>
+            <tbody id="userTableBody"></tbody>
+        </table>
+        <div id="loadSpinnerContainer" class="load-spinner-container"></div>
+    </div>
+
+    <div class="pagination">
+        <button id="prevPageBtn" disabled>← Назад</button>
+        <span class="page-info" id="pageInfo">Страница 1 из 1</span>
+        <button id="nextPageBtn" disabled>Вперёд →</button>
+    </div>
+    <div class="results-count" id="resultsCount"></div>
+</div>
+
+<script src="~/js/loadSpinner.js"></script>
+<script>
+    const pageSize = parseInt(document.getElementById('usersPageSize').value, 10);
+    let usersCount = 0;
+    let totalPages = 0;
+    let currentPage = 1;
+    let isNextPageExisted = true;
+    let isProcessing = false;
+
+    const tbody = document.getElementById('userTableBody');
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+    const pageInfo = document.getElementById('pageInfo');
+    const resultsCount = document.getElementById('resultsCount');
+
+    const searchInput = document.getElementById('searchInput');
+    const sortSelect = document.getElementById('sortSelect');
+    const findBtn = document.getElementById('findBtn');
+
+    const rolesDropdownToggle = document.getElementById('rolesDropdownToggle');
+    const rolesCheckboxesContainer = document.getElementById('rolesCheckboxes');
+    const rolesSelectedCount = document.getElementById('rolesSelectedCount');
+
+    rolesDropdownToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        rolesCheckboxesContainer.classList.toggle('open');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!rolesCheckboxesContainer.contains(e.target) && e.target !== rolesDropdownToggle) {
+            rolesCheckboxesContainer.classList.remove('open');
+        }
+    });
+
+    rolesCheckboxesContainer.addEventListener('change', () => {
+        updateRolesSelectedCount();
+    });
+
+    function getSelectedRoleIds() {
+        return Array.from(document.querySelectorAll('.role-checkbox-input:checked')).map(cb => cb.value);
+    }
+
+    function updateRolesSelectedCount() {
+        const count = getSelectedRoleIds().length;
+        rolesSelectedCount.textContent = count > 0 ? `(${count})` : '';
+    }
+
+    async function requestUsers(pageNumber) {
+        if (isProcessing) return;
+        isProcessing = true;
+        tbody.innerHTML = '';
+        showLoader();
+
+        const requestBody = {
+            pageSize: pageSize,
+            pageNumber: pageNumber,
+            searchQuery: searchInput.value.trim() || null,
+            userSort: sortSelect.value,
+            roleIds: getSelectedRoleIds()
+        };
+
+        try {
+            const response = await fetch('/admin/panel/users/json',
+                {
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json'
+                     },
+                     body: JSON.stringify(requestBody)
+                });
+            const usersResult = await response.json();
+
+            currentPage = pageNumber;
+            isNextPageExisted = usersResult.isNextPageExisted;
+            usersCount = usersResult.totalUsersCount;
+            totalPages = usersCount === 0 ? 1 : (usersCount % pageSize === 0 ? usersCount / pageSize : Math.floor(usersCount / pageSize) + 1);
+
+            renderTable(usersResult.users);
+            updatePaginationControls();
+        } catch (err) {
+            console.error(err);
+            tbody.innerHTML = `<tr><td colspan="5" class="empty-state">Не удалось загрузить пользователей</td></tr>`;
+            resultsCount.textContent = '';
+        } finally {
+            isProcessing = false;
+            hideLoader();
+        }
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return String(text).replace(/[&<>"']/g, m => map[m]);
+    }
+
+    function renderTable(users) {
+        if (users.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="empty-state">Пользователей не найдено</td></tr>`;
+            resultsCount.textContent = 'Найдено: 0 пользователей';
+            return;
+        }
+
+        let html = '';
+        for (const u of users) {
+            const verifiedClass = u.isEmailVerified ? 'verified' : 'not-verified';
+            const verifiedText = u.isEmailVerified ? '✅ Да' : '❌ Нет';
+
+            const rolesHtml = u.roles && u.roles.length
+                ? u.roles.map(r => `<span class="role-tag">${escapeHtml(r.name)}</span>`).join('')
+                : '<span style="color:#94a3b8; font-size:0.8rem;">—</span>';
+
+            html += `
+                <tr>
+                    <td><strong><a href="/users/${u.id}">${escapeHtml(u.userName)}</a></strong></td>
+                    <td>${escapeHtml(u.email)}</td>
+                    <td><span class="badge ${verifiedClass}">${verifiedText}</span></td>
+                    <td>${escapeHtml(u.registrationDate)}</td>
+                    <td><div class="roles-list">${rolesHtml}</div></td>
+                </tr>
+            `;
+
+        }
+        tbody.innerHTML = html;
+
+        const start = (currentPage - 1) * pageSize;
+        const end = start + pageSize;
+
+        const from = start + 1;
+        const to = Math.min(end, usersCount);
+        resultsCount.textContent = usersCount > 0
+            ? `Показано ${from}-${to} из ${usersCount} пользователей`
+            : 'Найдено: 0 пользователей';
+    }
+
+    function updatePaginationControls() {
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = !isNextPageExisted;
+        pageInfo.textContent = `Страница ${currentPage} из ${totalPages}`;
+    }
+
+    prevBtn.addEventListener('click', async () => await requestUsers(currentPage - 1));
+    nextBtn.addEventListener('click', async () => await requestUsers(currentPage + 1));
+    findBtn.addEventListener('click', async () => await requestUsers(1));
+
+    requestUsers(1);
+</script>

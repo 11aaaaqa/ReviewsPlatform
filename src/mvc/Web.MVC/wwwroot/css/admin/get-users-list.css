@@ -1,0 +1,240 @@
+﻿.users-table a {
+    text-decoration: none;
+    color: black;
+    cursor: pointer;
+    transition: color 0.1s;
+}
+
+.users-table a:hover {
+    color: rgba(70,140,190, 0.5);
+}
+
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 1rem 0 1.5rem;
+    padding: 1rem 0 1rem 0;
+    background: #f8fafc;
+    border-radius: 8px;
+    align-items: center;
+}
+
+.filters .search-box input {
+    width: 300px;
+    padding: 0.5rem 0.8rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: 0.2s;
+}
+
+.filters .search-box input:focus {
+    outline: none;
+    border-color: rgba(0,0,255, 0.5);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+
+.filters select {
+    padding: 0.5rem 0.8rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    font-size: 0.95rem;
+    min-width: 160px;
+    cursor: pointer;
+    transition: border-color 0.1s;
+}
+
+.filters select:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.filters .filter-label {
+    font-size: 0.9rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+.filters .find-btn {
+    padding: 0.5rem 1.2rem;
+    background: #e2e8f0;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: 0.2s;
+    color: #1e293b;
+}
+
+.filters .find-btn:hover {
+    background: #cbd5e1;
+}
+
+.roles-filter {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.roles-dropdown-toggle {
+    padding: 0.5rem 0.8rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    font-size: 0.9rem;
+    cursor: pointer;
+    min-width: 160px;
+    text-align: left;
+    color: #1e293b;
+    transition: border-color 0.2s;
+}
+
+.roles-dropdown-toggle:hover {
+    border-color: #94a3b8;
+}
+
+.roles-checkboxes {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 20;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    padding: 0.5rem;
+    min-width: 220px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.roles-checkboxes.open {
+    display: block;
+}
+
+.role-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.4rem;
+    font-size: 0.9rem;
+    color: #1e293b;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.role-checkbox:hover {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.role-checkbox input {
+    cursor: pointer;
+}
+
+.container table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.container th {
+    background: #f1f5f9;
+    color: #0f172a;
+    font-weight: 600;
+    padding: 0.75rem 0.5rem;
+    text-align: left;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.container td {
+    padding: 0.7rem 0.5rem;
+    border-bottom: 1px solid #e9edf2;
+    vertical-align: middle;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.badge.verified {
+    background: #bbf7d0;
+    color: #14532d;
+}
+
+.badge.not-verified {
+    background: #fecaca;
+    color: #7f1d1d;
+}
+
+.roles-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.roles-list .role-tag {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 0.15rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #64748b;
+}
+
+.pagination {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.pagination button {
+    background: white;
+    border: 1px solid #cbd5e1;
+    padding: 0.4rem 1.2rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: 0.2s;
+    color: #1e293b;
+}
+
+.pagination button:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+.pagination button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.page-info {
+    font-size: 0.95rem;
+    color: #334155;
+}
+
+.results-count {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-top: 0.5rem;
+    text-align: center;
+}
