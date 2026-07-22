@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Security.Claims;
 using AccountMicroservice.Api.Enums;
+using AccountMicroservice.Api.Enums.SortEnums;
+using AccountMicroservice.Api.Models;
 using AccountMicroservice.Api.Models.ReturnModels;
 using AccountMicroservice.Api.Services.EmailServices;
 using AccountMicroservice.Api.Services.TokenServices;
@@ -389,6 +391,32 @@ namespace AccountMicroservice.Api.Controllers
             logger.LogInformation("User {UserId} updated his password", user.Id);
 
             return Ok();
+        }
+
+        [Authorize(Roles = RoleNames.Admin + "," + RoleNames.Moderator)]
+        [HttpPost]
+        [Route("get-users")]
+        public async Task<IActionResult> GetUsersAsync([FromBody] GetUsersDto model)
+        {
+            int pageNumber = model.Pagination.PageNumber;
+            int pageSize = model.Pagination.PageSize;
+
+            GetUsersModel users;
+            if (model.RoleIds == null)
+            {
+                users = await unitOfWork.UserService.GetUsersAsync(model.SearchQuery, model.UserSort, pageSize, pageNumber);
+            }
+            else
+            {
+                users = await unitOfWork.UserService.GetUsersByRoleAsync(model.SearchQuery, model.RoleIds, model.UserSort,
+                    pageSize, pageNumber);
+            }
+
+            int totalUsersCount = users.TotalUsersCount;
+            bool isNextPageExisted = totalUsersCount > pageNumber * pageSize;
+
+            return Ok(new UsersResult 
+                { Users = users.Users, IsNextPageExisted = isNextPageExisted, TotalUsersCount = users.TotalUsersCount });
         }
     }
 }

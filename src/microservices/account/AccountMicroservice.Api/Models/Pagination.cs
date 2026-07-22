@@ -1,4 +1,4 @@
-﻿namespace CategoryMicroservice.Api.Models
+﻿namespace AccountMicroservice.Api.Models
 {
     public class Pagination
     {

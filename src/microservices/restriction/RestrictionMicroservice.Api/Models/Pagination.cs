@@ -6,7 +6,12 @@
         public int PageSize
         {
             get => pageSize;
-            set => pageSize = value > 30 ? 30 : value;
+            set
+            {
+                if (value < 0) pageSize = 0;
+                else if (value > 30) pageSize = 30;
+                else pageSize = value;
+            }
         }
 
         private int pageNumber;
