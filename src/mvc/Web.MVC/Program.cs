@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.IdentityModel.Tokens;
@@ -52,7 +53,10 @@ builder.Services.AddHttpClient(HttpClientNameConstants.DefaultWithToken, httpCli
     httpClient.BaseAddress = new Uri($"{builder.Configuration["ApiGateway:Protocol"]}://{builder.Configuration["ApiGateway:Domain"]}");
 }).AddHttpMessageHandler<AuthHandler>();
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 var app = builder.Build();
 
