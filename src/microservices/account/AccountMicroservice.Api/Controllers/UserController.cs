@@ -398,32 +398,25 @@ namespace AccountMicroservice.Api.Controllers
         [Route("get-users")]
         public async Task<IActionResult> GetUsersAsync([FromBody] GetUsersDto model)
         {
-            List<UserReturnModel> users;
-            List<UserReturnModel> usersNextPage;
+            int pageNumber = model.Pagination.PageNumber;
+            int pageSize = model.Pagination.PageSize;
 
+            GetUsersModel users;
             if (model.RoleIds == null)
             {
-                users = await unitOfWork.UserService.GetUsersAsync(model.SearchQuery, model.UserSort,
-                    model.Pagination.PageSize, model.Pagination.PageNumber);
-
-                usersNextPage = await unitOfWork.UserService.GetUsersAsync(model.SearchQuery, model.UserSort,
-                    model.Pagination.PageSize, model.Pagination.PageNumber + 1);
+                users = await unitOfWork.UserService.GetUsersAsync(model.SearchQuery, model.UserSort, pageSize, pageNumber);
             }
             else
             {
-                users = await unitOfWork.UserService.GetUsersByRoleAsync(model.SearchQuery, model.RoleIds,
-                    model.UserSort, model.Pagination.PageSize, model.Pagination.PageNumber);
-
-                usersNextPage = await unitOfWork.UserService.GetUsersByRoleAsync(model.SearchQuery, model.RoleIds,
-                    model.UserSort, model.Pagination.PageSize, model.Pagination.PageNumber + 1);
+                users = await unitOfWork.UserService.GetUsersByRoleAsync(model.SearchQuery, model.RoleIds, model.UserSort,
+                    pageSize, pageNumber);
             }
 
-            return Ok(new UsersResult { Users = users, IsNextPageExisted = usersNextPage.Count > 0 });
-        }
+            int totalUsersCount = users.TotalUsersCount;
+            bool isNextPageExisted = totalUsersCount > pageNumber * pageSize;
 
-        [Authorize(Roles = RoleNames.Admin + "," + RoleNames.Moderator)]
-        [HttpGet]
-        [Route("get-users/count")]
-        public async Task<IActionResult> GetUsersCount() => Ok(await unitOfWork.UserService.GetUsersCountAsync());
+            return Ok(new UsersResult 
+                { Users = users.Users, IsNextPageExisted = isNextPageExisted, TotalUsersCount = users.TotalUsersCount });
+        }
     }
 }

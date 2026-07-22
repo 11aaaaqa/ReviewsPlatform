@@ -10,10 +10,9 @@ namespace AccountMicroservice.Api.Services.UserServices
         Task<User?> GetUserByUserNameAsync(string userName);
         Task<User?> GetUserByEmailAsync(string email);
         Task<List<User>> GetUsersByUserIds(List<Guid> userIds);
-        Task<List<UserReturnModel>> GetUsersAsync(string? query, UserSort userSort, int pageSize, int pageNumber);
-        Task<List<UserReturnModel>> GetUsersByRoleAsync(string? query, Guid roleId, UserSort userSort, int pageSize, int pageNumber);
-        Task<List<UserReturnModel>> GetUsersByRoleAsync(string? query, List<Guid> roleIds, UserSort userSort, int pageSize, int pageNumber);
-        Task<int> GetUsersCountAsync();
+        Task<GetUsersModel> GetUsersAsync(string? query, UserSort userSort, int pageSize, int pageNumber);
+        Task<GetUsersModel> GetUsersByRoleAsync(string? query, Guid roleId, UserSort userSort, int pageSize, int pageNumber);
+        Task<GetUsersModel> GetUsersByRoleAsync(string? query, List<Guid> roleIds, UserSort userSort, int pageSize, int pageNumber);
         Task AddUserAsync(User user);
         void UpdateUser(User user);
     }

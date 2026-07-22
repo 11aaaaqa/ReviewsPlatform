@@ -21,7 +21,7 @@ namespace AccountMicroservice.Api.Services.UserServices
         public async Task<List<User>> GetUsersByUserIds(List<Guid> userIds)
             => await context.Users.Where(x => userIds.Contains(x.Id)).ToListAsync();
 
-        public async Task<List<UserReturnModel>> GetUsersAsync(string? query, UserSort userSort, int pageSize, int pageNumber)
+        public async Task<GetUsersModel> GetUsersAsync(string? query, UserSort userSort, int pageSize, int pageNumber)
         {
             IQueryable<UserReturnModel> users;
             if (query != null)
@@ -48,10 +48,16 @@ namespace AccountMicroservice.Api.Services.UserServices
 
             users = ApplySort(users, userSort);
 
-            return await users.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+            var usersReturnModel = new GetUsersModel
+            {
+                TotalUsersCount = await users.CountAsync(),
+                Users = await users.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync()
+            };
+
+            return usersReturnModel;
         }
 
-        public async Task<List<UserReturnModel>> GetUsersByRoleAsync(string? query, Guid roleId, UserSort userSort, int pageSize, int pageNumber)
+        public async Task<GetUsersModel> GetUsersByRoleAsync(string? query, Guid roleId, UserSort userSort, int pageSize, int pageNumber)
         {
             IQueryable<UserReturnModel> users;
             if (query != null)
@@ -81,10 +87,16 @@ namespace AccountMicroservice.Api.Services.UserServices
 
             users = ApplySort(users, userSort);
 
-            return await users.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+            var usersReturnModel = new GetUsersModel
+            {
+                TotalUsersCount = await users.CountAsync(),
+                Users = await users.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync()
+            };
+
+            return usersReturnModel;
         }
 
-        public async Task<List<UserReturnModel>> GetUsersByRoleAsync(string? query, List<Guid> roleIds, UserSort userSort, int pageSize, int pageNumber)
+        public async Task<GetUsersModel> GetUsersByRoleAsync(string? query, List<Guid> roleIds, UserSort userSort, int pageSize, int pageNumber)
         {
             IQueryable<UserReturnModel> users;
             if (query != null)
@@ -114,11 +126,14 @@ namespace AccountMicroservice.Api.Services.UserServices
 
             users = ApplySort(users, userSort);
 
-            return await users.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
-        }
+            var usersReturnModel = new GetUsersModel
+            {
+                TotalUsersCount = await users.CountAsync(),
+                Users = await users.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync()
+            };
 
-        public async Task<int> GetUsersCountAsync()
-            => await context.Users.CountAsync();
+            return usersReturnModel;
+        }
 
         public async Task AddUserAsync(User user)
         {
