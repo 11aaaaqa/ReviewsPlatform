@@ -1,4 +1,5 @@
 ﻿using AccountMicroservice.Api.Database;
+using AccountMicroservice.Api.Enums.SortEnums;
 using AccountMicroservice.Api.Models.Business;
 using AccountMicroservice.Api.Models.ReturnModels;
 using Microsoft.EntityFrameworkCore;
@@ -20,58 +21,104 @@ namespace AccountMicroservice.Api.Services.UserServices
         public async Task<List<User>> GetUsersByUserIds(List<Guid> userIds)
             => await context.Users.Where(x => userIds.Contains(x.Id)).ToListAsync();
 
-        public async Task<List<UserReturnModel>> GetUsersByRoleAsync(Role role, int pageSize, int pageNumber)
+        public async Task<List<UserReturnModel>> GetUsersAsync(string? query, UserSort userSort, int pageSize, int pageNumber)
         {
-            var users = await context.UserRoles
-                .Where(x => x.RoleId == role.Id)
-                .Join(
-                    context.Users,
-                    ur => ur.UserId,
-                    u => u.Id, (userRole, user) => new UserReturnModel
+            IQueryable<UserReturnModel> users;
+            if (query != null)
+            {
+                query = query.ToLower();
+                users = context.Users
+                    .Where(x => x.UserName.ToLower().Contains(query) || x.Email.ToLower().Contains(query))
+                    .Select(user => new UserReturnModel
                     {
-                        Id = user.Id, Email = user.Email, Roles = user.Roles, AvatarSource = user.AvatarSource,
+                        Id = user.Id, Roles = user.Roles, AvatarSource = user.AvatarSource, Email = user.Email,
+                        IsAvatarDefault = user.IsAvatarDefault, UserName = user.UserName,
+                        IsEmailVerified = user.IsEmailVerified, RegistrationDate = user.RegistrationDate
+                    });
+            }
+            else
+            {
+                users = context.Users.Select(user => new UserReturnModel
+                    {
+                        Id = user.Id, Roles = user.Roles, AvatarSource = user.AvatarSource, Email = user.Email,
+                        IsAvatarDefault = user.IsAvatarDefault, UserName = user.UserName,
+                        IsEmailVerified = user.IsEmailVerified, RegistrationDate = user.RegistrationDate
+                    });
+            }
+
+            users = ApplySort(users, userSort);
+
+            return await users.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+        }
+
+        public async Task<List<UserReturnModel>> GetUsersByRoleAsync(string? query, Guid roleId, UserSort userSort, int pageSize, int pageNumber)
+        {
+            IQueryable<UserReturnModel> users;
+            if (query != null)
+            {
+                query = query.ToLower();
+                users = context.Users
+                    .Where(x => x.Roles.Any(y => y.Id == roleId))
+                    .Where(x => x.UserName.ToLower().Contains(query) || x.Email.ToLower().Contains(query))
+                    .Select(user => new UserReturnModel
+                    {
+                        Id = user.Id, Roles = user.Roles, AvatarSource = user.AvatarSource, Email = user.Email,
                         IsAvatarDefault = user.IsAvatarDefault, IsEmailVerified = user.IsEmailVerified,
                         RegistrationDate = user.RegistrationDate, UserName = user.UserName
-                    })
-                .Include(x => x.Roles)
-                .OrderBy(x => x.Id)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .AsNoTracking()
-                .ToListAsync();
-
-            return users;
-        }
-
-        public async Task<List<UserReturnModel>> GetUsersByRoleAsync(List<Role> roles, int pageSize, int pageNumber)
-        {
-            List<Guid> roleIds = roles.Select(x => x.Id).ToList();
-            var users = await context.UserRoles
-                .Where(x => roleIds.Contains(x.RoleId))
-                .Join(
-                    context.Users,
-                    ur => ur.UserId,
-                    u => u.Id, (userRole, user) => new UserReturnModel
+                    });
+            }
+            else
+            {
+                users = context.Users
+                    .Where(x => x.Roles.Any(y => y.Id == roleId))
+                    .Select(user => new UserReturnModel
                     {
-                        Id = user.Id,
-                        Email = user.Email,
-                        Roles = user.Roles,
-                        AvatarSource = user.AvatarSource,
-                        IsAvatarDefault = user.IsAvatarDefault,
-                        IsEmailVerified = user.IsEmailVerified,
-                        RegistrationDate = user.RegistrationDate,
-                        UserName = user.UserName
-                    })
-                .Distinct()
-                .Include(x => x.Roles)
-                .OrderBy(x => x.Id)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .AsNoTracking()
-                .ToListAsync();
+                        Id = user.Id, Roles = user.Roles, AvatarSource = user.AvatarSource, Email = user.Email,
+                        IsAvatarDefault = user.IsAvatarDefault, IsEmailVerified = user.IsEmailVerified,
+                        RegistrationDate = user.RegistrationDate, UserName = user.UserName
+                    });
+            }
 
-            return users;
+            users = ApplySort(users, userSort);
+
+            return await users.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
         }
+
+        public async Task<List<UserReturnModel>> GetUsersByRoleAsync(string? query, List<Guid> roleIds, UserSort userSort, int pageSize, int pageNumber)
+        {
+            IQueryable<UserReturnModel> users;
+            if (query != null)
+            {
+                query = query.ToLower();
+                users = context.Users
+                    .Where(x => x.Roles.Any(y => roleIds.Contains(y.Id)))
+                    .Where(x => x.UserName.ToLower().Contains(query) || x.Email.ToLower().Contains(query))
+                    .Select(user => new UserReturnModel
+                    {
+                        Id = user.Id, Roles = user.Roles, AvatarSource = user.AvatarSource, Email = user.Email,
+                        IsAvatarDefault = user.IsAvatarDefault, IsEmailVerified = user.IsEmailVerified,
+                        RegistrationDate = user.RegistrationDate, UserName = user.UserName
+                    });
+            }
+            else
+            {
+                users = context.Users
+                    .Where(x => x.Roles.Any(y => roleIds.Contains(y.Id)))
+                    .Select(user => new UserReturnModel
+                    {
+                        Id = user.Id, Roles = user.Roles, AvatarSource = user.AvatarSource, Email = user.Email,
+                        IsAvatarDefault = user.IsAvatarDefault, IsEmailVerified = user.IsEmailVerified,
+                        RegistrationDate = user.RegistrationDate, UserName = user.UserName
+                    });
+            }
+
+            users = ApplySort(users, userSort);
+
+            return await users.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+        }
+
+        public async Task<int> GetUsersCountAsync()
+            => await context.Users.CountAsync();
 
         public async Task AddUserAsync(User user)
         {
@@ -81,6 +128,36 @@ namespace AccountMicroservice.Api.Services.UserServices
         public void UpdateUser(User user)
         {
             context.Users.Update(user);
+        }
+
+        private IQueryable<UserReturnModel> ApplySort(IQueryable<UserReturnModel> users, UserSort userSort)
+        {
+            switch (userSort)
+            {
+                case UserSort.None:
+                    users = users.OrderBy(x => x.Id);
+                    break;
+                case UserSort.UserNameAsc:
+                    users = users.OrderBy(x => x.UserName).ThenBy(x => x.Id);
+                    break;
+                case UserSort.UserNameDesc:
+                    users = users.OrderByDescending(x => x.UserName).ThenBy(x => x.Id);
+                    break;
+                case UserSort.EmailAsc:
+                    users = users.OrderBy(x => x.Email).ThenBy(x => x.Id);
+                    break;
+                case UserSort.EmailDesc:
+                    users = users.OrderByDescending(x => x.Email).ThenBy(x => x.Id);
+                    break;
+                case UserSort.RegistrationDateAsc:
+                    users = users.OrderBy(x => x.RegistrationDate).ThenBy(x => x.Id);
+                    break;
+                case UserSort.RegistrationDateDesc:
+                    users = users.OrderByDescending(x => x.RegistrationDate).ThenBy(x => x.Id);
+                    break;
+            }
+
+            return users;
         }
     }
 }

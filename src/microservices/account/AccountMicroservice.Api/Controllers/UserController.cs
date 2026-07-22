@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Security.Claims;
 using AccountMicroservice.Api.Enums;
+using AccountMicroservice.Api.Enums.SortEnums;
 using AccountMicroservice.Api.Models;
 using AccountMicroservice.Api.Models.ReturnModels;
 using AccountMicroservice.Api.Services.EmailServices;
@@ -394,14 +395,35 @@ namespace AccountMicroservice.Api.Controllers
 
         [Authorize(Roles = RoleNames.Admin + "," + RoleNames.Moderator)]
         [HttpPost]
-        [Route("get-users-by-roles")]
-        public async Task<IActionResult> GetUsersByRolesAsync([FromBody] List<Role> roles, [FromQuery] Pagination pagination)
+        [Route("get-users")]
+        public async Task<IActionResult> GetUsersAsync([FromBody] GetUsersDto model)
         {
-            var users = await unitOfWork.UserService.GetUsersByRoleAsync(roles, pagination.PageSize, pagination.PageNumber);
-            var usersNextPage = 
-                await unitOfWork.UserService.GetUsersByRoleAsync(roles, pagination.PageSize, pagination.PageNumber + 1);
+            List<UserReturnModel> users;
+            List<UserReturnModel> usersNextPage;
+
+            if (model.RoleIds == null)
+            {
+                users = await unitOfWork.UserService.GetUsersAsync(model.SearchQuery, model.UserSort,
+                    model.Pagination.PageSize, model.Pagination.PageNumber);
+
+                usersNextPage = await unitOfWork.UserService.GetUsersAsync(model.SearchQuery, model.UserSort,
+                    model.Pagination.PageSize, model.Pagination.PageNumber + 1);
+            }
+            else
+            {
+                users = await unitOfWork.UserService.GetUsersByRoleAsync(model.SearchQuery, model.RoleIds,
+                    model.UserSort, model.Pagination.PageSize, model.Pagination.PageNumber);
+
+                usersNextPage = await unitOfWork.UserService.GetUsersByRoleAsync(model.SearchQuery, model.RoleIds,
+                    model.UserSort, model.Pagination.PageSize, model.Pagination.PageNumber + 1);
+            }
 
             return Ok(new UsersResult { Users = users, IsNextPageExisted = usersNextPage.Count > 0 });
         }
+
+        [Authorize(Roles = RoleNames.Admin + "," + RoleNames.Moderator)]
+        [HttpGet]
+        [Route("get-users/count")]
+        public async Task<IActionResult> GetUsersCount() => Ok(await unitOfWork.UserService.GetUsersCountAsync());
     }
 }
