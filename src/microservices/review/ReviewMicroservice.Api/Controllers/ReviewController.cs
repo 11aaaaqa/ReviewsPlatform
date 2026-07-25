@@ -54,10 +54,10 @@ namespace ReviewMicroservice.Api.Controllers
         public async Task<IActionResult> GetAllReviewsUnderConsiderationAsync([FromQuery] Pagination pagination)
         {
             var reviews = await unitOfWork.ReviewRepository.GetAllByStatusAsync(ReviewStatus.UnderConsideration,
-                OrderByDate.Descending, pagination.PageNumber, pagination.PageSize);
+                OrderByDate.Ascending, pagination.PageNumber, pagination.PageSize);
 
             var reviewsNextPage = await unitOfWork.ReviewRepository.GetAllByStatusAsync(ReviewStatus.UnderConsideration,
-                OrderByDate.Descending, pagination.PageNumber + 1, pagination.PageSize);
+                OrderByDate.Ascending, pagination.PageNumber + 1, pagination.PageSize);
 
             return Ok(new ReviewsResult { IsNextPageExisted = reviewsNextPage.Count > 0, Reviews = reviews });
         }
