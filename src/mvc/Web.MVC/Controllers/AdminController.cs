@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Web.MVC.Constants;
 using Web.MVC.DTOs.admin;
 using Web.MVC.Models.Api_responses.account;
+using Web.MVC.Models.Api_responses.review;
 using Web.MVC.Models.View_models.Admin;
 using Web.MVC.Models.View_models.User;
 
@@ -75,6 +76,32 @@ namespace Web.MVC.Controllers
             }
 
             return new JsonResult(usersResultDisplayModel);
+        }
+
+        [HttpGet]
+        [Route("admin/panel/under-consideration/reviews")]
+        public async Task<IActionResult> GetReviews(int pageNumber = 1)
+        {
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+
+            int pageSize = 30;
+            var reviewsResponse = await httpClient.GetAsync(
+                $"/api/Review/get-under-consideration?pageNumber={pageNumber}&pageSize={pageSize}");
+            reviewsResponse.EnsureSuccessStatusCode();
+            var reviewsResult = await reviewsResponse.Content.ReadFromJsonAsync<ReviewsResultResponse>();
+
+            return View(new GetReviewsViewModel
+            {
+                CurrentPageNumber = pageNumber, Reviews = reviewsResult!.Reviews,
+                IsNextPageExisted = reviewsResult.IsNextPageExisted
+            });
+        }
+
+        [HttpGet]
+        [Route("admin/panel/under-consideration/reviews/{reviewId}")]
+        public async Task<IActionResult> GetReviewById([FromRoute] Guid reviewId)
+        {
+            return View();
         }
     }
 }

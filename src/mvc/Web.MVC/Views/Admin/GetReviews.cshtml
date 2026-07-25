@@ -1,0 +1,35 @@
+﻿@using System.Globalization
+@model Web.MVC.Models.View_models.Admin.GetReviewsViewModel
+<link rel="stylesheet" href="~/css/admin/units-list.css"/>
+
+<div class="units-page">
+    <div>
+        @foreach (var review in Model.Reviews)
+        {
+            <a class="unit-block" asp-controller="Admin" asp-action="GetReviewById" asp-route-reviewId="@review.Id">
+                <h5>@review.ShortReview</h5>
+                <p>Дата создания: @review.CreatedAt.ToString(CultureInfo.GetCultureInfo("ru-RU"))</p>
+            </a>
+        }
+    </div>
+    
+    <div class="pagination">
+        @if (Model.CurrentPageNumber == 1)
+        {
+            <button disabled>Назад</button>
+        }
+        else
+        {
+            <a asp-controller="Admin" asp-action="GetReviews" asp-route-pageNumber="@(Model.CurrentPageNumber - 1)">Назад</a>
+        }
+
+        @if (Model.IsNextPageExisted)
+        {
+            <a asp-controller="Admin" asp-action="GetReviews" asp-route-pageNumber="@(Model.CurrentPageNumber + 1)">Вперёд</a>
+        }
+        else
+        {
+            <button disabled>Вперёд</button>
+        }
+    </div>
+</div>
