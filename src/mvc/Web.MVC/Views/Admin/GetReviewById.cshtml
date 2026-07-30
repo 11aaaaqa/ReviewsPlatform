@@ -142,10 +142,11 @@
                     <input type="number" id="restrictionDuration" name="AddRestriction.DurationInDays" min="1" placeholder="Например, 7" disabled/>
                 </div>
 
-                <div class="checkbox-row">
+                <label class="checkbox-row" for="isPermanentInput">
                     <input id="isPermanentInput" type="checkbox" name="AddRestriction.IsPermanent" value="false" disabled/>
-                    <label for="isPermanentInput">Заблокировать навсегда</label>
-                </div>
+                    <span class="checkbox-custom"></span>
+                    <span class="checkbox-label">Заблокировать навсегда</span>
+                </label>
 
                 <div class="form-group">
                     <label for="blockReason">Причина блокировки</label>
@@ -161,7 +162,7 @@
 
             <div class="restriction-panel-actions">
                 <button type="button" class="cancel-restriction" id="cancelRejectBtn">Отмена</button>
-                <button type="submit" class="accept-unit">Отклонить отзыв</button>
+                <button type="submit" class="reject">Отклонить отзыв</button>
             </div>
         </form>
     </div>
