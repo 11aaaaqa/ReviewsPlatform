@@ -127,7 +127,7 @@
                     <label>Тип блокировки</label>
                     <div class="radio-pill-group">
                         <label class="radio-pill">
-                            <input type="radio" name="AddRestriction.RestrictionType" value="ReviewPosting" disabled/>
+                            <input type="radio" name="AddRestriction.RestrictionType" value="ReviewPosting" checked disabled/>
                             <span>Создание отзывов</span>
                         </label>
                         <label class="radio-pill">
@@ -139,7 +139,7 @@
 
                 <div class="form-group" id="restrictionDurationBlock">
                     <label for="restrictionDuration">Длительность (в днях)</label>
-                    <input type="number" id="restrictionDuration" name="AddRestriction.DurationInDays" min="1" placeholder="Например, 7" disabled/>
+                    <input type="number" id="restrictionDuration" name="AddRestriction.DurationInDays" min="0" placeholder="Например, 7" disabled/>
                 </div>
 
                 <label class="checkbox-row" for="isPermanentInput">
@@ -205,7 +205,7 @@
         this.value = isPermanent ? 'true' : 'false';
         restrictionDurationBlock.style.display = isPermanent ? 'none' : '';
         if (isPermanent) {
-            restrictionDurationInput.value = '';
+            restrictionDurationInput.value = '0';
         }
     });
 </script>
@@ -215,7 +215,7 @@
     const rejectReviewForm = document.getElementById('rejectReviewForm');
     let rejectProcessing = false;
 
-    rejectReviewForm.addEventListener('submit', async(e) => {
+    rejectReviewForm.addEventListener('submit', async function(e){
         e.preventDefault();
 
         if (rejectProcessing) return;
@@ -260,6 +260,7 @@
         } catch (e) {
             errorMessageContainer.textContent = 'Что-то пошло не так';
             errorMessageContainer.style.display = 'block';
+            console.log('Failed to execute');
         } finally {
             rejectProcessing = false;
         }
