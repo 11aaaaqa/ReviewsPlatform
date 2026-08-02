@@ -27,8 +27,7 @@ namespace ReviewMicroservice.UnitTests
             var reactionMock = new Mock<IReactionService>();
             reactionMock.Setup(x => x.ReactAsync(userId, reviewId, reactionType)).Throws<NotFoundException>();
             var controller = new ReviewController(new Mock<IUnitOfWork>().Object, new Mock<IMessagePublisher>().Object,
-                new Mock<ILogger<ReviewController>>().Object, new Mock<RestrictionInfo.RestrictionInfoClient>().Object,
-                new Mock<ImageValidator>().Object, reactionMock.Object);
+                new Mock<ILogger<ReviewController>>().Object, new Mock<ImageValidator>().Object, reactionMock.Object);
             controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = user } };
 
             var result = await controller.ReactOnReviewAsync(reviewId, reactionType);
@@ -48,8 +47,7 @@ namespace ReviewMicroservice.UnitTests
             var reactionMock = new Mock<IReactionService>();
             reactionMock.Setup(x => x.ReactAsync(userId, reviewId, reactionType)).Throws<SelfReactionNotAllowedException>();
             var controller = new ReviewController(new Mock<IUnitOfWork>().Object, new Mock<IMessagePublisher>().Object,
-                new Mock<ILogger<ReviewController>>().Object, new Mock<RestrictionInfo.RestrictionInfoClient>().Object,
-                new Mock<ImageValidator>().Object, reactionMock.Object);
+                new Mock<ILogger<ReviewController>>().Object, new Mock<ImageValidator>().Object, reactionMock.Object);
             controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = user } };
 
             var result = await controller.ReactOnReviewAsync(reviewId, reactionType);
@@ -69,8 +67,7 @@ namespace ReviewMicroservice.UnitTests
             var reactionMock = new Mock<IReactionService>();
             reactionMock.Setup(x => x.ReactAsync(userId, reviewId, reactionType)).Throws<Exception>();
             var controller = new ReviewController(new Mock<IUnitOfWork>().Object, new Mock<IMessagePublisher>().Object,
-                new Mock<ILogger<ReviewController>>().Object, new Mock<RestrictionInfo.RestrictionInfoClient>().Object,
-                new Mock<ImageValidator>().Object, reactionMock.Object);
+                new Mock<ILogger<ReviewController>>().Object, new Mock<ImageValidator>().Object, reactionMock.Object);
             controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = user } };
 
             var result = await controller.ReactOnReviewAsync(reviewId, reactionType);
@@ -91,8 +88,7 @@ namespace ReviewMicroservice.UnitTests
             var reactionMock = new Mock<IReactionService>();
             reactionMock.Setup(x => x.ReactAsync(userId, reviewId, reactionType));
             var controller = new ReviewController(new Mock<IUnitOfWork>().Object, new Mock<IMessagePublisher>().Object,
-                new Mock<ILogger<ReviewController>>().Object, new Mock<RestrictionInfo.RestrictionInfoClient>().Object,
-                new Mock<ImageValidator>().Object, reactionMock.Object);
+                new Mock<ILogger<ReviewController>>().Object, new Mock<ImageValidator>().Object, reactionMock.Object);
             controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = user } };
 
             var result = await controller.ReactOnReviewAsync(reviewId, reactionType);
