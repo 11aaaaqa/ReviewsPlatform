@@ -10,7 +10,7 @@ namespace Web.MVC.DTOs.user
 
         [Required(ErrorMessage = "Поле \"Имя пользователя\" обязательно")]
         [Display(Name = "Имя пользователя")]
-        [StringLength(StringLengthDtoConstants.UserNameMax)]
+        [StringLength(StringLengthDtoConstants.UserNameMax, ErrorMessage = "Превышено максимальное количество символов")]
         public string NewUserName
         {
             get => newUserName;

@@ -5,7 +5,7 @@ namespace Web.MVC.DTOs.comment
 {
     public class AddCommentDto
     {
-        [Required(ErrorMessage = "Поле \"Комментарий\" обяхательно")]
+        [Required(ErrorMessage = "Поле \"Комментарий\" обязательно")]
         [StringLength(StringLengthDtoConstants.CommentTextMax, ErrorMessage = "Превышено максимально количество символов")]
         public string Text { get; set; }
 

@@ -1,6 +1,4 @@
-﻿using Web.MVC.Models.Api_responses.review.enums;
-
-namespace Web.MVC.Models.Api_responses.review
+﻿namespace Web.MVC.Models.Api_responses.review
 {
     public class ReviewResponse
     {

@@ -1,4 +1,4 @@
-﻿using Web.MVC.Models.Api_responses.review.enums;
+﻿using Web.MVC.Models.Api_responses;
 using Web.MVC.Models.View_models.User;
 
 namespace Web.MVC.Models.View_models.Review
@@ -17,7 +17,7 @@ namespace Web.MVC.Models.View_models.Review
         public Guid ItemId { get; set; }
 
         public UserDisplay User { get; set; }
-        public ReviewStatus ReviewStatus { get; set; }
+        public EntityStatus ReviewStatus { get; set; }
         public string? RejectionReason { get; set; }
         public bool IsCreatedWithItem { get; set; }
     }
