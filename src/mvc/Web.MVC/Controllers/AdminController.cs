@@ -8,7 +8,6 @@ using Web.MVC.Constants;
 using Web.MVC.DTOs.admin;
 using Web.MVC.Models.Api_responses.account;
 using Web.MVC.Models.Api_responses.category;
-using Web.MVC.Models.Api_responses.restriction;
 using Web.MVC.Models.Api_responses.review;
 using Web.MVC.Models.View_models.Admin;
 using Web.MVC.Models.View_models.Category;
@@ -152,7 +151,7 @@ namespace Web.MVC.Controllers
                 reviewDisplay.PicturesSrc.Add(imageConverter.GetImageSrc(picture));
             }
 
-            GetReviewByIdAdminViewModel model = new() { Review = reviewDisplay, IsUserRestricted = false};
+            GetReviewByIdAdminViewModel model = new() { Review = reviewDisplay, IsUserRestricted = false };
 
             var restrictionResponse = await httpClient.GetAsync($"/api/Restriction/get-active/{userCreatedBy.Id}");
             if (restrictionResponse.IsSuccessStatusCode)
@@ -163,6 +162,20 @@ namespace Web.MVC.Controllers
             {
                 if (restrictionResponse.StatusCode != HttpStatusCode.NotFound)
                     restrictionResponse.EnsureSuccessStatusCode();
+            }
+
+            if (review.IsCreatedWithItem)
+            {
+                var subcategoryResponse = await httpClient.GetAsync($"/api/Subcategory/get-by-id/{item.SubcategoryId}");
+                subcategoryResponse.EnsureSuccessStatusCode();
+                var subcategory = await subcategoryResponse.Content.ReadFromJsonAsync<SubcategoryResponse>();
+
+                var categoryResponse = await httpClient.GetAsync($"/api/Category/get-by-id/{subcategory!.CategoryId}");
+                categoryResponse.EnsureSuccessStatusCode();
+                var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryResponse>();
+                
+                model.CategoryInfo = new GetReviewCategoryInfo(CategoryName: category!.Name,
+                    SubcategoryId: subcategory.Id, SubcategoryName: subcategory.Name);
             }
 
             return View(model);

@@ -6,5 +6,6 @@ namespace Web.MVC.Models.View_models.Admin
     {
         public ReviewDisplay Review { get; set; }
         public bool IsUserRestricted { get; set; }
+        public GetReviewCategoryInfo? CategoryInfo { get; set; } = null;
     }
 }
