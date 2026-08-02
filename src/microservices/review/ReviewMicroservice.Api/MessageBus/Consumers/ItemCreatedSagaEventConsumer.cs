@@ -18,7 +18,7 @@ namespace ReviewMicroservice.Api.MessageBus.Consumers
                 CreatedAt = DateOnly.FromDateTime(DateTime.UtcNow),
                 DislikesCount = 0, ItemEstimation = message.ReviewItemEstimation, ItemId = message.ItemId, LikesCount = 0,
                 Pictures = message.ReviewPictures,
-                ReviewStatus = ReviewStatus.UnderConsideration, ShortReview = message.ShortReview,
+                ReviewStatus = EntityStatus.UnderConsideration, ShortReview = message.ShortReview,
                 Text = message.ReviewText, IsCreatedWithItem = true, RejectionReason = null
             };
 

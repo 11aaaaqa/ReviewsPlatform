@@ -16,7 +16,7 @@ namespace ReviewMicroservice.Api.Models
         public Guid ItemId { get; set; }
 
         public Guid UserId { get; set; }
-        public ReviewStatus ReviewStatus { get; set; }
+        public EntityStatus ReviewStatus { get; set; }
         public string? RejectionReason { get; set; }
         public bool IsCreatedWithItem { get; set; }
     }

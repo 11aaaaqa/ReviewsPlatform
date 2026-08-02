@@ -59,7 +59,7 @@ namespace ReviewMicroservice.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Comments");
+                    b.ToTable("Comments", (string)null);
                 });
 
             modelBuilder.Entity("ReviewMicroservice.Api.Models.Business.Comments.CommentReply", b =>
@@ -72,7 +72,7 @@ namespace ReviewMicroservice.Api.Migrations
 
                     b.HasKey("ParentId", "RepliedId");
 
-                    b.ToTable("CommentReplies");
+                    b.ToTable("CommentReplies", (string)null);
                 });
 
             modelBuilder.Entity("ReviewMicroservice.Api.Models.Business.Review", b =>
@@ -125,7 +125,7 @@ namespace ReviewMicroservice.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Reviews");
+                    b.ToTable("Reviews", (string)null);
                 });
 
             modelBuilder.Entity("ReviewMicroservice.Api.Models.Business.ReviewReaction", b =>
@@ -141,7 +141,7 @@ namespace ReviewMicroservice.Api.Migrations
 
                     b.HasKey("ReviewId", "UserId");
 
-                    b.ToTable("ReviewReactions");
+                    b.ToTable("ReviewReactions", (string)null);
                 });
 
             modelBuilder.Entity("ReviewMicroservice.Api.Models.Business.ReviewReaction", b =>

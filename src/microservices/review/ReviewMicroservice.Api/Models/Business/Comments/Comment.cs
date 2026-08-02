@@ -1,4 +1,6 @@
-﻿namespace ReviewMicroservice.Api.Models.Business.Comments
+﻿using ReviewMicroservice.Api.Enums;
+
+namespace ReviewMicroservice.Api.Models.Business.Comments
 {
     public class Comment
     {
@@ -10,7 +12,7 @@
         public Guid? ParentCommentId { get; set; }
         public Guid ReviewId { get; set; }
 
-        public CommentStatus CommentStatus { get; set; }
+        public EntityStatus CommentStatus { get; set; }
         public string? RejectionReason { get; set; }
         public Guid? ConsideredByUserId { get; set; }
     }
