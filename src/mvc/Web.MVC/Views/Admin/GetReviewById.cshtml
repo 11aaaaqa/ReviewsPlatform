@@ -1,5 +1,5 @@
 ﻿@using Web.MVC.Constants
-@model Web.MVC.Models.View_models.Review.ReviewDisplay
+@model Web.MVC.Models.View_models.Admin.GetReviewByIdAdminViewModel
 <link rel="stylesheet" href="~/css/admin/get-review-by-id.css"/>
 <link rel="stylesheet" href="~/css/admin/unit-consideration.css"/>
 
@@ -21,28 +21,28 @@
 
 <div class="get-review-by-id-page-block">
     <div id="unitBlock">
-        @if (Model.IsCreatedWithItem)
+        @if (Model.Review.IsCreatedWithItem)
         {
             <h3 style="color: red;">Отзыв создается вместе с товаром</h3>
         }
 
         <div class="item-info-block">
-            <h3 style="margin-bottom: 18px;">@Model.Item.Name</h3>
+            <h3 style="margin-bottom: 18px;">@Model.Review.Item.Name</h3>
             <div style="display: flex; gap: 15px; align-items: center;">
-                <img src="@Model.Item.PictureSrc" style="max-width: 220px; max-height: 220px;" />
+                <img src="@Model.Review.Item.PictureSrc" style="max-width: 220px; max-height: 220px;" />
                 <div>
-                    @if (!Model.IsCreatedWithItem)
+                    @if (!Model.Review.IsCreatedWithItem)
                     {
                         <div class="star-rating" style="font-size: 30px;">
-                            <div class="star-rating-fill" style="width: @(Model.Item.GeneralEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                            <div class="star-rating-fill" style="width: @(Model.Review.Item.GeneralEstimation * 20)%; font-size: 30px;">★★★★★</div>
                         </div>
                         <p style="color: gray; font-size: 14px; font-weight: 700;">
-                            Среднее: @Model.Item.GeneralEstimation (@Model.Item.ReviewsCount @GetReviewWord(Model.Item.ReviewsCount))
+                            Среднее: @Model.Review.Item.GeneralEstimation (@Model.Review.Item.ReviewsCount @GetReviewWord(Model.Review.Item.ReviewsCount))
                         </p>
                     }
-                    @if (Model.Item.Brand != null)
+                    @if (Model.Review.Item.Brand != null)
                     {
-                        <p style="font-size: 15px;">Бренд: @Model.Item.Brand</p>
+                        <p style="font-size: 15px;">Бренд: @Model.Review.Item.Brand</p>
                     }
                 </div>
             </div>
@@ -51,28 +51,28 @@
         <div class="review-block">
             <div>
                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 5px;">
-                    <img src="@Model.CreatedByUser.AvatarSrc" style="width: 50px; height: 50px; object-fit: cover;" />
-                    <a class="user-name-link" asp-controller="User" asp-action="GetUserById" asp-route-userId="@Model.CreatedByUser.Id">
-                        @Model.CreatedByUser.UserName
+                    <img src="@Model.Review.CreatedByUser.AvatarSrc" style="width: 50px; height: 50px; object-fit: cover;" />
+                    <a class="user-name-link" asp-controller="User" asp-action="GetUserById" asp-route-userId="@Model.Review.CreatedByUser.Id">
+                        @Model.Review.CreatedByUser.UserName
                     </a>
                 </div>
                 <div style="display: flex; align-items: center; gap: 7px; margin: 12px 0 12px 0;">
                     <h4 style="margin-top: 8px;">Оценка:</h4>
                     <div class="star-rating" style="font-size: 30px;">
-                        <div class="star-rating-fill" style="width: @(Model.ItemEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                        <div class="star-rating-fill" style="width: @(Model.Review.ItemEstimation * 20)%; font-size: 30px;">★★★★★</div>
                     </div>
                 </div>
             </div>
 
             <div>
                 <div>
-                    @Html.Raw(Model.Text)
+                    @Html.Raw(Model.Review.Text)
                 </div>
 
-                @if (Model.PicturesSrc.Any())
+                @if (Model.Review.PicturesSrc.Any())
                 {
                     int maxVisiblePhotos = 4;
-                    int totalPhotos = Model.PicturesSrc.Count;
+                    int totalPhotos = Model.Review.PicturesSrc.Count;
 
                     <div class="review-images-grid" id="review-gallery-grid">
                         @for (int i = 0; i < totalPhotos; i++)
@@ -83,8 +83,8 @@
                             <div class="review-img-wrapper @(isHidden ? "hidden-photo" : "") @(isLastVisibleWithMore ? "has-more" : "")"
                                  @(isLastVisibleWithMore ? $"data-more-text=+{totalPhotos - maxVisiblePhotos + 1}" : "")>
 
-                                <a href="@Url.Content(Model.PicturesSrc[i])" data-fancybox="review-gallery">
-                                    <img src="@Url.Content(Model.PicturesSrc[i])" class="review-img-thumb" alt="Фото отзыва" />
+                                <a href="@Url.Content(Model.Review.PicturesSrc[i])" data-fancybox="review-gallery">
+                                    <img src="@Url.Content(Model.Review.PicturesSrc[i])" class="review-img-thumb" alt="Фото отзыва" />
                                 </a>
                             </div>
                         }
@@ -95,14 +95,14 @@
 
         <div class="consideration-btns">
             <button class="reject-unit" id="rejectUnitBtn">Отклонить</button>
-            <form method="post" asp-controller="Admin" asp-action="AcceptReview" asp-route-reviewId="@Model.Id">
+            <form method="post" asp-controller="Admin" asp-action="AcceptReview" asp-route-reviewId="@Model.Review.Id">
                 <button type="submit" class="accept-unit">Принять</button>
             </form>
         </div>
     </div>
     
     <div id="restrictionBlock">
-        <form id="rejectReviewForm" method="post" asp-controller="Admin" asp-action="RejectReview" asp-route-reviewId="@Model.Id">
+        <form id="rejectReviewForm" method="post" asp-controller="Admin" asp-action="RejectReview" asp-route-reviewId="@Model.Review.Id">
             <div id="errorMessageContainer" style="display: none; color: red; margin-bottom: 3px;"></div>
             <div class="form-group">
                 <label for="rejectionReason">Причина отклонения</label>
@@ -123,6 +123,16 @@
             </label>
 
             <div id="restrictionFields" class="restriction-fields">
+                <div>
+                    @if (Model.IsUserRestricted)
+                    {
+                        <div style="color: red; margin-bottom: 15px;">
+                            <p>Пользователь имеет ограничение. Перед блокировкой необходимо снять это ограничение в его профиле.</p>
+                        </div>
+                    }
+                    <input type="text" class="hidden" id="isUserRestrictedInput" value="@Model.IsUserRestricted.ToString()" />
+                </div>
+
                 <div class="form-group">
                     <label>Тип блокировки</label>
                     <div class="radio-pill-group">
@@ -211,6 +221,7 @@
 </script>
 
 <script>
+    const isUserRestricted = document.getElementById('isUserRestrictedInput').value.toLowerCase() === 'true';
     const errorMessageContainer = document.getElementById('errorMessageContainer');
     const rejectReviewForm = document.getElementById('rejectReviewForm');
     let rejectProcessing = false;
@@ -218,7 +229,11 @@
     rejectReviewForm.addEventListener('submit', async function(e){
         e.preventDefault();
 
-        if (rejectProcessing) return;
+        if (enableRestrictionCheckbox.checked && isUserRestricted) {
+            return;
+        }
+
+            if (rejectProcessing) return;
         rejectProcessing = true;
 
         let formData;
