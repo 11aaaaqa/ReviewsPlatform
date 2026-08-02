@@ -120,7 +120,6 @@ namespace RestrictionMicroservice.Api.Controllers
                 Reason = model.Reason, RestrictingUserId = userId,
                 RestrictedUserId = model.RestrictedUserId, RestrictionType = model.RestrictionType,
                 ExpiryTime = model.IsPermanent ? DateTime.UtcNow : DateTime.UtcNow.Add(model.Duration),
-
                 IsDisabled = false, DisablingReason = null, DisabledAt = new DateTime(), DisabledByUserId = Guid.Empty
             };
             await unitOfWork.RestrictionRepository.AddAsync(restrictionToAdd);
