@@ -11,7 +11,7 @@ namespace RestrictionMicroservice.Api.Services.RestrictionRepository
 
         public async Task<Restriction?> GetActiveRestrictionByRestrictedUserIdAsync(Guid restrictedUserId)
             => await context.Restrictions.Where(x => x.RestrictedUserId == restrictedUserId && !x.IsDisabled)
-                .FirstOrDefaultAsync(x => x.ExpiryTime > DateTime.UtcNow);
+                .FirstOrDefaultAsync(x => x.ExpiryTime > DateTime.UtcNow || x.IsPermanent);
 
         public async Task<List<Restriction>> GetAllByRestrictedUserIdAsync(Guid restrictedUserId, int pageNumber,
             int pageSize)
