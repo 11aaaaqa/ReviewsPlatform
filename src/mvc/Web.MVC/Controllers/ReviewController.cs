@@ -353,7 +353,8 @@ namespace Web.MVC.Controllers
             {
                 CreatedAt = review.CreatedAt, CreatedByUser = userDisplay, DislikesCount = review.DislikesCount, Id = review.Id,
                 Item = itemDisplay, ItemEstimation = review.ItemEstimation, LikesCount = review.LikesCount, PicturesSrc = pictures, 
-                ShortReview = review.ShortReview, Text = review.Text, CommentsCount = review.CommentsCount
+                ShortReview = review.ShortReview, Text = review.Text, CommentsCount = review.CommentsCount,
+                IsCreatedWithItem = review.IsCreatedWithItem
             };
 
             string currentUrl = HttpContext.Request.Path;

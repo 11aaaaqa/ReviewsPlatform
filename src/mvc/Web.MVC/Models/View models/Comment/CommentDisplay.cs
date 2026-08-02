@@ -1,4 +1,4 @@
-﻿using Web.MVC.Models.Api_responses.comment;
+﻿using Web.MVC.Models.Api_responses;
 using Web.MVC.Models.View_models.User;
 
 namespace Web.MVC.Models.View_models.Comment
@@ -13,7 +13,7 @@ namespace Web.MVC.Models.View_models.Comment
         public Guid? ParentCommentId { get; set; }
         public Guid ReviewId { get; set; }
 
-        public CommentStatus CommentStatus { get; set; }
+        public EntityStatus CommentStatus { get; set; }
         public string? RejectionReason { get; set; }
         public Guid? ConsideredByUserId { get; set; }
     }
