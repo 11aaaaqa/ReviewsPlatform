@@ -53,15 +53,7 @@
     display: none !important;
 }
 
-.item-info-block {
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
-    padding: 15px 20px;
-    margin-bottom: 15px;
-}
-
-.review-block {
+.border-block {
     border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 12px;
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);

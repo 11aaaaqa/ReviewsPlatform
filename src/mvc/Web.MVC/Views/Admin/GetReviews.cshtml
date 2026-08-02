@@ -7,7 +7,7 @@
         @foreach (var review in Model.Reviews)
         {
             <a class="unit-block" asp-controller="Admin" asp-action="GetReviewById" asp-route-reviewId="@review.Id">
-                <h5>@review.ShortReview</h5>
+                <div class="unit-text">@Html.Raw(review.ShortReview)</div>
                 <p>Дата создания: @review.CreatedAt.ToString(CultureInfo.GetCultureInfo("ru-RU"))</p>
             </a>
         }

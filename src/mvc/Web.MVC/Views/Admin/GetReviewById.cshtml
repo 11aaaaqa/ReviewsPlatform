@@ -24,9 +24,17 @@
         @if (Model.Review.IsCreatedWithItem)
         {
             <h3 style="color: red;">Отзыв создается вместе с товаром</h3>
+            <div class="border-block">
+                <h4>Категория: @Model.CategoryInfo!.CategoryName</h4>
+                <h4>Подкатегория:
+                    <a class="themed-link-on-hover" asp-controller="Category" asp-action="GetItemsBySubcategoryId"
+                       asp-route-subcategoryId="@Model.CategoryInfo.SubcategoryId">
+                        @Model.CategoryInfo.SubcategoryName
+                    </a></h4>
+            </div>
         }
 
-        <div class="item-info-block">
+        <div class="border-block">
             <h3 style="margin-bottom: 18px;">@Model.Review.Item.Name</h3>
             <div style="display: flex; gap: 15px; align-items: center;">
                 <img src="@Model.Review.Item.PictureSrc" style="max-width: 220px; max-height: 220px;" />
@@ -48,7 +56,7 @@
             </div>
         </div>
 
-        <div class="review-block">
+        <div class="border-block">
             <div>
                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 5px;">
                     <img src="@Model.Review.CreatedByUser.AvatarSrc" style="width: 50px; height: 50px; object-fit: cover;" />
@@ -65,7 +73,13 @@
             </div>
 
             <div>
+                <div style="margin-bottom: 15px;">
+                    <h5 style="margin: 0 0 3px 0;">Краткий отзыв:</h5>
+                    @Html.Raw(Model.Review.ShortReview)
+                </div>
+
                 <div>
+                    <h5 style="margin: 0 0 3px 0;">Текст отзыва:</h5>
                     @Html.Raw(Model.Review.Text)
                 </div>
 
@@ -84,7 +98,7 @@
                                  @(isLastVisibleWithMore ? $"data-more-text=+{totalPhotos - maxVisiblePhotos + 1}" : "")>
 
                                 <a href="@Url.Content(Model.Review.PicturesSrc[i])" data-fancybox="review-gallery">
-                                    <img src="@Url.Content(Model.Review.PicturesSrc[i])" class="review-img-thumb" alt="Фото отзыва" />
+                                    <img src="@Url.Content(Model.Review.PicturesSrc[i])" class="review-img-thumb" alt="Фото отзыва"/>
                                 </a>
                             </div>
                         }
