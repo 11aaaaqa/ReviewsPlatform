@@ -11,7 +11,7 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
         public async Task<Review?> GetByIdAsync(Guid id)
             => await context.Reviews.SingleOrDefaultAsync(x => x.Id == id);
 
-        public async Task<List<ReviewNoPictures>> GetAllByStatusAsync(ReviewStatus status, OrderByDate orderByDate, int pageNumber, int pageSize)
+        public async Task<List<ReviewNoPictures>> GetAllByStatusAsync(EntityStatus status, OrderByDate orderByDate, int pageNumber, int pageSize)
         {
             var reviews = context.Reviews.Where(x => x.ReviewStatus == status).Select(x => 
                 new ReviewNoPictures
@@ -34,7 +34,7 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
             return await reviews.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
         }
 
-        public async Task<List<ReviewNoPictures>> GetByUserIdAsync(Guid userId, ReviewStatus reviewStatus,
+        public async Task<List<ReviewNoPictures>> GetByUserIdAsync(Guid userId, EntityStatus reviewStatus,
             OrderByDate orderByDate, int pageNumber, int pageSize)
         {
             var reviews = context.Reviews.Where(x => x.UserId == userId)
@@ -60,7 +60,7 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
             return await reviews.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
         }
 
-        public async Task<List<ReviewNoPictures>> GetByItemIdAsync(Guid itemId, ReviewStatus reviewStatus, OrderByDate orderByDate, int pageNumber, int pageSize)
+        public async Task<List<ReviewNoPictures>> GetByItemIdAsync(Guid itemId, EntityStatus reviewStatus, OrderByDate orderByDate, int pageNumber, int pageSize)
         {
             var reviews = context.Reviews.Where(x => x.ItemId == itemId)
                 .Where(x => x.ReviewStatus == reviewStatus)
@@ -91,7 +91,7 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
         public async Task<List<ReviewNoPictures>> GetByItemIdByActualityAsync(Guid itemId, int pageNumber, int pageSize)
         {
             return await context.Reviews
-                .Where(x => x.ItemId == itemId && x.ReviewStatus == ReviewStatus.Verified)
+                .Where(x => x.ItemId == itemId && x.ReviewStatus == EntityStatus.Verified)
                 .Select(x => 
                     new ReviewNoPictures
                     {
@@ -118,7 +118,7 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
 
         public async Task<List<ReviewNoPictures>> GetByItemIdAsync(Guid itemId, OrderByEstimation orderByEstimation, int pageNumber, int pageSize)
         {
-            var reviews = context.Reviews.Where(x => x.ItemId == itemId && x.ReviewStatus == ReviewStatus.Verified)
+            var reviews = context.Reviews.Where(x => x.ItemId == itemId && x.ReviewStatus == EntityStatus.Verified)
                 .Select(x => 
                     new ReviewNoPictures
                     {

@@ -106,6 +106,10 @@ namespace CategoryMicroservice.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 2");
+
                     b.HasIndex("SubcategoryId");
 
                     b.ToTable("Items");

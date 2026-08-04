@@ -2,7 +2,6 @@
 using MessageBus.Publisher;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RestrictionGrpcService;
 using ReviewMicroservice.Api.Constants;
 using ReviewMicroservice.Api.DTOs;
 using ReviewMicroservice.Api.DTOs.review;
@@ -14,6 +13,7 @@ using ReviewMicroservice.Api.Services;
 using ReviewMicroservice.Api.Services.ReviewServices.ReactionServices;
 using ReviewMicroservice.Api.Services.UnitOfWork;
 using System.Security.Claims;
+using MessageBus.Messages.Saga.RejectReviewAndAddRestriction;
 using ReviewMicroservice.Api.Filters.AuthorizationFilters;
 
 namespace ReviewMicroservice.Api.Controllers
@@ -53,18 +53,18 @@ namespace ReviewMicroservice.Api.Controllers
         [Route("get-under-consideration")]
         public async Task<IActionResult> GetAllReviewsUnderConsiderationAsync([FromQuery] Pagination pagination)
         {
-            var reviews = await unitOfWork.ReviewRepository.GetAllByStatusAsync(ReviewStatus.UnderConsideration,
-                OrderByDate.Descending, pagination.PageNumber, pagination.PageSize);
+            var reviews = await unitOfWork.ReviewRepository.GetAllByStatusAsync(EntityStatus.UnderConsideration,
+                OrderByDate.Ascending, pagination.PageNumber, pagination.PageSize);
 
-            var reviewsNextPage = await unitOfWork.ReviewRepository.GetAllByStatusAsync(ReviewStatus.UnderConsideration,
-                OrderByDate.Descending, pagination.PageNumber + 1, pagination.PageSize);
+            var reviewsNextPage = await unitOfWork.ReviewRepository.GetAllByStatusAsync(EntityStatus.UnderConsideration,
+                OrderByDate.Ascending, pagination.PageNumber + 1, pagination.PageSize);
 
             return Ok(new ReviewsResult { IsNextPageExisted = reviewsNextPage.Count > 0, Reviews = reviews });
         }
 
         [HttpGet]
         [Route("get-by-user-id/{userId}")]
-        public async Task<IActionResult> GetAllReviewsByUserIdAsync([FromRoute] Guid userId, [FromQuery] ReviewStatus reviewStatus,
+        public async Task<IActionResult> GetAllReviewsByUserIdAsync([FromRoute] Guid userId, [FromQuery] EntityStatus reviewStatus,
             [FromQuery] OrderByDate orderByDate, [FromQuery] Pagination pagination)
         {
             var reviews =
@@ -81,10 +81,10 @@ namespace ReviewMicroservice.Api.Controllers
         public async Task<IActionResult> GetAllReviewsByItemIdAsync([FromRoute] Guid itemId, [FromQuery] OrderByDate orderByDate,
             [FromQuery] Pagination pagination)
         {
-            var reviews = await unitOfWork.ReviewRepository.GetByItemIdAsync(itemId, ReviewStatus.Verified, orderByDate,
+            var reviews = await unitOfWork.ReviewRepository.GetByItemIdAsync(itemId, EntityStatus.Verified, orderByDate,
                 pagination.PageNumber, pagination.PageSize);
 
-            var reviewsNextPage = await unitOfWork.ReviewRepository.GetByItemIdAsync(itemId, ReviewStatus.Verified, orderByDate,
+            var reviewsNextPage = await unitOfWork.ReviewRepository.GetByItemIdAsync(itemId, EntityStatus.Verified, orderByDate,
                 pagination.PageNumber + 1, pagination.PageSize);
 
             return Ok(new ReviewsResult { IsNextPageExisted = reviewsNextPage.Count > 0, Reviews = reviews });
@@ -155,7 +155,7 @@ namespace ReviewMicroservice.Api.Controllers
             if (review == null)
                 return NotFound("Review with current identifier does not exist");
 
-            if (review.ReviewStatus != ReviewStatus.UnderConsideration)
+            if (review.ReviewStatus != EntityStatus.UnderConsideration)
                 return BadRequest("Review must be in under consideration status");
 
             string oldShortReview = review.ShortReview;
@@ -186,7 +186,7 @@ namespace ReviewMicroservice.Api.Controllers
                 return Forbid();
 
             Guid itemId = review.ItemId;
-            ReviewStatus reviewStatus = review.ReviewStatus;
+            EntityStatus reviewStatus = review.ReviewStatus;
             int itemEstimation = review.ItemEstimation;
 
             try
@@ -201,7 +201,7 @@ namespace ReviewMicroservice.Api.Controllers
                 await unitOfWork.CommentRepository.ExecuteDeleteCommentsByReviewIdAsync(reviewId);
 
                 await messagePublisher.PublishAsync(new ReviewRemovedEvent
-                    { ItemId = itemId, IsReviewVerified = reviewStatus == ReviewStatus.Verified, ItemEstimation = itemEstimation});
+                    { ItemId = itemId, IsReviewVerified = reviewStatus == EntityStatus.Verified, ItemEstimation = itemEstimation});
 
                 await unitOfWork.CommitTransactionAsync();
             }
@@ -218,7 +218,7 @@ namespace ReviewMicroservice.Api.Controllers
             return Ok();
         }
 
-        [UserRestrictionFilter(RestrictionType.All, RestrictionType.ReviewPosting)]
+        [UserRestrictionFilter(RestrictionGrpcService.RestrictionType.All, RestrictionGrpcService.RestrictionType.ReviewPosting)]
         [RequestSizeLimit(5 * 2 * 1024 * 1024)]
         [Authorize(Roles = RoleNames.Verified)]
         [HttpPost]
@@ -243,7 +243,7 @@ namespace ReviewMicroservice.Api.Controllers
             {
                 Id = Guid.NewGuid(), UserId = userId, ItemId = model.ItemId, CreatedAt = DateOnly.FromDateTime(DateTime.UtcNow),
                 IsCreatedWithItem = false, DislikesCount = 0, LikesCount = 0, ItemEstimation = model.ItemEstimation,
-                RejectionReason = null, ReviewStatus = ReviewStatus.UnderConsideration, ShortReview = model.ShortReview,
+                RejectionReason = null, ReviewStatus = EntityStatus.UnderConsideration, ShortReview = model.ShortReview,
                 Text = model.Text, Pictures = model.Pictures, CommentsCount = 0
             };
 
@@ -262,19 +262,23 @@ namespace ReviewMicroservice.Api.Controllers
             if (review == null)
                 return NotFound("Review with current identifier does not exist");
 
-            if (review.ReviewStatus != ReviewStatus.UnderConsideration)
+            if (review.ReviewStatus != EntityStatus.UnderConsideration)
                 return BadRequest("Review is not in Under consideration status");
 
             try
             {
                 await unitOfWork.BeginTransactionAsync();
 
-                review.ReviewStatus = ReviewStatus.Verified;
+                review.ReviewStatus = EntityStatus.Verified;
+                review.CreatedAt = DateOnly.FromDateTime(DateTime.UtcNow);
                 unitOfWork.ReviewRepository.Update(review);
                 await unitOfWork.CompleteAsync();
 
                 await messagePublisher.PublishAsync(new ReviewAcceptedEvent
-                    { ItemId = review.ItemId, IsReviewCreatedWithItem = review.IsCreatedWithItem, ItemEstimation = review.ItemEstimation });
+                {
+                    ItemId = review.ItemId, IsReviewCreatedWithItem = review.IsCreatedWithItem,
+                    ItemEstimation = review.ItemEstimation, ReviewId = review.Id
+                });
 
                 await unitOfWork.CommitTransactionAsync();
             }
@@ -300,20 +304,35 @@ namespace ReviewMicroservice.Api.Controllers
             if (review == null)
                 return NotFound("Review with current identifier does not exist");
 
-            if (review.ReviewStatus != ReviewStatus.UnderConsideration)
+            if (review.ReviewStatus != EntityStatus.UnderConsideration)
                 return BadRequest("Review is not in Under consideration status");
 
+            string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid currentUserId = new Guid(userIdStr);
             try
             {
                 await unitOfWork.BeginTransactionAsync();
 
-                review.ReviewStatus = ReviewStatus.Rejected;
+                review.ReviewStatus = EntityStatus.Rejected;
                 review.RejectionReason = model.RejectionReason;
                 unitOfWork.ReviewRepository.Update(review);
                 await unitOfWork.CompleteAsync();
 
-                if (review.IsCreatedWithItem)
-                    await messagePublisher.PublishAsync(new ReviewCreatedWithItemRejectedEvent { ItemId = review.ItemId });
+                if (model.AddRestriction != null)
+                {
+                    await messagePublisher.PublishAsync(new ReviewRejectedSagaEvent
+                    {
+                        ReviewId = review.Id, Duration = model.AddRestriction.Duration,
+                        RestrictingUserId = currentUserId,
+                        IsPermanent = model.AddRestriction.IsPermanent, Reason = model.AddRestriction.Reason,
+                        RestrictedUserId = review.UserId, RestrictionType = (int)model.AddRestriction.RestrictionType,
+                    });
+                }
+                else
+                {
+                    if (review.IsCreatedWithItem)
+                        await messagePublisher.PublishAsync(new ReviewCreatedWithItemRejectedEvent { ItemId = review.ItemId });
+                }
 
                 await unitOfWork.CommitTransactionAsync();
             }
@@ -324,8 +343,9 @@ namespace ReviewMicroservice.Api.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
-            string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
             logger.LogInformation("User {UserId} rejected review {ReviewId}", userIdStr, model.ReviewId);
+
+            if (model.AddRestriction != null) return Accepted();
 
             return Ok();
         }

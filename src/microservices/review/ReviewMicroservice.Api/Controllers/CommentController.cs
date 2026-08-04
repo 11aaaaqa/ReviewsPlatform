@@ -1,16 +1,16 @@
-﻿using System.Security.Claims;
-using MessageBus.Messages.Comment;
+﻿using MessageBus.Messages.Comment;
 using MessageBus.Publisher;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RestrictionGrpcService;
 using ReviewMicroservice.Api.Constants;
 using ReviewMicroservice.Api.DTOs;
 using ReviewMicroservice.Api.DTOs.comment;
+using ReviewMicroservice.Api.Enums;
 using ReviewMicroservice.Api.Filters.AuthorizationFilters;
 using ReviewMicroservice.Api.Models;
 using ReviewMicroservice.Api.Models.Business.Comments;
 using ReviewMicroservice.Api.Services.UnitOfWork;
+using System.Security.Claims;
 
 namespace ReviewMicroservice.Api.Controllers
 {
@@ -68,7 +68,7 @@ namespace ReviewMicroservice.Api.Controllers
             return Ok(new CommentsResult { Comments = comments, IsNextPageExisted = commentsNextPage.Count > 0 });
         }
 
-        [UserRestrictionFilter(RestrictionType.All, RestrictionType.Commenting)]
+        [UserRestrictionFilter(RestrictionGrpcService.RestrictionType.All, RestrictionGrpcService.RestrictionType.Commenting)]
         [Authorize(Roles = RoleNames.Verified)]
         [HttpPost]
         [Route("add")]
@@ -90,7 +90,7 @@ namespace ReviewMicroservice.Api.Controllers
             {
                 Id = Guid.NewGuid(),
                 CreatedAt = DateTime.UtcNow,
-                CommentStatus = CommentStatus.UnderConsideration,
+                CommentStatus = EntityStatus.UnderConsideration,
                 UserId = userId,
                 RepliesCount = 0,
                 ConsideredByUserId = null,
@@ -159,7 +159,7 @@ namespace ReviewMicroservice.Api.Controllers
             if (comment == null)
                 return NotFound("Comment with current identifier does not exist");
 
-            if (comment.CommentStatus != CommentStatus.UnderConsideration)
+            if (comment.CommentStatus != EntityStatus.UnderConsideration)
                 return BadRequest("Comment is not in Under consideration status");
 
             string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
@@ -168,7 +168,7 @@ namespace ReviewMicroservice.Api.Controllers
             {
                 await unitOfWork.BeginTransactionAsync();
 
-                comment.CommentStatus = CommentStatus.Verified;
+                comment.CommentStatus = EntityStatus.Verified;
                 comment.ConsideredByUserId = userId;
                 unitOfWork.CommentRepository.Update(comment);
                 await unitOfWork.CompleteAsync();
@@ -212,7 +212,7 @@ namespace ReviewMicroservice.Api.Controllers
             if (comment == null)
                 return NotFound("Comment with current identifier does not exist");
 
-            if (comment.CommentStatus != CommentStatus.UnderConsideration)
+            if (comment.CommentStatus != EntityStatus.UnderConsideration)
                 return BadRequest("Comment is not in Under consideration status");
 
             model.Reason = model.Reason.Trim();
@@ -220,7 +220,7 @@ namespace ReviewMicroservice.Api.Controllers
             string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
             Guid userId = new Guid(userIdStr);
 
-            comment.CommentStatus = CommentStatus.Rejected;
+            comment.CommentStatus = EntityStatus.Rejected;
             comment.RejectionReason = model.Reason;
             comment.ConsideredByUserId = userId;
             unitOfWork.CommentRepository.Update(comment);

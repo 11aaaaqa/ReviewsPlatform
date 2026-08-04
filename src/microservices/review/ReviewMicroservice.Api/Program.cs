@@ -6,6 +6,7 @@ using MessageBus.Extensions;
 using MessageBus.Messages.Category;
 using MessageBus.Messages.Item;
 using MessageBus.Messages.Saga.CreateItemWIthReview;
+using MessageBus.Messages.Saga.RejectReviewAndAddRestriction;
 using Microsoft.EntityFrameworkCore;
 using RestrictionGrpcService;
 using ReviewMicroservice.Api.Database;
@@ -53,7 +54,10 @@ builder.Services.AddRabbitMqMessageBus(new RabbitMqOptions
     }).AddMessageBusHandler<ItemCreatedSagaEvent, ItemCreatedSagaEventConsumer>()
     .AddMessageBusHandler<ItemRemovedEvent, ItemRemovedEventConsumer>()
     .AddMessageBusHandler<CategoryRemovedEvent, CategoryRemovedEventConsumer>()
-    .AddMessageBusHandler<SubcategoryRemovedEvent, SubcategoryRemovedEventConsumer>();
+    .AddMessageBusHandler<SubcategoryRemovedEvent, SubcategoryRemovedEventConsumer>()
+    .AddMessageBusHandler<UserRestrictedSagaEvent, UserRestrictedSagaEventConsumer>()
+    .AddMessageBusHandler<UserFailedToBeRestrictedSagaEvent, UserFailedToBeRestrictedSagaEventConsumer>()
+    .AddMessageBusHandler<ItemMergedEvent, ItemMergedEventConsumer>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();

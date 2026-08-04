@@ -5,12 +5,12 @@ namespace Web.MVC.DTOs.reivew
 {
     public class AddReviewWithItemDto
     {
-        [StringLength(StringLengthDtoConstants.ItemNameMax)]
+        [StringLength(StringLengthDtoConstants.ItemNameMax, ErrorMessage = "Превышено максимальное количество символов у поля Название товара")]
         [Required(ErrorMessage = "Поле \"Название товара\" обязательно")]
         [Display(Name = "Название товара")]
         public string ItemName { get; set; }
 
-        [StringLength(StringLengthDtoConstants.ItemBrandMax)]
+        [StringLength(StringLengthDtoConstants.ItemBrandMax, ErrorMessage = "Превышено максимальное количество символов у поля Бренд товара")]
         [Display(Name = "Бренд")]
         public string? ItemBrand { get; set; }
 
@@ -24,12 +24,12 @@ namespace Web.MVC.DTOs.reivew
 
 
         [Required(ErrorMessage = "Поле \"Краткое резюме\" обязательно")]
-        [StringLength(StringLengthDtoConstants.ShortReviewMax)]
+        [StringLength(StringLengthDtoConstants.ShortReviewMax, ErrorMessage = "Превышено максимальное количество символов у поля Краткое резюме")]
         [Display(Name = "Краткое резюме")]
         public string ShortReview { get; set; }
 
         [Required(ErrorMessage = "Поле \"Отзыв\" обязательно")]
-        [StringLength(StringLengthDtoConstants.ReviewTextMax)]
+        [StringLength(StringLengthDtoConstants.ReviewTextMax, ErrorMessage = "Превышено максимальное количество символов у поля отзыв")]
         [Display(Name = "Отзыв")]
         public string ReviewText { get; set; }
 

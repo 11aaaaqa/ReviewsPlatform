@@ -8,7 +8,7 @@ namespace Web.MVC.DTOs.user
         [Required(ErrorMessage = "Поле \"Адрес эл. почты\" обязательно")]
         [Display(Name = "Адрес эл. почты")]
         [DataType(DataType.EmailAddress)]
-        [StringLength(StringLengthDtoConstants.EmailAddressMax)]
+        [StringLength(StringLengthDtoConstants.EmailAddressMax, ErrorMessage = "Превышено максимальное количество символов")]
         public string Email { get; set; }
 
         public bool IsRequested { get; set; } = false;

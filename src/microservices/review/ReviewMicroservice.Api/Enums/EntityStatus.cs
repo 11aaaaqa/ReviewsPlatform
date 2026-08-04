@@ -1,6 +1,6 @@
 ﻿namespace ReviewMicroservice.Api.Enums
 {
-    public enum ReviewStatus
+    public enum EntityStatus
     {
         UnderConsideration,
         Verified,

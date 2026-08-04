@@ -18,6 +18,17 @@ namespace CategoryMicroservice.Api.Controllers
         ILogger<CategoryController> logger, IMessagePublisher messagePublisher) : ControllerBase
     {
         [HttpGet]
+        [Route("get-by-id/{categoryId}")]
+        public async Task<IActionResult> GetCategoryByIdAsync([FromRoute] Guid categoryId)
+        {
+            var category = await unitOfWork.CategoryRepository.GetByIdAsync(categoryId);
+            if (category == null)
+                return NotFound("Category with current identifier does not exist");
+
+            return Ok(category);
+        }
+
+        [HttpGet]
         [Route("all")]
         public async Task<IActionResult> GetAllCategoriesAsync()
             => Ok(await categoryRepository.GetAllAsync());

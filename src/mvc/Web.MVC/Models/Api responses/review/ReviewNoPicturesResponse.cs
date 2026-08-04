@@ -1,6 +1,4 @@
-﻿using Web.MVC.Models.Api_responses.review.enums;
-
-namespace Web.MVC.Models.Api_responses.review
+﻿namespace Web.MVC.Models.Api_responses.review
 {
     public class ReviewNoPicturesResponse
     {
@@ -16,7 +14,7 @@ namespace Web.MVC.Models.Api_responses.review
         public Guid ItemId { get; set; }
 
         public Guid UserId { get; set; }
-        public ReviewStatus ReviewStatus { get; set; }
+        public EntityStatus ReviewStatus { get; set; }
         public string? RejectionReason { get; set; }
         public bool IsCreatedWithItem { get; set; }
     }

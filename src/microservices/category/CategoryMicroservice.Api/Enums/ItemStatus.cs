@@ -4,6 +4,7 @@
     {
         Pending,
         UnderConsideration,
-        Verified
+        Verified,
+        Rejected
     }
 }

@@ -1,4 +1,5 @@
-﻿using CategoryMicroservice.Api.Models.Business;
+﻿using CategoryMicroservice.Api.Enums;
+using CategoryMicroservice.Api.Models.Business;
 using Microsoft.EntityFrameworkCore;
 
 namespace CategoryMicroservice.Api.Database
@@ -14,6 +15,8 @@ namespace CategoryMicroservice.Api.Database
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            builder.Entity<Item>().HasIndex(x => x.Name).IsUnique().HasFilter($"\"{nameof(Item.Status)}\" = {(int)ItemStatus.Verified}");
 
             builder.Entity<Category>().HasIndex(x => x.Name).IsUnique();
             builder.Entity<Category>()

@@ -5,8 +5,8 @@ namespace Web.MVC.DTOs.category
 {
     public class AddSubcategoryDto
     {
-        [Required]
-        [StringLength(StringLengthDtoConstants.SubcategoryNameMax)]
+        [Required(ErrorMessage = "Поле \"Название подкатегории\" обязательно")]
+        [StringLength(StringLengthDtoConstants.SubcategoryNameMax, ErrorMessage = "Превышено максимальное количество символов")]
         public string Name { get; set; }
 
         [Required]

@@ -34,6 +34,17 @@ namespace CategoryMicroservice.Api.Controllers
         }
 
         [HttpGet]
+        [Route("get-by-name")]
+        public async Task<IActionResult> GetItemByNameAsync([FromQuery] string name)
+        {
+            var item = await unitOfWork.ItemRepository.GetVerifiedItemByNameAsync(name);
+            if (item == null)
+                return NotFound("Verified item with current name does not exist");
+
+            return Ok(item);
+        }
+
+        [HttpGet]
         [Route("get-all-by-subcategory/{subcategoryId}")]
         public async Task<IActionResult> GetAllItemsBySubcategoryIdAsync([FromRoute] Guid subcategoryId, [FromQuery] Pagination pagination)
         {

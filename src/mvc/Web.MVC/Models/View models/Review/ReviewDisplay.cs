@@ -17,5 +17,6 @@ namespace Web.MVC.Models.View_models.Review
 
         public ItemDisplay Item { get; set; }
         public UserDisplay CreatedByUser { get; set; }
+        public bool IsCreatedWithItem { get; set; }
     }
 }

@@ -1,0 +1,341 @@
+﻿@using Web.MVC.Constants
+@model Web.MVC.Models.View_models.Admin.GetReviewByIdAdminViewModel
+<link rel="stylesheet" href="~/css/admin/get-review-by-id.css"/>
+<link rel="stylesheet" href="~/css/admin/unit-consideration.css"/>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
+<script src="https://cdn.jsdelivr.net/npm/@@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+
+@{
+    string GetReviewWord(int count)
+    {
+        int mod100 = count % 100;
+        int mod10 = count % 10;
+
+        if (mod10 == 1 && mod100 != 11) return "отзыв";
+        if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "отзыва";
+        return "отзывов";
+    }
+}
+
+<div class="get-review-by-id-page-block">
+    <div id="unitBlock">
+        @if (Model.Review.IsCreatedWithItem && Model.ActualItem == null)
+        {
+            <h3 style="color: red;">Отзыв создается вместе с товаром</h3>
+            <div class="border-block">
+                <h4>Категория: @Model.CategoryInfo!.CategoryName</h4>
+                <h4>Подкатегория:
+                    <a class="themed-link-on-hover" asp-controller="Category" asp-action="GetItemsBySubcategoryId"
+                       asp-route-subcategoryId="@Model.CategoryInfo.SubcategoryId">
+                        @Model.CategoryInfo.SubcategoryName
+                    </a></h4>
+            </div>
+        }
+
+        <div class="border-block">
+            @if (Model.ActualItem != null)
+            {
+                <h3 style="margin-bottom: 18px;">@Model.ActualItem.Name</h3>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <img src="@Model.ActualItem.PictureSrc" style="max-width: 220px; max-height: 220px;" />
+                    <div>
+                        <div class="star-rating" style="font-size: 30px;">
+                            <div class="star-rating-fill" style="width: @(Model.ActualItem.GeneralEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                        </div>
+                        <p style="color: gray; font-size: 14px; font-weight: 700;">
+                            Среднее: @Model.ActualItem.GeneralEstimation (@Model.ActualItem.ReviewsCount @GetReviewWord(Model.ActualItem.ReviewsCount))
+                        </p>
+                        @if (Model.ActualItem.Brand != null)
+                        {
+                            <p style="font-size: 15px;">Бренд: @Model.ActualItem.Brand</p>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <h3 style="margin-bottom: 18px;">@Model.Review.Item.Name</h3>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <img src="@Model.Review.Item.PictureSrc" style="max-width: 220px; max-height: 220px;" />
+                    <div>
+                        @if (!Model.Review.IsCreatedWithItem)
+                        {
+                            <div class="star-rating" style="font-size: 30px;">
+                                <div class="star-rating-fill" style="width: @(Model.Review.Item.GeneralEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                            </div>
+                            <p style="color: gray; font-size: 14px; font-weight: 700;">
+                                Среднее: @Model.Review.Item.GeneralEstimation (@Model.Review.Item.ReviewsCount @GetReviewWord(Model.Review.Item.ReviewsCount))
+                            </p>
+                        }
+                        @if (Model.Review.Item.Brand != null)
+                        {
+                            <p style="font-size: 15px;">Бренд: @Model.Review.Item.Brand</p>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="border-block">
+            <div>
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 5px;">
+                    <img src="@Model.Review.CreatedByUser.AvatarSrc" style="width: 50px; height: 50px; object-fit: cover;" />
+                    <a class="user-name-link" asp-controller="User" asp-action="GetUserById" asp-route-userId="@Model.Review.CreatedByUser.Id">
+                        @Model.Review.CreatedByUser.UserName
+                    </a>
+                </div>
+                <div style="display: flex; align-items: center; gap: 7px; margin: 12px 0 12px 0;">
+                    <h4 style="margin-top: 8px;">Оценка:</h4>
+                    <div class="star-rating" style="font-size: 30px;">
+                        <div class="star-rating-fill" style="width: @(Model.Review.ItemEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div style="margin-bottom: 15px;">
+                    <h5 style="margin: 0 0 3px 0;">Краткий отзыв:</h5>
+                    @Html.Raw(Model.Review.ShortReview)
+                </div>
+
+                <div>
+                    <h5 style="margin: 0 0 3px 0;">Текст отзыва:</h5>
+                    @Html.Raw(Model.Review.Text)
+                </div>
+
+                @if (Model.Review.PicturesSrc.Any())
+                {
+                    int maxVisiblePhotos = 4;
+                    int totalPhotos = Model.Review.PicturesSrc.Count;
+
+                    <div class="review-images-grid" id="review-gallery-grid">
+                        @for (int i = 0; i < totalPhotos; i++)
+                        {
+                            bool isHidden = i >= maxVisiblePhotos;
+                            bool isLastVisibleWithMore = (i == maxVisiblePhotos - 1) && (totalPhotos > maxVisiblePhotos);
+
+                            <div class="review-img-wrapper @(isHidden ? "hidden-photo" : "") @(isLastVisibleWithMore ? "has-more" : "")"
+                                 @(isLastVisibleWithMore ? $"data-more-text=+{totalPhotos - maxVisiblePhotos + 1}" : "")>
+
+                                <a href="@Url.Content(Model.Review.PicturesSrc[i])" data-fancybox="review-gallery">
+                                    <img src="@Url.Content(Model.Review.PicturesSrc[i])" class="review-img-thumb" alt="Фото отзыва"/>
+                                </a>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="consideration-btns">
+            <button class="reject-unit" id="rejectUnitBtn">Отклонить</button>
+            <form method="post" asp-controller="Admin" asp-action="AcceptReview" asp-route-reviewId="@Model.Review.Id">
+                <button type="submit" class="accept-unit">Принять</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="restrictionBlock">
+        <form id="rejectReviewForm" method="post" asp-controller="Admin" asp-action="RejectReview" asp-route-reviewId="@Model.Review.Id">
+            <div id="errorMessageContainer" style="display: none; color: red; margin-bottom: 3px;"></div>
+            <div class="form-group">
+                <label for="rejectionReason">Причина отклонения</label>
+                <textarea id="rejectionReason"
+                          class="restriction-textarea"
+                          placeholder="Введите причину отказа"
+                          rows="3"
+                          name="RejectionReason"
+                          maxlength="@StringLengthDtoConstants.ReviewRejectReasonMax"></textarea>
+            </div>
+
+            <label class="restriction-toggle-row" for="enableRestrictionCheckbox">
+                <span class="switch">
+                    <input type="checkbox" id="enableRestrictionCheckbox"/>
+                    <span class="switch-slider"></span>
+                </span>
+                <span>Также заблокировать пользователя</span>
+            </label>
+
+            <div id="restrictionFields" class="restriction-fields">
+                <div>
+                    @if (Model.IsUserRestricted)
+                    {
+                        <div style="color: red; margin-bottom: 15px;">
+                            <p>Пользователь имеет ограничение. Перед блокировкой необходимо снять это ограничение в его профиле.</p>
+                        </div>
+                    }
+                    <input type="text" class="hidden" id="isUserRestrictedInput" value="@Model.IsUserRestricted.ToString()" />
+                </div>
+
+                <div class="form-group">
+                    <label>Тип блокировки</label>
+                    <div class="radio-pill-group">
+                        <label class="radio-pill">
+                            <input type="radio" name="AddRestriction.RestrictionType" value="ReviewPosting" checked disabled/>
+                            <span>Создание отзывов</span>
+                        </label>
+                        <label class="radio-pill">
+                            <input type="radio" name="AddRestriction.RestrictionType" value="All" disabled/>
+                            <span>Все действия</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="restrictionDurationBlock">
+                    <label for="restrictionDuration">Длительность (в днях)</label>
+                    <input type="number" id="restrictionDuration" name="AddRestriction.DurationInDays" min="0" placeholder="Например, 7" disabled/>
+                </div>
+
+                <label class="checkbox-row" for="isPermanentInput">
+                    <input id="isPermanentInput" type="checkbox" name="AddRestriction.IsPermanent" value="false" disabled/>
+                    <span class="checkbox-custom"></span>
+                    <span class="checkbox-label">Заблокировать навсегда</span>
+                </label>
+
+                <div class="form-group">
+                    <label for="blockReason">Причина блокировки</label>
+                    <textarea id="blockReason"
+                              class="restriction-textarea"
+                              name="AddRestriction.Reason"
+                              rows="3"
+                              placeholder="Введите причину блокировки"
+                              maxlength="@StringLengthDtoConstants.RestrictionReasonMax"
+                              disabled></textarea>
+                </div>
+            </div>
+
+            <div class="restriction-panel-actions">
+                <button type="button" class="cancel-restriction" id="cancelRejectBtn">Отмена</button>
+                <button type="submit" class="reject">Отклонить отзыв</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const rejectUnitBtn = document.getElementById('rejectUnitBtn');
+    const cancelRejectBtn = document.getElementById('cancelRejectBtn');
+    const restrictionBlock = document.getElementById('restrictionBlock');
+
+    function openRestrictionBlock() {
+        restrictionBlock.classList.add('open');
+        restrictionBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function closeRestrictionBlock() {
+        restrictionBlock.classList.remove('open');
+    }
+
+    rejectUnitBtn.addEventListener('click', openRestrictionBlock);
+    cancelRejectBtn.addEventListener('click', closeRestrictionBlock);
+
+    const enableRestrictionCheckbox = document.getElementById('enableRestrictionCheckbox');
+    const restrictionFields = document.getElementById('restrictionFields');
+    const restrictionInputs = restrictionFields.querySelectorAll('input, textarea');
+
+    enableRestrictionCheckbox.addEventListener('change', function () {
+        const enabled = this.checked;
+
+        restrictionFields.classList.toggle('expanded', enabled);
+        restrictionInputs.forEach(input => { input.disabled = !enabled; });
+    });
+
+    const restrictionDurationBlock = document.getElementById('restrictionDurationBlock');
+    const restrictionDurationInput = document.getElementById('restrictionDuration');
+    const isPermanentInput = document.getElementById('isPermanentInput');
+
+    isPermanentInput.addEventListener('change', function() {
+        const isPermanent = this.checked;
+        this.value = isPermanent ? 'true' : 'false';
+        restrictionDurationBlock.style.display = isPermanent ? 'none' : '';
+        if (isPermanent) {
+            restrictionDurationInput.value = '0';
+        }
+    });
+</script>
+
+<script>
+    const isUserRestricted = document.getElementById('isUserRestrictedInput').value.toLowerCase() === 'true';
+    const errorMessageContainer = document.getElementById('errorMessageContainer');
+    const rejectReviewForm = document.getElementById('rejectReviewForm');
+    let rejectProcessing = false;
+
+    rejectReviewForm.addEventListener('submit', async function(e){
+        e.preventDefault();
+
+        if (enableRestrictionCheckbox.checked && isUserRestricted) {
+            return;
+        }
+
+            if (rejectProcessing) return;
+        rejectProcessing = true;
+
+        let formData;
+        if (enableRestrictionCheckbox.checked) {
+            formData = new FormData(rejectReviewForm);
+        } else {
+            formData = new FormData();
+            formData.append(rejectionReason.name, rejectionReason.value);
+        }
+
+        try {
+            const response = await fetch(this.action,
+                {
+                    method: this.method,
+                    body: formData
+                });
+
+            if (response.redirected)
+            {
+                window.location.href = response.url;
+            } else if (response.status === 400) {
+                const result = await response.json();
+
+                errorMessageContainer.textContent = '';
+
+                if (result.errors && result.errors.length > 0)
+                {
+                    result.errors.forEach(error => {
+                        const errorItem = document.createElement('div');
+                        errorItem.textContent = error;
+                        errorMessageContainer.appendChild(errorItem);
+                    });
+                    errorMessageContainer.style.display = 'block';
+                }
+            } else {
+                errorMessageContainer.textContent = 'Что-то пошло не так';
+                errorMessageContainer.style.display = 'block';
+            }
+        } catch (e) {
+            errorMessageContainer.textContent = 'Что-то пошло не так';
+            errorMessageContainer.style.display = 'block';
+            console.log('Failed to execute');
+        } finally {
+            rejectProcessing = false;
+        }
+    });
+</script>
+
+<script>
+    const blockReason = document.getElementById('blockReason');
+    const rejectionReason = document.getElementById('rejectionReason');
+
+    function autoResize(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
+    blockReason.addEventListener('input', () => autoResize(blockReason));
+    rejectionReason.addEventListener('input', () => autoResize(rejectionReason));
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        Fancybox.bind("[data-fancybox='review-gallery']", {
+            Infinite: true,
+            Images: { Panzoom: { maxScale: 3 } }
+        });
+    });
+</script>

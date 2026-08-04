@@ -14,5 +14,7 @@
         public const int ShortReviewMax = 500;
         public const int ReviewTextMax = 2000;
         public const int CommentTextMax = 500;
+        public const int RestrictionReasonMax = 250;
+        public const int ReviewRejectReasonMax = 500;
     }
 }

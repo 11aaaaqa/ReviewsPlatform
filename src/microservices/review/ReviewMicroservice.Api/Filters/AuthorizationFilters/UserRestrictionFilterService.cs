@@ -32,7 +32,10 @@ namespace ReviewMicroservice.Api.Filters.AuthorizationFilters
                     foreach (var restrictionType in restrictionTypes)
                     {
                         if (restrictionInfoReply.RestrictionType == restrictionType)
+                        {
                             context.Result = new ForbidResult();
+                            return;
+                        }
                     }
                 }
             }

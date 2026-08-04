@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ReviewMicroservice.Api.Database;
+using ReviewMicroservice.Api.Enums;
 using ReviewMicroservice.Api.Exceptions;
 using ReviewMicroservice.Api.Models.Business.Comments;
 
@@ -13,7 +14,7 @@ namespace ReviewMicroservice.Api.Services.CommentServices
         public async Task<List<Comment>> GetByReviewIdAsync(Guid reviewId, int pageSize, int pageNumber)
         {
             return await context.Comments
-                .Where(x => x.CommentStatus == CommentStatus.Verified)
+                .Where(x => x.CommentStatus == EntityStatus.Verified)
                 .Where(x => x.ReviewId == reviewId)
                 .Where(x => x.ParentCommentId == null)
                 .OrderByDescending(x => x.CreatedAt)
@@ -26,7 +27,7 @@ namespace ReviewMicroservice.Api.Services.CommentServices
         public async Task<List<Comment>> GetCommentRepliesAsync(Guid parentCommentId, int pageSize, int pageNumber)
         {
             return await context.Comments
-                .Where(x => x.CommentStatus == CommentStatus.Verified)
+                .Where(x => x.CommentStatus == EntityStatus.Verified)
                 .Where(x => x.ParentCommentId == parentCommentId)
                 .OrderBy(x => x.CreatedAt)
                 .ThenBy(x => x.Id)
@@ -38,7 +39,7 @@ namespace ReviewMicroservice.Api.Services.CommentServices
         public async Task<List<Comment>> GetByUserIdAsync(Guid userId, int pageSize, int pageNumber)
         {
             return await context.Comments
-                .Where(x => x.CommentStatus == CommentStatus.Verified)
+                .Where(x => x.CommentStatus == EntityStatus.Verified)
                 .Where(x => x.UserId == userId)
                 .OrderByDescending(x => x.CreatedAt)
                 .ThenBy(x => x.Id)

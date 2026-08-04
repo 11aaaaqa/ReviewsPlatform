@@ -10,7 +10,7 @@ namespace Web.MVC.DTOs.account
 
         [Required(ErrorMessage = "Поле \"Имя пользователя\" обязательно")]
         [Display(Name = "Имя пользователя")]
-        [StringLength(StringLengthDtoConstants.UserNameMax)]
+        [StringLength(StringLengthDtoConstants.UserNameMax, ErrorMessage = "Превышено максимальное количество символов у имени пользователя")]
         public string UserName
         {
             get => userName;
@@ -20,7 +20,7 @@ namespace Web.MVC.DTOs.account
         [Required(ErrorMessage = "Поле \"Адрес эл. почты\" обязательно")]
         [Display(Name = "Адрес эл. почты")]
         [DataType(DataType.EmailAddress)]
-        [StringLength(StringLengthDtoConstants.EmailAddressMax)]
+        [StringLength(StringLengthDtoConstants.EmailAddressMax, ErrorMessage = "Превышено максимальное количество символов у адреса эл. почты")]
         public string Email { get; set; }
 
         [Required(ErrorMessage = "Поле \"Пароль\" обязательно")]

@@ -1,0 +1,21 @@
+﻿using Web.MVC.Models.Api_responses.restriction.enums;
+
+namespace Web.MVC.Models.Api_responses.restriction
+{
+    public class RestrictionResponse
+    {
+        public Guid Id { get; set; }
+        public Guid RestrictedUserId { get; set; }
+        public Guid RestrictingUserId { get; set; }
+        public RestrictionType RestrictionType { get; set; }
+        public DateTime ExpiryTime { get; set; }
+        public bool IsPermanent { get; set; }
+        public string Reason { get; set; }
+        public DateTime CreatedAt { get; set; }
+
+        public bool IsDisabled { get; set; }
+        public Guid DisabledByUserId { get; set; }
+        public DateTime DisabledAt { get; set; }
+        public string? DisablingReason { get; set; }
+    }
+}

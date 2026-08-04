@@ -10,5 +10,7 @@ namespace ReviewMicroservice.Api.DTOs.review
         [Required]
         [StringLength(500)]
         public string RejectionReason { get; set; }
+
+        public AddRestrictionDto? AddRestriction { get; set; }
     }
 }

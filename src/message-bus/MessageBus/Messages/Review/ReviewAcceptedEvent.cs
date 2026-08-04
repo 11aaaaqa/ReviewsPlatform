@@ -4,6 +4,7 @@ namespace MessageBus.Messages.Review
 {
     public class ReviewAcceptedEvent : MessageBase
     {
+        public Guid ReviewId { get; set; }
         public Guid ItemId { get; set; }
         public bool IsReviewCreatedWithItem { get; set; }
         public int ItemEstimation { get; set; }
