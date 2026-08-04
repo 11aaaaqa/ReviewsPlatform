@@ -56,7 +56,8 @@ builder.Services.AddRabbitMqMessageBus(new RabbitMqOptions
     .AddMessageBusHandler<CategoryRemovedEvent, CategoryRemovedEventConsumer>()
     .AddMessageBusHandler<SubcategoryRemovedEvent, SubcategoryRemovedEventConsumer>()
     .AddMessageBusHandler<UserRestrictedSagaEvent, UserRestrictedSagaEventConsumer>()
-    .AddMessageBusHandler<UserFailedToBeRestrictedSagaEvent, UserFailedToBeRestrictedSagaEventConsumer>();
+    .AddMessageBusHandler<UserFailedToBeRestrictedSagaEvent, UserFailedToBeRestrictedSagaEventConsumer>()
+    .AddMessageBusHandler<ItemMergedEvent, ItemMergedEventConsumer>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();

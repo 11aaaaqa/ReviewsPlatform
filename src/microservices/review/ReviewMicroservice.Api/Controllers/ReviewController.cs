@@ -275,7 +275,10 @@ namespace ReviewMicroservice.Api.Controllers
                 await unitOfWork.CompleteAsync();
 
                 await messagePublisher.PublishAsync(new ReviewAcceptedEvent
-                    { ItemId = review.ItemId, IsReviewCreatedWithItem = review.IsCreatedWithItem, ItemEstimation = review.ItemEstimation });
+                {
+                    ItemId = review.ItemId, IsReviewCreatedWithItem = review.IsCreatedWithItem,
+                    ItemEstimation = review.ItemEstimation, ReviewId = review.Id
+                });
 
                 await unitOfWork.CommitTransactionAsync();
             }

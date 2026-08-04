@@ -166,16 +166,36 @@ namespace Web.MVC.Controllers
 
             if (review.IsCreatedWithItem)
             {
-                var subcategoryResponse = await httpClient.GetAsync($"/api/Subcategory/get-by-id/{item.SubcategoryId}");
-                subcategoryResponse.EnsureSuccessStatusCode();
-                var subcategory = await subcategoryResponse.Content.ReadFromJsonAsync<SubcategoryResponse>();
+                var actualItemResponse = await httpClient.GetAsync($"/api/Item/get-by-name?name={item.Name}");
+                if (!actualItemResponse.IsSuccessStatusCode)
+                {
+                    if (actualItemResponse.StatusCode != HttpStatusCode.NotFound)
+                        actualItemResponse.EnsureSuccessStatusCode();
+                    else
+                    {
+                        var subcategoryResponse = await httpClient.GetAsync($"/api/Subcategory/get-by-id/{item.SubcategoryId}");
+                        subcategoryResponse.EnsureSuccessStatusCode();
+                        var subcategory = await subcategoryResponse.Content.ReadFromJsonAsync<SubcategoryResponse>();
 
-                var categoryResponse = await httpClient.GetAsync($"/api/Category/get-by-id/{subcategory!.CategoryId}");
-                categoryResponse.EnsureSuccessStatusCode();
-                var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryResponse>();
-                
-                model.CategoryInfo = new GetReviewCategoryInfo(CategoryName: category!.Name,
-                    SubcategoryId: subcategory.Id, SubcategoryName: subcategory.Name);
+                        var categoryResponse = await httpClient.GetAsync($"/api/Category/get-by-id/{subcategory!.CategoryId}");
+                        categoryResponse.EnsureSuccessStatusCode();
+                        var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryResponse>();
+
+                        model.CategoryInfo = new GetReviewCategoryInfo(CategoryName: category!.Name,
+                            SubcategoryId: subcategory.Id, SubcategoryName: subcategory.Name);
+                    }
+                }
+                else
+                {
+                    var actualItem = await actualItemResponse.Content.ReadFromJsonAsync<ItemResponse>();
+                    model.ActualItem = new ItemDisplay
+                    {
+                        Brand = actualItem!.Brand, GeneralEstimation = actualItem.GeneralEstimation, Id = actualItem.Id,
+                        Name = actualItem.Name, ReviewsCount = actualItem.ReviewsCount,
+                        SubcategoryId = actualItem.SubcategoryId,
+                        PictureSrc = imageConverter.GetImageSrc(actualItem.Picture)
+                    };
+                }
             }
 
             return View(model);

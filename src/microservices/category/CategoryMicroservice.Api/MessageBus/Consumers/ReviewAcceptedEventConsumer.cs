@@ -1,11 +1,14 @@
 ﻿using CategoryMicroservice.Api.Enums;
 using CategoryMicroservice.Api.Services.UnitOfWork;
 using MessageBus.Handler;
+using MessageBus.Messages.Category;
 using MessageBus.Messages.Review;
+using MessageBus.Publisher;
 
 namespace CategoryMicroservice.Api.MessageBus.Consumers
 {
-    public class ReviewAcceptedEventConsumer(IUnitOfWork unitOfWork) : IMessageHandler<ReviewAcceptedEvent>
+    public class ReviewAcceptedEventConsumer(IUnitOfWork unitOfWork, IMessagePublisher messagePublisher)
+        : IMessageHandler<ReviewAcceptedEvent>
     {
         public async Task HandleAsync(ReviewAcceptedEvent message)
         {
@@ -25,6 +28,8 @@ namespace CategoryMicroservice.Api.MessageBus.Consumers
                     unitOfWork.ItemRepository.Update(existingItem);
 
                     await unitOfWork.ItemRepository.RemoveAsync(item.Id);
+
+                    await messagePublisher.PublishAsync(new ItemMergedEvent { ReviewId = message.ReviewId, MergedItemId = existingItem.Id });
                 }
                 else
                 {

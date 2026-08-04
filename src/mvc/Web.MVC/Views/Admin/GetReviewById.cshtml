@@ -21,7 +21,7 @@
 
 <div class="get-review-by-id-page-block">
     <div id="unitBlock">
-        @if (Model.Review.IsCreatedWithItem)
+        @if (Model.Review.IsCreatedWithItem && Model.ActualItem == null)
         {
             <h3 style="color: red;">Отзыв создается вместе с товаром</h3>
             <div class="border-block">
@@ -35,25 +35,47 @@
         }
 
         <div class="border-block">
-            <h3 style="margin-bottom: 18px;">@Model.Review.Item.Name</h3>
-            <div style="display: flex; gap: 15px; align-items: center;">
-                <img src="@Model.Review.Item.PictureSrc" style="max-width: 220px; max-height: 220px;" />
-                <div>
-                    @if (!Model.Review.IsCreatedWithItem)
-                    {
+            @if (Model.ActualItem != null)
+            {
+                <h3 style="margin-bottom: 18px;">@Model.ActualItem.Name</h3>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <img src="@Model.ActualItem.PictureSrc" style="max-width: 220px; max-height: 220px;" />
+                    <div>
                         <div class="star-rating" style="font-size: 30px;">
-                            <div class="star-rating-fill" style="width: @(Model.Review.Item.GeneralEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                            <div class="star-rating-fill" style="width: @(Model.ActualItem.GeneralEstimation * 20)%; font-size: 30px;">★★★★★</div>
                         </div>
                         <p style="color: gray; font-size: 14px; font-weight: 700;">
-                            Среднее: @Model.Review.Item.GeneralEstimation (@Model.Review.Item.ReviewsCount @GetReviewWord(Model.Review.Item.ReviewsCount))
+                            Среднее: @Model.ActualItem.GeneralEstimation (@Model.ActualItem.ReviewsCount @GetReviewWord(Model.ActualItem.ReviewsCount))
                         </p>
-                    }
-                    @if (Model.Review.Item.Brand != null)
-                    {
-                        <p style="font-size: 15px;">Бренд: @Model.Review.Item.Brand</p>
-                    }
+                        @if (Model.ActualItem.Brand != null)
+                        {
+                            <p style="font-size: 15px;">Бренд: @Model.ActualItem.Brand</p>
+                        }
+                    </div>
                 </div>
-            </div>
+            }
+            else
+            {
+                <h3 style="margin-bottom: 18px;">@Model.Review.Item.Name</h3>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <img src="@Model.Review.Item.PictureSrc" style="max-width: 220px; max-height: 220px;" />
+                    <div>
+                        @if (!Model.Review.IsCreatedWithItem)
+                        {
+                            <div class="star-rating" style="font-size: 30px;">
+                                <div class="star-rating-fill" style="width: @(Model.Review.Item.GeneralEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                            </div>
+                            <p style="color: gray; font-size: 14px; font-weight: 700;">
+                                Среднее: @Model.Review.Item.GeneralEstimation (@Model.Review.Item.ReviewsCount @GetReviewWord(Model.Review.Item.ReviewsCount))
+                            </p>
+                        }
+                        @if (Model.Review.Item.Brand != null)
+                        {
+                            <p style="font-size: 15px;">Бренд: @Model.Review.Item.Brand</p>
+                        }
+                    </div>
+                </div>
+            }
         </div>
 
         <div class="border-block">
