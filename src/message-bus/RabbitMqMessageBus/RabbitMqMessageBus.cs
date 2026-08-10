@@ -67,7 +67,8 @@ namespace RabbitMqMessageBus
                         UserName = rabbitMqOptions.UserName,
                         Password = rabbitMqOptions.Password,
                         VirtualHost = rabbitMqOptions.VirtualHost,
-                        HostName = rabbitMqOptions.HostName
+                        HostName = rabbitMqOptions.HostName,
+                        AutomaticRecoveryEnabled = true
                     };
 
                     await Policy.Handle<Exception>().WaitAndRetryAsync(10, _ => TimeSpan.FromSeconds(3),
@@ -143,8 +144,6 @@ namespace RabbitMqMessageBus
             {
                 logger.LogCritical(ex, "Exception was thrown while handling message {RoutingKey}", eventArgs.RoutingKey);
                 await consumerChannel!.BasicNackAsync(deliveryTag: eventArgs.DeliveryTag, multiple: false, requeue: false, CancellationToken.None);
-
-                throw;
             }
             
             await consumerChannel!.BasicAckAsync(deliveryTag: eventArgs.DeliveryTag, multiple: false);
