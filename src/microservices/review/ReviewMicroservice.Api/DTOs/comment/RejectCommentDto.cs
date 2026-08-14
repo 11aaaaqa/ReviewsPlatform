@@ -1,4 +1,5 @@
 ﻿using Ganss.Xss;
+using ReviewMicroservice.Api.DTOs.review;
 using System.ComponentModel.DataAnnotations;
 
 namespace ReviewMicroservice.Api.DTOs.comment
@@ -18,5 +19,7 @@ namespace ReviewMicroservice.Api.DTOs.comment
             set => htmlSanitizer.Sanitize(value);
         }
         private string reason;
+
+        public AddRestrictionDto? AddRestriction { get; set; }
     }
 }
