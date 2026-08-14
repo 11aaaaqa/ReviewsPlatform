@@ -10,7 +10,7 @@ namespace RestrictionMicroservice.Api.Services.UnitOfWork
 
         Task CompleteAsync();
         Task BeginTransactionAsync();
-        Task CommitAsync();
+        Task CommitTransactionAsync();
         Task RollbackTransactionAsync();
     }
 }

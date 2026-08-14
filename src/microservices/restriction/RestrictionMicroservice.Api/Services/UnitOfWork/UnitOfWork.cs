@@ -32,7 +32,7 @@ namespace RestrictionMicroservice.Api.Services.UnitOfWork
             transaction = await context.Database.BeginTransactionAsync();
         }
 
-        public async Task CommitAsync()
+        public async Task CommitTransactionAsync()
         {
             if (transaction == null)
                 throw new TransactionHasNotBegunException();
