@@ -168,6 +168,7 @@ namespace ReviewMicroservice.Api.Controllers
             {
                 await unitOfWork.BeginTransactionAsync();
 
+                comment.CreatedAt = DateTime.UtcNow;
                 comment.CommentStatus = EntityStatus.Verified;
                 comment.ConsideredByUserId = userId;
                 unitOfWork.CommentRepository.Update(comment);
