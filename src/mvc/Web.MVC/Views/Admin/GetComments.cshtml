@@ -1,0 +1,38 @@
+﻿@using System.Globalization
+@model Web.MVC.Models.View_models.Admin.GetCommentsViewModel
+<link rel="stylesheet" href="~/css/admin/units-list.css" />
+
+<div class="units-page">
+    <div>
+        @foreach (var comment in Model.Comments)
+        {
+            <a class="unit-block" asp-controller="Admin" asp-action="GetCommentById" asp-route-commentId="@comment.Id">
+                <div class="unit-text">@Html.Raw(comment.Text)</div>
+                <p>Дата создания: @comment.CreatedAt.ToString(CultureInfo.GetCultureInfo("ru-RU"))</p>
+            </a>
+        }
+    </div>
+
+    @if (Model.Comments.Count > 0)
+    {
+        <div class="pagination">
+            @if (Model.CurrentPageNumber == 1)
+            {
+                <button disabled>Назад</button>
+            }
+            else
+            {
+                <a asp-controller="Admin" asp-action="GetComments" asp-route-pageNumber="@(Model.CurrentPageNumber - 1)">Назад</a>
+            }
+
+            @if (Model.IsNextPageExisted)
+            {
+                <a asp-controller="Admin" asp-action="GetComments" asp-route-pageNumber="@(Model.CurrentPageNumber + 1)">Вперёд</a>
+            }
+            else
+            {
+                <button disabled>Вперёд</button>
+            }
+        </div>
+    }
+</div>

@@ -8,6 +8,7 @@ using Web.MVC.Constants;
 using Web.MVC.DTOs.admin;
 using Web.MVC.Models.Api_responses.account;
 using Web.MVC.Models.Api_responses.category;
+using Web.MVC.Models.Api_responses.comment;
 using Web.MVC.Models.Api_responses.review;
 using Web.MVC.Models.View_models.Admin;
 using Web.MVC.Models.View_models.Category;
@@ -260,6 +261,144 @@ namespace Web.MVC.Controllers
             }
 
             return RedirectToAction("GetReviews");
+        }
+
+        [HttpGet]
+        [Route("admin/panel/under-consideration/comments")]
+        public async Task<IActionResult> GetComments(int pageNumber = 1)
+        {
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+
+            int pageSize = 30;
+
+            var commentsResponse = await httpClient.GetAsync(
+                $"/api/Comment/get-under-consideration?pageNumber={pageNumber}&pageSize={pageSize}");
+            commentsResponse.EnsureSuccessStatusCode();
+            var commentsResult = await commentsResponse.Content.ReadFromJsonAsync<CommentsResultResponse>();
+
+            return View(new GetCommentsViewModel
+            {
+                Comments = commentsResult!.Comments, CurrentPageNumber = pageNumber,
+                IsNextPageExisted = commentsResult.IsNextPageExisted
+            });
+        }
+
+        [HttpGet]
+        [Route("admin/panel/under-consideration/comments/{commentId}")]
+        public async Task<IActionResult> GetCommentById([FromRoute] Guid commentId)
+        {
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+
+            var commentResponse = await httpClient.GetAsync($"/api/Comment/get-by-id/{commentId}");
+            commentResponse.EnsureSuccessStatusCode();
+            var comment = await commentResponse.Content.ReadFromJsonAsync<CommentResponse>();
+
+            var userCreatedByResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{comment!.UserId}");
+            userCreatedByResponse.EnsureSuccessStatusCode();
+            var userCreatedBy = await userCreatedByResponse.Content.ReadFromJsonAsync<UserResponse>();
+
+            var reviewResponse = await httpClient.GetAsync($"/api/Review/get-by-id/{comment.ReviewId}");
+            reviewResponse.EnsureSuccessStatusCode();
+            var review = await reviewResponse.Content.ReadFromJsonAsync<ReviewResponse>();
+
+            var itemResponse = await httpClient.GetAsync($"/api/Item/get-by-id/{review!.ItemId}");
+            itemResponse.EnsureSuccessStatusCode();
+            var item = await itemResponse.Content.ReadFromJsonAsync<ItemResponse>();
+
+            var userDisplay = new UserDisplay
+            {
+                Id = userCreatedBy!.Id, Roles = userCreatedBy.Roles, Email = userCreatedBy.Email,
+                AvatarSrc = imageConverter.GetImageSrc(userCreatedBy.AvatarSource),
+                IsAvatarDefault = userCreatedBy.IsAvatarDefault, IsEmailVerified = userCreatedBy.IsEmailVerified,
+                RegistrationDate = userCreatedBy.RegistrationDate, UserName = userCreatedBy.UserName
+            };
+
+            var itemDisplay = new ItemDisplay
+            {
+                Id = item!.Id, Brand = item.Brand, GeneralEstimation = item.GeneralEstimation,
+                Name = item.Name, ReviewsCount = item.ReviewsCount, SubcategoryId = item.SubcategoryId,
+                PictureSrc = imageConverter.GetImageSrc(item.Picture)
+            };
+
+            GetCommentByIdViewModel model = new()
+            {
+                Review = review, Comment = comment, IsUserRestricted = false, Item = itemDisplay,
+                UserCommentCreatedBy = userDisplay
+            };
+
+            var restrictionResponse = await httpClient.GetAsync($"/api/Restriction/get-active/{userCreatedBy.Id}");
+            if (restrictionResponse.IsSuccessStatusCode)
+            {
+                model.IsUserRestricted = true;
+            }
+            else
+            {
+                if (restrictionResponse.StatusCode != HttpStatusCode.NotFound)
+                    restrictionResponse.EnsureSuccessStatusCode();
+            }
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [Route("admin/panel/under-consideration/comments/{commentId}/accept")]
+        public async Task<IActionResult> AcceptComment([FromRoute] Guid commentId)
+        {
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+
+            var acceptCommentResponse = await httpClient.GetAsync($"/api/Comment/accept-comment/{commentId}");
+            acceptCommentResponse.EnsureSuccessStatusCode();
+
+            return RedirectToAction("GetComments");
+        }
+
+        [HttpPost]
+        [Route("admin/panel/under-consideration/comments/{commentId}/reject")]
+        public async Task<IActionResult> RejectComment([FromRoute] Guid commentId, [FromForm] RejectCommentDto model)
+        {
+            if (model.AddRestriction is { IsPermanent: false, DurationInDays: <= 0 })
+                ModelState.AddModelError(string.Empty, "Длительность блокировки не может быть отрицательной или равной 0");
+
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList();
+                return BadRequest(new { errors });
+            }
+
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+
+            if (model.AddRestriction != null)
+            {
+                TimeSpan duration = TimeSpan.Zero;
+                if (!model.AddRestriction.IsPermanent)
+                    duration = new TimeSpan(days: model.AddRestriction.DurationInDays, 0, 0, 0);
+
+                using StringContent jsonContent = new(JsonSerializer.Serialize(new
+                {
+                    CommentId = commentId,
+                    Reason = model.RejectionReason,
+                    AddRestriction = new
+                    {
+                        model.AddRestriction.RestrictionType,
+                        model.AddRestriction.IsPermanent,
+                        model.AddRestriction.Reason,
+                        Duration = duration
+                    }
+                }), Encoding.UTF8, "application/json");
+
+                var rejectCommentResponse = await httpClient.PutAsync("/api/Comment/reject-comment", jsonContent);
+                rejectCommentResponse.EnsureSuccessStatusCode();
+            }
+            else
+            {
+                using StringContent jsonContent = new(JsonSerializer.Serialize(new
+                { CommentId = commentId, Reason = model.RejectionReason }), Encoding.UTF8, "application/json");
+
+                var rejectCommentResponse = await httpClient.PutAsync("/api/Comment/reject-comment", jsonContent);
+                rejectCommentResponse.EnsureSuccessStatusCode();
+            }
+
+            return RedirectToAction("GetComments");
         }
     }
 }

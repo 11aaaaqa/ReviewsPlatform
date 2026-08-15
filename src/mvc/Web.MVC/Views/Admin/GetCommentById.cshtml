@@ -1,0 +1,292 @@
+﻿@using Web.MVC.Constants
+@model Web.MVC.Models.View_models.Admin.GetCommentByIdViewModel
+<link rel="stylesheet" href="~/css/admin/get-review-by-id.css" />
+<link rel="stylesheet" href="~/css/admin/unit-consideration.css" />
+<link rel="stylesheet" href="~/css/admin/get-comment-by-id.css"/>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
+<script src="https://cdn.jsdelivr.net/npm/@@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+
+@{
+    string GetReviewWord(int count)
+    {
+        int mod100 = count % 100;
+        int mod10 = count % 10;
+
+        if (mod10 == 1 && mod100 != 11) return "отзыв";
+        if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "отзыва";
+        return "отзывов";
+    }
+}
+
+<div class="get-comment-by-id-page-block">
+    <div id="unitBlock">
+        <div class="border-block">
+            <h3 style="margin-bottom: 18px;">@Model.Item.Name</h3>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <img src="@Model.Item.PictureSrc" style="max-width: 220px; max-height: 220px;" />
+                <div>
+                    <div class="star-rating" style="font-size: 30px;">
+                        <div class="star-rating-fill" style="width: @(Model.Item.GeneralEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                    </div>
+                    <p style="color: gray; font-size: 14px; font-weight: 700;">
+                        Среднее: @Model.Item.GeneralEstimation (@Model.Item.ReviewsCount @GetReviewWord(Model.Item.ReviewsCount))
+                    </p>
+                    @if (Model.Item.Brand != null)
+                    {
+                        <p style="font-size: 15px;">Бренд: @Model.Item.Brand</p>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 25px;">
+            <h4>Отзыв</h4>
+            <div class="border-block">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 12px;">
+                        <h4 style="margin-top: 8px;">Оценка:</h4>
+                        <div class="star-rating" style="font-size: 30px;">
+                            <div class="star-rating-fill" style="width: @(Model.Review.ItemEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div>
+                        <h5 style="margin: 0 0 3px 0;">Краткий отзыв:</h5>
+                        @Html.Raw(Model.Review.ShortReview)
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 25px;">
+            <h4>Комментарий</h4>
+            <div class="border-block">
+                <div style="margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 5px;">
+                        <img src="@Model.UserCommentCreatedBy.AvatarSrc" style="width: 40px; height: 40px; object-fit: cover;" />
+                        <a class="user-name-link" asp-controller="User" asp-action="GetUserById" asp-route-userId="@Model.UserCommentCreatedBy.Id">
+                            @Model.UserCommentCreatedBy.UserName
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    @Html.Raw(Model.Comment.Text)
+                </div>
+
+                <div style="margin-top: 15px;">
+                    @if (Model.Comment.ParentCommentId == null)
+                    {
+                        <h6>Является ответом на комментарий: <span style="color: rgb(255, 0, 0);">Нет</span></h6>
+                    }
+                    else
+                    {
+                        <h6>Является ответом на комментарий: <span style="color: hsl(120, 100%, 32%);">Да</span></h6>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="consideration-btns">
+            <button class="reject-unit" id="rejectUnitBtn">Отклонить</button>
+            <form method="post" asp-controller="Admin" asp-action="AcceptComment" asp-route-commentId="@Model.Comment.Id">
+                <button type="submit" class="accept-unit">Принять</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="restrictionBlock">
+        <form id="rejectCommentForm" method="post" asp-controller="Admin" asp-action="RejectComment" asp-route-commentId="@Model.Comment.Id">
+            <div id="errorMessageContainer" style="display: none; color: red; margin-bottom: 3px;"></div>
+            <div class="form-group">
+                <label for="rejectionReason">Причина отклонения</label>
+                <textarea id="rejectionReason"
+                          class="restriction-textarea"
+                          placeholder="Введите причину отказа"
+                          rows="3"
+                          name="RejectionReason"
+                          maxlength="@StringLengthDtoConstants.CommentRejectReasonMax"></textarea>
+            </div>
+
+            <label class="restriction-toggle-row" for="enableRestrictionCheckbox">
+                <span class="switch">
+                    <input type="checkbox" id="enableRestrictionCheckbox" />
+                    <span class="switch-slider"></span>
+                </span>
+                <span>Также заблокировать пользователя</span>
+            </label>
+
+            <div id="restrictionFields" class="restriction-fields">
+                <div>
+                    @if (Model.IsUserRestricted)
+                    {
+                        <div style="color: red; margin-bottom: 15px;">
+                            <p>Пользователь имеет ограничение. Перед блокировкой необходимо снять это ограничение в его профиле.</p>
+                        </div>
+                    }
+                    <input type="text" class="hidden" id="isUserRestrictedInput" value="@Model.IsUserRestricted.ToString()" />
+                </div>
+
+                <div class="form-group">
+                    <label>Тип блокировки</label>
+                    <div class="radio-pill-group">
+                        <label class="radio-pill">
+                            <input type="radio" name="AddRestriction.RestrictionType" value="Commenting" checked disabled />
+                            <span>Создание комментариев</span>
+                        </label>
+                        <label class="radio-pill">
+                            <input type="radio" name="AddRestriction.RestrictionType" value="All" disabled />
+                            <span>Все действия</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="restrictionDurationBlock">
+                    <label for="restrictionDuration">Длительность (в днях)</label>
+                    <input type="number" id="restrictionDuration" name="AddRestriction.DurationInDays" min="0" placeholder="Например, 7" disabled />
+                </div>
+
+                <label class="checkbox-row" for="isPermanentInput">
+                    <input id="isPermanentInput" type="checkbox" name="AddRestriction.IsPermanent" value="false" disabled />
+                    <span class="checkbox-custom"></span>
+                    <span class="checkbox-label">Заблокировать навсегда</span>
+                </label>
+
+                <div class="form-group">
+                    <label for="blockReason">Причина блокировки</label>
+                    <textarea id="blockReason"
+                              class="restriction-textarea"
+                              name="AddRestriction.Reason"
+                              rows="3"
+                              placeholder="Введите причину блокировки"
+                              maxlength="@StringLengthDtoConstants.RestrictionReasonMax"
+                              disabled></textarea>
+                </div>
+            </div>
+
+            <div class="restriction-panel-actions">
+                <button type="button" class="cancel-restriction" id="cancelRejectBtn">Отмена</button>
+                <button type="submit" class="reject">Отклонить отзыв</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const rejectUnitBtn = document.getElementById('rejectUnitBtn');
+    const cancelRejectBtn = document.getElementById('cancelRejectBtn');
+    const restrictionBlock = document.getElementById('restrictionBlock');
+
+    function openRestrictionBlock() {
+        restrictionBlock.classList.add('open');
+        restrictionBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function closeRestrictionBlock() {
+        restrictionBlock.classList.remove('open');
+    }
+
+    rejectUnitBtn.addEventListener('click', openRestrictionBlock);
+    cancelRejectBtn.addEventListener('click', closeRestrictionBlock);
+
+    const enableRestrictionCheckbox = document.getElementById('enableRestrictionCheckbox');
+    const restrictionFields = document.getElementById('restrictionFields');
+    const restrictionInputs = restrictionFields.querySelectorAll('input, textarea');
+
+    enableRestrictionCheckbox.addEventListener('change', function() {
+        const enabled = this.checked;
+
+        restrictionFields.classList.toggle('expanded', enabled);
+        restrictionInputs.forEach(input => { input.disabled = !enabled; });
+    });
+
+    const restrictionDurationBlock = document.getElementById('restrictionDurationBlock');
+    const restrictionDurationInput = document.getElementById('restrictionDuration');
+    const isPermanentInput = document.getElementById('isPermanentInput');
+
+    isPermanentInput.addEventListener('change', function() {
+        const isPermanent = this.checked;
+        this.value = isPermanent ? 'true' : 'false';
+        restrictionDurationBlock.style.display = isPermanent ? 'none' : '';
+        if (isPermanent) {
+            restrictionDurationInput.value = '0';
+        }
+    });
+</script>
+
+<script>
+    const isUserRestricted = document.getElementById('isUserRestrictedInput').value.toLowerCase() === 'true';
+    const errorMessageContainer = document.getElementById('errorMessageContainer');
+    const rejectCommentForm = document.getElementById('rejectCommentForm');
+    let rejectProcessing = false;
+
+    rejectCommentForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        if (enableRestrictionCheckbox.checked && isUserRestricted) {
+            return;
+        }
+
+        if (rejectProcessing) return;
+        rejectProcessing = true;
+
+        let formData;
+        if (enableRestrictionCheckbox.checked) {
+            formData = new FormData(rejectCommentForm);
+        } else {
+            formData = new FormData();
+            formData.append(rejectionReason.name, rejectionReason.value);
+        }
+
+        try {
+            const response = await fetch(this.action,
+                {
+                    method: this.method,
+                    body: formData
+                });
+
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else if (response.status === 400) {
+                const result = await response.json();
+
+                errorMessageContainer.textContent = '';
+
+                if (result.errors && result.errors.length > 0) {
+                    result.errors.forEach(error => {
+                        const errorItem = document.createElement('div');
+                        errorItem.textContent = error;
+                        errorMessageContainer.appendChild(errorItem);
+                    });
+                    errorMessageContainer.style.display = 'block';
+                }
+            } else {
+                errorMessageContainer.textContent = 'Что-то пошло не так';
+                errorMessageContainer.style.display = 'block';
+            }
+        } catch (e) {
+            errorMessageContainer.textContent = 'Что-то пошло не так';
+            errorMessageContainer.style.display = 'block';
+            console.log('Failed to execute');
+        } finally {
+            rejectProcessing = false;
+        }
+    });
+</script>
+
+<script>
+    const blockReason = document.getElementById('blockReason');
+    const rejectionReason = document.getElementById('rejectionReason');
+
+    function autoResize(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
+    blockReason.addEventListener('input', () => autoResize(blockReason));
+    rejectionReason.addEventListener('input', () => autoResize(rejectionReason));
+</script>
