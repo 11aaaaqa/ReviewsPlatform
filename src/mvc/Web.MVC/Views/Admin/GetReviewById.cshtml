@@ -81,7 +81,7 @@
         <div class="border-block">
             <div>
                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 5px;">
-                    <img src="@Model.Review.CreatedByUser.AvatarSrc" style="width: 50px; height: 50px; object-fit: cover;" />
+                    <img src="@Model.Review.CreatedByUser.AvatarSrc" style="width: 40px; height: 40px; object-fit: cover;" />
                     <a class="user-name-link" asp-controller="User" asp-action="GetUserById" asp-route-userId="@Model.Review.CreatedByUser.Id">
                         @Model.Review.CreatedByUser.UserName
                     </a>
