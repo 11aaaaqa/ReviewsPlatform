@@ -31,6 +31,20 @@ namespace ReviewMicroservice.Api.Controllers
             return Ok(comment);
         }
 
+        [Authorize(Roles = RoleNames.Admin + "," + RoleNames.Moderator)]
+        [HttpGet]
+        [Route("get-under-consideration")]
+        public async Task<IActionResult> GetCommentsUnderConsideration([FromQuery] Pagination pagination)
+        {
+            var comments = await unitOfWork.CommentRepository.GetAllByStatusAsync(EntityStatus.UnderConsideration,
+                OrderByDate.Descending, pagination.PageSize, pagination.PageNumber);
+
+            var commentsNextPage = await unitOfWork.CommentRepository.GetAllByStatusAsync(EntityStatus.UnderConsideration,
+                OrderByDate.Descending, pagination.PageSize, pagination.PageNumber + 1);
+
+            return Ok(new CommentsResult { Comments = comments, IsNextPageExisted = commentsNextPage.Count > 0 });
+        }
+
         [HttpGet]
         [Route("get-by-review-id/{reviewId}")]
         public async Task<IActionResult> GetCommentsByReviewIdAsync([FromRoute] Guid reviewId, [FromQuery] Pagination pagination)
@@ -58,13 +72,14 @@ namespace ReviewMicroservice.Api.Controllers
         }
 
         [HttpGet]
-        [Route("get-by-user-id/{userId}")]
+        [Route("get-by-user-id/{userId}/verified")]
         public async Task<IActionResult> GetCommentsByUserIdAsync([FromRoute] Guid userId, [FromQuery] Pagination pagination)
         {
-            var comments = await unitOfWork.CommentRepository.GetByUserIdAsync(userId, pagination.PageSize, pagination.PageNumber);
+            var comments = await unitOfWork.CommentRepository.GetByUserIdAsync(userId, EntityStatus.Verified, OrderByDate.Descending,
+                pagination.PageSize, pagination.PageNumber);
 
             var commentsNextPage = await unitOfWork.CommentRepository
-                .GetByUserIdAsync(userId, pagination.PageSize, pagination.PageNumber + 1);
+                .GetByUserIdAsync(userId, EntityStatus.Verified, OrderByDate.Descending, pagination.PageSize, pagination.PageNumber + 1);
 
             return Ok(new CommentsResult { Comments = comments, IsNextPageExisted = commentsNextPage.Count > 0 });
         }
@@ -77,6 +92,8 @@ namespace ReviewMicroservice.Api.Controllers
         {
             var review = await unitOfWork.ReviewRepository.GetByIdAsync(model.ReviewId);
             if (review == null) return NotFound("Review with current identifier does not exist");
+
+            if (review.ReviewStatus != EntityStatus.Verified) return BadRequest("Review is not verified");
 
             if (model.ParentCommentId != null)
             {
