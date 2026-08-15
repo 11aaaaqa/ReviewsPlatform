@@ -13,23 +13,26 @@
         }
     </div>
     
-    <div class="pagination">
-        @if (Model.CurrentPageNumber == 1)
-        {
-            <button disabled>Назад</button>
-        }
-        else
-        {
-            <a asp-controller="Admin" asp-action="GetReviews" asp-route-pageNumber="@(Model.CurrentPageNumber - 1)">Назад</a>
-        }
+    @if (Model.Reviews.Count > 0)
+    {
+        <div class="pagination">
+            @if (Model.CurrentPageNumber == 1)
+            {
+                <button disabled>Назад</button>
+            }
+            else
+            {
+                <a asp-controller="Admin" asp-action="GetReviews" asp-route-pageNumber="@(Model.CurrentPageNumber - 1)">Назад</a>
+            }
 
-        @if (Model.IsNextPageExisted)
-        {
-            <a asp-controller="Admin" asp-action="GetReviews" asp-route-pageNumber="@(Model.CurrentPageNumber + 1)">Вперёд</a>
-        }
-        else
-        {
-            <button disabled>Вперёд</button>
-        }
-    </div>
+            @if (Model.IsNextPageExisted)
+            {
+                <a asp-controller="Admin" asp-action="GetReviews" asp-route-pageNumber="@(Model.CurrentPageNumber + 1)">Вперёд</a>
+            }
+            else
+            {
+                <button disabled>Вперёд</button>
+            }
+        </div>
+    }
 </div>

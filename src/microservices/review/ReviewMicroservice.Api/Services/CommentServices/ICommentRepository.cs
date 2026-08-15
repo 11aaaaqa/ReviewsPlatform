@@ -1,4 +1,5 @@
-﻿using ReviewMicroservice.Api.Models.Business.Comments;
+﻿using ReviewMicroservice.Api.Enums;
+using ReviewMicroservice.Api.Models.Business.Comments;
 
 namespace ReviewMicroservice.Api.Services.CommentServices
 {
@@ -7,7 +8,8 @@ namespace ReviewMicroservice.Api.Services.CommentServices
         Task<Comment?> GetByIdAsync(Guid commentId);
         Task<List<Comment>> GetByReviewIdAsync(Guid reviewId, int pageSize, int pageNumber);
         Task<List<Comment>> GetCommentRepliesAsync(Guid parentCommentId, int pageSize, int pageNumber);
-        Task<List<Comment>> GetByUserIdAsync(Guid userId, int pageSize, int pageNumber);
+        Task<List<Comment>> GetByUserIdAsync(Guid userId, EntityStatus status, OrderByDate orderByDate, int pageSize, int pageNumber);
+        Task<List<Comment>> GetAllByStatusAsync(EntityStatus status, OrderByDate orderByDate, int pageSize, int pageNumber);
         Task<List<Guid>> GetAllCommentIdsByReviewIdAsync(Guid reviewId);
         Task ExecuteRepliesCountUpdateAsync(List<Guid> commentIds, int delta);
         Task ExecuteDeleteCommentsByIdsAsync(List<Guid> commentIds);

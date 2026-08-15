@@ -36,16 +36,39 @@ namespace ReviewMicroservice.Api.Services.CommentServices
                 .ToListAsync();
         }
 
-        public async Task<List<Comment>> GetByUserIdAsync(Guid userId, int pageSize, int pageNumber)
+        public async Task<List<Comment>> GetByUserIdAsync(Guid userId, EntityStatus status, OrderByDate orderByDate, int pageSize, int pageNumber)
         {
-            return await context.Comments
-                .Where(x => x.CommentStatus == EntityStatus.Verified)
-                .Where(x => x.UserId == userId)
-                .OrderByDescending(x => x.CreatedAt)
-                .ThenBy(x => x.Id)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            var comments = context.Comments.Where(x => x.CommentStatus == status)
+                .Where(x => x.UserId == userId);
+
+            switch (orderByDate)
+            {
+                case OrderByDate.Descending:
+                    comments = comments.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id);
+                    break;
+                case OrderByDate.Ascending:
+                    comments = comments.OrderBy(x => x.CreatedAt).ThenBy(x => x.Id);
+                    break;
+            }
+
+            return await comments.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+        }
+
+        public async Task<List<Comment>> GetAllByStatusAsync(EntityStatus status, OrderByDate orderByDate, int pageSize, int pageNumber)
+        {
+            var comments = context.Comments.Where(x => x.CommentStatus == status);
+
+            switch (orderByDate)
+            {
+                case OrderByDate.Descending:
+                    comments = comments.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id);
+                    break;
+                case OrderByDate.Ascending:
+                    comments = comments.OrderBy(x => x.CreatedAt).ThenBy(x => x.Id);
+                    break;
+            }
+
+            return await comments.Skip((pageNumber - 1) * pageSize).Take(pageNumber * pageSize).ToListAsync();
         }
 
         public async Task<List<Guid>> GetAllCommentIdsByReviewIdAsync(Guid reviewId)

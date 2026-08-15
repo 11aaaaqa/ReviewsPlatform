@@ -9,6 +9,7 @@ using RestrictionMicroservice.Api.Services.UnitOfWork;
 using System.Text;
 using MessageBus.Extensions;
 using MessageBus.Messages.Review;
+using MessageBus.Messages.Saga.RejectCommentAndAddRestriction;
 using MessageBus.Messages.Saga.RejectReviewAndAddRestriction;
 using RestrictionMicroservice.Api.MessageBus.Consumers;
 using RestrictionMicroservice.Api.Services.GrpcServices;
@@ -50,7 +51,8 @@ builder.Services.AddRabbitMqMessageBus(new RabbitMqOptions
     VirtualHost = builder.Configuration["RABBITMQ_DEFAULT_VHOST"]!,
     QueueName = "RestrictionMicroservice"
 }).AddMessageBusHandler<ReviewRemovedEvent, ReviewRemovedEventConsumer>()
-.AddMessageBusHandler<ReviewRejectedSagaEvent, ReviewRejectedSagaEventConsumer>();
+.AddMessageBusHandler<ReviewRejectedSagaEvent, ReviewRejectedSagaEventConsumer>()
+.AddMessageBusHandler<CommentRejectedSagaEvent, CommentRejectedSagaEventConsumer>();
 
 builder.Services.AddGrpc();
 

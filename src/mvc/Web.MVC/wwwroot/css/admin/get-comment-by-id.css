@@ -1,0 +1,39 @@
+﻿.get-comment-by-id-page-block {
+    margin: 0 20%;
+}
+
+@media (max-width: 1400px) {
+    .get-comment-by-id-page-block {
+        margin: 0 15%;
+    }
+}
+
+@media (max-width: 1200px) {
+    .get-comment-by-id-page-block {
+        margin: 0 10%;
+    }
+}
+
+@media (max-width: 992px) {
+    .get-comment-by-id-page-block {
+        margin: 0 7%;
+    }
+}
+
+@media (max-width: 768px) {
+    .get-comment-by-id-page-block {
+        margin: 0 5%;
+    }
+}
+
+@media (max-width: 600px) {
+    .get-comment-by-id-page-block {
+        margin: 0 2%;
+    }
+}
+
+@media (max-width: 520px) {
+    .get-comment-by-id-page-block {
+        margin: 0;
+    }
+}

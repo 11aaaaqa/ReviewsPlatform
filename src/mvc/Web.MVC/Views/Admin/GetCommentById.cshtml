@@ -1,7 +1,8 @@
 ﻿@using Web.MVC.Constants
-@model Web.MVC.Models.View_models.Admin.GetReviewByIdAdminViewModel
-<link rel="stylesheet" href="~/css/admin/get-review-by-id.css"/>
-<link rel="stylesheet" href="~/css/admin/unit-consideration.css"/>
+@model Web.MVC.Models.View_models.Admin.GetCommentByIdViewModel
+<link rel="stylesheet" href="~/css/admin/get-review-by-id.css" />
+<link rel="stylesheet" href="~/css/admin/unit-consideration.css" />
+<link rel="stylesheet" href="~/css/admin/get-comment-by-id.css"/>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
@@ -19,126 +20,87 @@
     }
 }
 
-<div class="get-review-by-id-page-block">
+<div class="get-comment-by-id-page-block">
     <div id="unitBlock">
-        @if (Model.Review.IsCreatedWithItem && Model.ActualItem == null)
-        {
-            <h3 style="color: red;">Отзыв создается вместе с товаром</h3>
-            <div class="border-block">
-                <h4>Категория: @Model.CategoryInfo!.CategoryName</h4>
-                <h4>Подкатегория:
-                    <a class="themed-link-on-hover" asp-controller="Category" asp-action="GetItemsBySubcategoryId"
-                       asp-route-subcategoryId="@Model.CategoryInfo.SubcategoryId">
-                        @Model.CategoryInfo.SubcategoryName
-                    </a></h4>
-            </div>
-        }
-
         <div class="border-block">
-            @if (Model.ActualItem != null)
-            {
-                <h3 style="margin-bottom: 18px;">@Model.ActualItem.Name</h3>
-                <div style="display: flex; gap: 15px; align-items: center;">
-                    <img src="@Model.ActualItem.PictureSrc" style="max-width: 220px; max-height: 220px;" />
-                    <div>
-                        <div class="star-rating" style="font-size: 30px;">
-                            <div class="star-rating-fill" style="width: @(Model.ActualItem.GeneralEstimation * 20)%; font-size: 30px;">★★★★★</div>
-                        </div>
-                        <p style="color: gray; font-size: 14px; font-weight: 700;">
-                            Среднее: @Model.ActualItem.GeneralEstimation (@Model.ActualItem.ReviewsCount @GetReviewWord(Model.ActualItem.ReviewsCount))
-                        </p>
-                        @if (Model.ActualItem.Brand != null)
-                        {
-                            <p style="font-size: 15px;">Бренд: @Model.ActualItem.Brand</p>
-                        }
-                    </div>
-                </div>
-            }
-            else
-            {
-                <h3 style="margin-bottom: 18px;">@Model.Review.Item.Name</h3>
-                <div style="display: flex; gap: 15px; align-items: center;">
-                    <img src="@Model.Review.Item.PictureSrc" style="max-width: 220px; max-height: 220px;" />
-                    <div>
-                        @if (!Model.Review.IsCreatedWithItem)
-                        {
-                            <div class="star-rating" style="font-size: 30px;">
-                                <div class="star-rating-fill" style="width: @(Model.Review.Item.GeneralEstimation * 20)%; font-size: 30px;">★★★★★</div>
-                            </div>
-                            <p style="color: gray; font-size: 14px; font-weight: 700;">
-                                Среднее: @Model.Review.Item.GeneralEstimation (@Model.Review.Item.ReviewsCount @GetReviewWord(Model.Review.Item.ReviewsCount))
-                            </p>
-                        }
-                        @if (Model.Review.Item.Brand != null)
-                        {
-                            <p style="font-size: 15px;">Бренд: @Model.Review.Item.Brand</p>
-                        }
-                    </div>
-                </div>
-            }
-        </div>
-
-        <div class="border-block">
-            <div>
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 5px;">
-                    <img src="@Model.Review.CreatedByUser.AvatarSrc" style="width: 40px; height: 40px; object-fit: cover;" />
-                    <a class="user-name-link" asp-controller="User" asp-action="GetUserById" asp-route-userId="@Model.Review.CreatedByUser.Id">
-                        @Model.Review.CreatedByUser.UserName
-                    </a>
-                </div>
-                <div style="display: flex; align-items: center; gap: 7px; margin: 12px 0 12px 0;">
-                    <h4 style="margin-top: 8px;">Оценка:</h4>
+            <h3 style="margin-bottom: 18px;">@Model.Item.Name</h3>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <img src="@Model.Item.PictureSrc" style="max-width: 220px; max-height: 220px;" />
+                <div>
                     <div class="star-rating" style="font-size: 30px;">
-                        <div class="star-rating-fill" style="width: @(Model.Review.ItemEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                        <div class="star-rating-fill" style="width: @(Model.Item.GeneralEstimation * 20)%; font-size: 30px;">★★★★★</div>
                     </div>
+                    <p style="color: gray; font-size: 14px; font-weight: 700;">
+                        Среднее: @Model.Item.GeneralEstimation (@Model.Item.ReviewsCount @GetReviewWord(Model.Item.ReviewsCount))
+                    </p>
+                    @if (Model.Item.Brand != null)
+                    {
+                        <p style="font-size: 15px;">Бренд: @Model.Item.Brand</p>
+                    }
                 </div>
             </div>
-
-            <div>
-                <div style="margin-bottom: 15px;">
-                    <h5 style="margin: 0 0 3px 0;">Краткий отзыв:</h5>
-                    @Html.Raw(Model.Review.ShortReview)
+        </div>
+        
+        <div style="margin-top: 25px;">
+            <h4>Отзыв</h4>
+            <div class="border-block">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 12px;">
+                        <h4 style="margin-top: 8px;">Оценка:</h4>
+                        <div class="star-rating" style="font-size: 30px;">
+                            <div class="star-rating-fill" style="width: @(Model.Review.ItemEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div>
-                    <h5 style="margin: 0 0 3px 0;">Текст отзыва:</h5>
-                    @Html.Raw(Model.Review.Text)
+                    <div>
+                        <h5 style="margin: 0 0 3px 0;">Краткий отзыв:</h5>
+                        @Html.Raw(Model.Review.ShortReview)
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 25px;">
+            <h4>Комментарий</h4>
+            <div class="border-block">
+                <div style="margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 5px;">
+                        <img src="@Model.UserCommentCreatedBy.AvatarSrc" style="width: 40px; height: 40px; object-fit: cover;" />
+                        <a class="user-name-link" asp-controller="User" asp-action="GetUserById" asp-route-userId="@Model.UserCommentCreatedBy.Id">
+                            @Model.UserCommentCreatedBy.UserName
+                        </a>
+                    </div>
                 </div>
 
-                @if (Model.Review.PicturesSrc.Any())
-                {
-                    int maxVisiblePhotos = 4;
-                    int totalPhotos = Model.Review.PicturesSrc.Count;
+                <div>
+                    @Html.Raw(Model.Comment.Text)
+                </div>
 
-                    <div class="review-images-grid" id="review-gallery-grid">
-                        @for (int i = 0; i < totalPhotos; i++)
-                        {
-                            bool isHidden = i >= maxVisiblePhotos;
-                            bool isLastVisibleWithMore = (i == maxVisiblePhotos - 1) && (totalPhotos > maxVisiblePhotos);
-
-                            <div class="review-img-wrapper @(isHidden ? "hidden-photo" : "") @(isLastVisibleWithMore ? "has-more" : "")"
-                                 @(isLastVisibleWithMore ? $"data-more-text=+{totalPhotos - maxVisiblePhotos + 1}" : "")>
-
-                                <a href="@Url.Content(Model.Review.PicturesSrc[i])" data-fancybox="review-gallery">
-                                    <img src="@Url.Content(Model.Review.PicturesSrc[i])" class="review-img-thumb" alt="Фото отзыва"/>
-                                </a>
-                            </div>
-                        }
-                    </div>
-                }
+                <div style="margin-top: 15px;">
+                    @if (Model.Comment.ParentCommentId == null)
+                    {
+                        <h6>Является ответом на комментарий: <span style="color: rgb(255, 0, 0);">Нет</span></h6>
+                    }
+                    else
+                    {
+                        <h6>Является ответом на комментарий: <span style="color: hsl(120, 100%, 32%);">Да</span></h6>
+                    }
+                </div>
             </div>
         </div>
 
         <div class="consideration-btns">
             <button class="reject-unit" id="rejectUnitBtn">Отклонить</button>
-            <form method="post" asp-controller="Admin" asp-action="AcceptReview" asp-route-reviewId="@Model.Review.Id">
+            <form method="post" asp-controller="Admin" asp-action="AcceptComment" asp-route-commentId="@Model.Comment.Id">
                 <button type="submit" class="accept-unit">Принять</button>
             </form>
         </div>
     </div>
     
     <div id="restrictionBlock">
-        <form id="rejectReviewForm" method="post" asp-controller="Admin" asp-action="RejectReview" asp-route-reviewId="@Model.Review.Id">
+        <form id="rejectCommentForm" method="post" asp-controller="Admin" asp-action="RejectComment" asp-route-commentId="@Model.Comment.Id">
             <div id="errorMessageContainer" style="display: none; color: red; margin-bottom: 3px;"></div>
             <div class="form-group">
                 <label for="rejectionReason">Причина отклонения</label>
@@ -147,12 +109,12 @@
                           placeholder="Введите причину отказа"
                           rows="3"
                           name="RejectionReason"
-                          maxlength="@StringLengthDtoConstants.ReviewRejectReasonMax"></textarea>
+                          maxlength="@StringLengthDtoConstants.CommentRejectReasonMax"></textarea>
             </div>
 
             <label class="restriction-toggle-row" for="enableRestrictionCheckbox">
                 <span class="switch">
-                    <input type="checkbox" id="enableRestrictionCheckbox"/>
+                    <input type="checkbox" id="enableRestrictionCheckbox" />
                     <span class="switch-slider"></span>
                 </span>
                 <span>Также заблокировать пользователя</span>
@@ -173,11 +135,11 @@
                     <label>Тип блокировки</label>
                     <div class="radio-pill-group">
                         <label class="radio-pill">
-                            <input type="radio" name="AddRestriction.RestrictionType" value="ReviewPosting" checked disabled/>
-                            <span>Создание отзывов</span>
+                            <input type="radio" name="AddRestriction.RestrictionType" value="Commenting" checked disabled />
+                            <span>Создание комментариев</span>
                         </label>
                         <label class="radio-pill">
-                            <input type="radio" name="AddRestriction.RestrictionType" value="All" disabled/>
+                            <input type="radio" name="AddRestriction.RestrictionType" value="All" disabled />
                             <span>Все действия</span>
                         </label>
                     </div>
@@ -185,11 +147,11 @@
 
                 <div class="form-group" id="restrictionDurationBlock">
                     <label for="restrictionDuration">Длительность (в днях)</label>
-                    <input type="number" id="restrictionDuration" name="AddRestriction.DurationInDays" min="0" placeholder="Например, 7" disabled/>
+                    <input type="number" id="restrictionDuration" name="AddRestriction.DurationInDays" min="0" placeholder="Например, 7" disabled />
                 </div>
 
                 <label class="checkbox-row" for="isPermanentInput">
-                    <input id="isPermanentInput" type="checkbox" name="AddRestriction.IsPermanent" value="false" disabled/>
+                    <input id="isPermanentInput" type="checkbox" name="AddRestriction.IsPermanent" value="false" disabled />
                     <span class="checkbox-custom"></span>
                     <span class="checkbox-label">Заблокировать навсегда</span>
                 </label>
@@ -235,7 +197,7 @@
     const restrictionFields = document.getElementById('restrictionFields');
     const restrictionInputs = restrictionFields.querySelectorAll('input, textarea');
 
-    enableRestrictionCheckbox.addEventListener('change', function () {
+    enableRestrictionCheckbox.addEventListener('change', function() {
         const enabled = this.checked;
 
         restrictionFields.classList.toggle('expanded', enabled);
@@ -259,22 +221,22 @@
 <script>
     const isUserRestricted = document.getElementById('isUserRestrictedInput').value.toLowerCase() === 'true';
     const errorMessageContainer = document.getElementById('errorMessageContainer');
-    const rejectReviewForm = document.getElementById('rejectReviewForm');
+    const rejectCommentForm = document.getElementById('rejectCommentForm');
     let rejectProcessing = false;
 
-    rejectReviewForm.addEventListener('submit', async function(e){
+    rejectCommentForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
         if (enableRestrictionCheckbox.checked && isUserRestricted) {
             return;
         }
 
-            if (rejectProcessing) return;
+        if (rejectProcessing) return;
         rejectProcessing = true;
 
         let formData;
         if (enableRestrictionCheckbox.checked) {
-            formData = new FormData(rejectReviewForm);
+            formData = new FormData(rejectCommentForm);
         } else {
             formData = new FormData();
             formData.append(rejectionReason.name, rejectionReason.value);
@@ -287,16 +249,14 @@
                     body: formData
                 });
 
-            if (response.redirected)
-            {
+            if (response.redirected) {
                 window.location.href = response.url;
             } else if (response.status === 400) {
                 const result = await response.json();
 
                 errorMessageContainer.textContent = '';
 
-                if (result.errors && result.errors.length > 0)
-                {
+                if (result.errors && result.errors.length > 0) {
                     result.errors.forEach(error => {
                         const errorItem = document.createElement('div');
                         errorItem.textContent = error;
@@ -329,13 +289,4 @@
 
     blockReason.addEventListener('input', () => autoResize(blockReason));
     rejectionReason.addEventListener('input', () => autoResize(rejectionReason));
-</script>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        Fancybox.bind("[data-fancybox='review-gallery']", {
-            Infinite: true,
-            Images: { Panzoom: { maxScale: 3 } }
-        });
-    });
 </script>

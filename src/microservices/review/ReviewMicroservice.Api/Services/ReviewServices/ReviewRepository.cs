@@ -24,10 +24,10 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
             switch (orderByDate)
             {
                 case OrderByDate.Descending:
-                    reviews = reviews.OrderByDescending(x => x.CreatedAt);
+                    reviews = reviews.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id);
                     break;
                 case OrderByDate.Ascending:
-                    reviews = reviews.OrderBy(x => x.CreatedAt);
+                    reviews = reviews.OrderBy(x => x.CreatedAt).ThenBy(x => x.Id);
                     break;
             }
 
@@ -50,10 +50,10 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
             switch (orderByDate)
             {
                 case OrderByDate.Ascending:
-                    reviews = reviews.OrderBy(x => x.CreatedAt);
+                    reviews = reviews.OrderBy(x => x.CreatedAt).ThenBy(x => x.Id);
                     break;
                 case OrderByDate.Descending:
-                    reviews = reviews.OrderByDescending(x => x.CreatedAt);
+                    reviews = reviews.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id);
                     break;
             }
 
@@ -75,10 +75,10 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
             switch (orderByDate)
             {
                 case OrderByDate.Ascending:
-                    reviews = reviews.OrderBy(x => x.CreatedAt);
+                    reviews = reviews.OrderBy(x => x.CreatedAt).ThenBy(x => x.Id);
                     break;
                 case OrderByDate.Descending:
-                    reviews = reviews.OrderByDescending(x => x.CreatedAt);
+                    reviews = reviews.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id);
                     break;
             }
 
@@ -101,6 +101,7 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
                         CommentsCount = x.CommentsCount
                     })
                 .OrderByDescending(x => x.LikesCount)
+                .ThenBy(x => x.Id)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize).ToListAsync();
         }
@@ -130,10 +131,10 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
             switch (orderByEstimation)
             {
                 case OrderByEstimation.Ascending:
-                    reviews = reviews.OrderBy(x => x.ItemEstimation);
+                    reviews = reviews.OrderBy(x => x.ItemEstimation).ThenBy(x => x.Id);
                     break;
                 case OrderByEstimation.Descending:
-                    reviews = reviews.OrderByDescending(x => x.ItemEstimation);
+                    reviews = reviews.OrderByDescending(x => x.ItemEstimation).ThenBy(x => x.Id);
                     break;
             }
 

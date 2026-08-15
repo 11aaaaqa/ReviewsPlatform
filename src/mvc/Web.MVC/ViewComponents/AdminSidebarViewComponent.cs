@@ -12,11 +12,14 @@ namespace Web.MVC.ViewComponents
             const string GetUsersList = nameof(GetUsersList);
             const string GetReviews = nameof(GetReviews);
             const string GetReviewById = nameof(GetReviewById);
+            const string GetComments = nameof(GetComments);
+            const string GetCommentById = nameof(GetCommentById);
 
             var items = new List<AdminMenuItem>
             {
                 new() { Controller = controllerName, Action = GetUsersList, Title = "Пользователи" },
-                new() { Controller = controllerName, Action = GetReviews, Title = "Отзывы" }
+                new() { Controller = controllerName, Action = GetReviews, Title = "Отзывы" },
+                new() { Controller = controllerName, Action = GetComments, Title = "Комментарии" }
             };
 
             string currentController = ViewContext.RouteData.Values["controller"]!.ToString()!;
@@ -29,10 +32,23 @@ namespace Web.MVC.ViewComponents
             }
             else
             {
-                if (currentController == controllerName && currentAction == GetReviewById)
+                if (currentController == controllerName)
                 {
-                    var getReviewsItem = items.SingleOrDefault(x => x.Controller == controllerName && x.Action == GetReviews);
-                    getReviewsItem?.IsActive = true;
+                    switch (currentAction)
+                    {
+                        case GetReviewById:
+                        {
+                            var getReviewsItem = items.SingleOrDefault(x => x.Controller == controllerName && x.Action == GetReviews);
+                            getReviewsItem?.IsActive = true;
+                            break;
+                        }
+                        case GetCommentById:
+                        {
+                            var getCommentsItem = items.SingleOrDefault(x => x.Controller == controllerName && x.Action == GetComments);
+                            getCommentsItem?.IsActive = true;
+                            break;
+                        }
+                    }
                 }
             }
 

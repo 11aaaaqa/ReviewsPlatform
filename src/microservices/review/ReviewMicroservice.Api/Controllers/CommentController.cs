@@ -11,6 +11,7 @@ using ReviewMicroservice.Api.Models;
 using ReviewMicroservice.Api.Models.Business.Comments;
 using ReviewMicroservice.Api.Services.UnitOfWork;
 using System.Security.Claims;
+using MessageBus.Messages.Saga.RejectCommentAndAddRestriction;
 
 namespace ReviewMicroservice.Api.Controllers
 {
@@ -28,6 +29,20 @@ namespace ReviewMicroservice.Api.Controllers
                 return NotFound();
 
             return Ok(comment);
+        }
+
+        [Authorize(Roles = RoleNames.Admin + "," + RoleNames.Moderator)]
+        [HttpGet]
+        [Route("get-under-consideration")]
+        public async Task<IActionResult> GetCommentsUnderConsideration([FromQuery] Pagination pagination)
+        {
+            var comments = await unitOfWork.CommentRepository.GetAllByStatusAsync(EntityStatus.UnderConsideration,
+                OrderByDate.Descending, pagination.PageSize, pagination.PageNumber);
+
+            var commentsNextPage = await unitOfWork.CommentRepository.GetAllByStatusAsync(EntityStatus.UnderConsideration,
+                OrderByDate.Descending, pagination.PageSize, pagination.PageNumber + 1);
+
+            return Ok(new CommentsResult { Comments = comments, IsNextPageExisted = commentsNextPage.Count > 0 });
         }
 
         [HttpGet]
@@ -57,13 +72,14 @@ namespace ReviewMicroservice.Api.Controllers
         }
 
         [HttpGet]
-        [Route("get-by-user-id/{userId}")]
+        [Route("get-by-user-id/{userId}/verified")]
         public async Task<IActionResult> GetCommentsByUserIdAsync([FromRoute] Guid userId, [FromQuery] Pagination pagination)
         {
-            var comments = await unitOfWork.CommentRepository.GetByUserIdAsync(userId, pagination.PageSize, pagination.PageNumber);
+            var comments = await unitOfWork.CommentRepository.GetByUserIdAsync(userId, EntityStatus.Verified, OrderByDate.Descending,
+                pagination.PageSize, pagination.PageNumber);
 
             var commentsNextPage = await unitOfWork.CommentRepository
-                .GetByUserIdAsync(userId, pagination.PageSize, pagination.PageNumber + 1);
+                .GetByUserIdAsync(userId, EntityStatus.Verified, OrderByDate.Descending, pagination.PageSize, pagination.PageNumber + 1);
 
             return Ok(new CommentsResult { Comments = comments, IsNextPageExisted = commentsNextPage.Count > 0 });
         }
@@ -76,6 +92,8 @@ namespace ReviewMicroservice.Api.Controllers
         {
             var review = await unitOfWork.ReviewRepository.GetByIdAsync(model.ReviewId);
             if (review == null) return NotFound("Review with current identifier does not exist");
+
+            if (review.ReviewStatus != EntityStatus.Verified) return BadRequest("Review is not verified");
 
             if (model.ParentCommentId != null)
             {
@@ -168,6 +186,7 @@ namespace ReviewMicroservice.Api.Controllers
             {
                 await unitOfWork.BeginTransactionAsync();
 
+                comment.CreatedAt = DateTime.UtcNow;
                 comment.CommentStatus = EntityStatus.Verified;
                 comment.ConsideredByUserId = userId;
                 unitOfWork.CommentRepository.Update(comment);
@@ -219,13 +238,37 @@ namespace ReviewMicroservice.Api.Controllers
 
             string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
             Guid userId = new Guid(userIdStr);
+            try
+            {
+                await unitOfWork.BeginTransactionAsync();
 
-            comment.CommentStatus = EntityStatus.Rejected;
-            comment.RejectionReason = model.Reason;
-            comment.ConsideredByUserId = userId;
-            unitOfWork.CommentRepository.Update(comment);
+                comment.CommentStatus = EntityStatus.Rejected;
+                comment.RejectionReason = model.Reason;
+                comment.ConsideredByUserId = userId;
+                unitOfWork.CommentRepository.Update(comment);
+                await unitOfWork.CompleteAsync();
 
-            await unitOfWork.CompleteAsync();
+                if (model.AddRestriction != null)
+                {
+                    await messagePublisher.PublishAsync(new CommentRejectedSagaEvent
+                    {
+                        RestrictionType = (int)model.AddRestriction.RestrictionType,
+                        Reason = model.AddRestriction.Reason,
+                        IsPermanent = model.AddRestriction.IsPermanent, Duration = model.AddRestriction.Duration,
+                        RestrictingUserId = userId, RestrictedUserId = comment.UserId, CommentId = comment.Id
+                    });
+                }
+
+                await unitOfWork.CommitTransactionAsync();
+            }
+            catch (Exception e)
+            {
+                await unitOfWork.RollbackTransactionAsync();
+                logger.LogCritical(e, "An exception was thrown while processing comment rejecting method");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+
+            if (model.AddRestriction != null) return Accepted();
 
             return Ok();
         }
