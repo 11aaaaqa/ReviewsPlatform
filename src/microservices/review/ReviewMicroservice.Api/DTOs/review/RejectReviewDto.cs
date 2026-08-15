@@ -15,7 +15,7 @@ namespace ReviewMicroservice.Api.DTOs.review
         public string RejectionReason
         {
             get => rejectionReason;
-            set => htmlSanitizer.Sanitize(value);
+            set => rejectionReason = htmlSanitizer.Sanitize(value);
         }
         private string rejectionReason;
 

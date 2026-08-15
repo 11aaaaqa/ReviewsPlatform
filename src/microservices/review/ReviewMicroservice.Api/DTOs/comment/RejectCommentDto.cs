@@ -16,7 +16,7 @@ namespace ReviewMicroservice.Api.DTOs.comment
         public string Reason
         {
             get => reason;
-            set => htmlSanitizer.Sanitize(value);
+            set => reason = htmlSanitizer.Sanitize(value);
         }
         private string reason;
 
