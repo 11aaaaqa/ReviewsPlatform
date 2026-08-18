@@ -71,9 +71,28 @@ namespace ReviewMicroservice.Api.Controllers
             return Ok(new CommentsResult { Comments = comments, IsNextPageExisted = commentsNextPage.Count > 0 });
         }
 
+        [Authorize]
         [HttpGet]
-        [Route("get-by-user-id/{userId}/verified")]
-        public async Task<IActionResult> GetCommentsByUserIdAsync([FromRoute] Guid userId, [FromQuery] Pagination pagination)
+        [Route("get/all/{userId}")]
+        public async Task<IActionResult> GetAllCommentsByUserIdAsync([FromRoute] Guid userId, [FromQuery] EntityStatus entityStatus,
+            [FromQuery] OrderByDate orderByDate, [FromQuery] Pagination pagination)
+        {
+            string currentUserIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid currentUserId = new Guid(currentUserIdStr);
+            if (currentUserId != userId && !User.IsInRole(RoleNames.Admin) && !User.IsInRole(RoleNames.Moderator)) return Forbid();
+
+            var comments = await unitOfWork.CommentRepository.GetByUserIdAsync(userId, entityStatus, orderByDate,
+                pagination.PageSize, pagination.PageNumber);
+
+            var commentsNextPage = await unitOfWork.CommentRepository.GetByUserIdAsync(userId, entityStatus, orderByDate,
+                pagination.PageSize, pagination.PageNumber + 1);
+
+            return Ok(new CommentsResult { Comments = comments, IsNextPageExisted = commentsNextPage.Count > 0 });
+        }
+
+        [HttpGet]
+        [Route("get/all/{userId}/verified")]
+        public async Task<IActionResult> GetAllVerifiedCommentsByUserIdAsync([FromRoute] Guid userId, [FromQuery] Pagination pagination)
         {
             var comments = await unitOfWork.CommentRepository.GetByUserIdAsync(userId, EntityStatus.Verified, OrderByDate.Descending,
                 pagination.PageSize, pagination.PageNumber);
