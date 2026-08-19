@@ -201,16 +201,9 @@
         rating.textContent = '★'.repeat(review.itemEstimation) + '☆'.repeat(Math.max(0, 5 - review.itemEstimation));
         card.appendChild(rating);
 
-        if (review.shortReview) {
-            const shortReview = document.createElement('p');
-            shortReview.style.fontWeight = '600';
-            shortReview.textContent = review.shortReview;
-            card.appendChild(shortReview);
-        }
-
-        const text = document.createElement('p');
-        text.textContent = review.text;
-        card.appendChild(text);
+        const shortReview = document.createElement('div');
+        shortReview.innerHTML = review.shortReview;
+        card.appendChild(shortReview);
 
         if (review.reviewStatus === 'Rejected' && review.rejectionReason) {
             const reason = document.createElement('p');
@@ -253,8 +246,8 @@
             card.appendChild(replyMark);
         }
 
-        const text = document.createElement('p');
-        text.textContent = comment.text;
+        const text = document.createElement('div');
+        text.innerHTML = comment.text;
         card.appendChild(text);
 
         if (comment.commentStatus === 'Rejected' && comment.rejectionReason) {
