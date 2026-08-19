@@ -66,7 +66,7 @@
                     </div>
                 }
             }
-            @if (Model.User.Id == new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
+            @if (Model.CurrentUserId != null && Model.User.Id == Model.CurrentUserId)
             {
                 <a class="btn-wide-stretched" style="margin-top: 5px;" asp-controller="User" asp-action="EditUserProfile">
                     Настройка профиля
@@ -74,21 +74,267 @@
             }
         </div>
     </div>
+    
+    <div class="content-section"
+         data-user-id="@Model.User.Id"
+         data-can-view-all="@Model.CanUserViewCommsReviewsWithDifferentStatuses.ToString().ToLower()">
+
+        <div class="content-tabs">
+            <button class="tab-btn active" data-tab="reviews" type="button">Отзывы</button>
+            <button class="tab-btn" data-tab="comments" type="button">Комментарии</button>
+        </div>
+
+        <div class="filters-block">
+            @if (Model.CanUserViewCommsReviewsWithDifferentStatuses)
+            {
+                <select class="filter-select" id="statusFilter">
+                    <option value="Verified" selected>Одобренные</option>
+                    <option value="UnderConsideration">На рассмотрении</option>
+                    <option value="Rejected">Отклонённые</option>
+                </select>
+                <select class="filter-select" id="orderFilter">
+                    <option value="Descending" selected>Сначала новые</option>
+                    <option value="Ascending">Сначала старые</option>
+                </select>
+            }
+        </div>
+
+        <div class="content-list" id="contentList"></div>
+
+        <div id="sentinel" style="height: 10px;"></div>
+        <div id="loadSpinnerContainer" class="load-spinner-container"></div>
+
+        <p class="no-content-message" id="noContentMessage" style="display:none;">Ничего не найдено</p>
+    </div>
 </div>
 @if (Model.CanUserSetTheRoles && Model.User.Id != new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
 {
     <script>
-        const overlay = document.getElementById('modalOverlay');
-        const openModalBtn = document.getElementById('openModalBtn');
+    const overlay = document.getElementById('modalOverlay');
+    const openModalBtn = document.getElementById('openModalBtn');
 
-        overlay.onclick = (e) => {
-            if(e.target === overlay) {
-                overlay.style.display = 'none';
-            }
+    overlay.onclick = (e) => {
+        if(e.target === overlay) {
+            overlay.style.display = 'none';
         }
+    }
 
-        openModalBtn.onclick = () => {
-            overlay.style.display = 'flex';
-        }
-    </script>
+    openModalBtn.onclick = () => {
+        overlay.style.display = 'flex';
+    }
+</script>
 }
+<script src="~/js/loadSpinner.js"></script>
+<script>
+    const section = document.querySelector('.content-section');
+    
+    const userId = section.dataset.userId;
+    const canViewAll = section.dataset.canViewAll === 'true';
+
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const statusFilter = document.getElementById('statusFilter');
+    const orderFilter = document.getElementById('orderFilter');
+    const contentList = document.getElementById('contentList');
+    const noContentMessage = document.getElementById('noContentMessage');
+
+    const PAGE_SIZE = 25;
+
+    let state = {
+        tab: 'reviews',
+        pageNumber: 1,
+        isLoading: false,
+        hasMore: true
+    };
+
+    function buildUrl() {
+        const params = new URLSearchParams({
+            pageNumber: state.pageNumber,
+            pageSize: PAGE_SIZE
+        });
+
+        if (canViewAll) {
+            params.set('orderByDate', orderFilter.value);
+            params.set(state.tab === 'reviews' ? 'reviewStatus' : 'commentStatus', statusFilter.value);
+            return `/users/${userId}/${state.tab}?${params.toString()}`;
+        }
+
+        return `/users/${userId}/${state.tab}/verified?${params.toString()}`;
+    }
+
+    function statusBadgeClass(status) {
+        return 'status-badge ' + String(status).toLowerCase();
+    }
+
+    function statusLabel(status) {
+        switch (status) {
+            case 'Verified': return 'Одобрено';
+            case 'UnderConsideration': return 'На рассмотрении';
+            case 'Rejected': return 'Отклонено';
+            default: return status;
+        }
+    }
+
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('ru-RU');
+    }
+
+    function renderReviewItem(review) {
+        const card = document.createElement('div');
+        card.className = 'content-card';
+
+        const header = document.createElement('div');
+        header.className = 'content-card-header';
+
+        const badge = document.createElement('span');
+        badge.className = statusBadgeClass(review.reviewStatus);
+        badge.textContent = statusLabel(review.reviewStatus);
+
+        const date = document.createElement('span');
+        date.textContent = formatDate(review.createdAt);
+
+        header.appendChild(badge);
+        header.appendChild(date);
+        card.appendChild(header);
+
+        const rating = document.createElement('div');
+        rating.textContent = '★'.repeat(review.itemEstimation) + '☆'.repeat(Math.max(0, 5 - review.itemEstimation));
+        card.appendChild(rating);
+
+        if (review.shortReview) {
+            const shortReview = document.createElement('p');
+            shortReview.style.fontWeight = '600';
+            shortReview.textContent = review.shortReview;
+            card.appendChild(shortReview);
+        }
+
+        const text = document.createElement('p');
+        text.textContent = review.text;
+        card.appendChild(text);
+
+        if (review.reviewStatus === 'Rejected' && review.rejectionReason) {
+            const reason = document.createElement('p');
+            reason.className = 'rejection-reason';
+            reason.textContent = 'Причина отклонения: ' + review.rejectionReason;
+            card.appendChild(reason);
+        }
+
+        const stats = document.createElement('div');
+        stats.className = 'content-card-stats';
+        stats.textContent = `👍 ${review.likesCount}   👎 ${review.dislikesCount}   💬 ${review.commentsCount}`;
+        card.appendChild(stats);
+
+        return card;
+    }
+
+    function renderCommentItem(comment) {
+        const card = document.createElement('div');
+        card.className = 'content-card';
+
+        const header = document.createElement('div');
+        header.className = 'content-card-header';
+
+        const badge = document.createElement('span');
+        badge.className = statusBadgeClass(comment.commentStatus);
+        badge.textContent = statusLabel(comment.commentStatus);
+
+        const date = document.createElement('span');
+        date.textContent = formatDate(comment.createdAt);
+
+        header.appendChild(badge);
+        header.appendChild(date);
+        card.appendChild(header);
+
+        if (comment.parentCommentId) {
+            const replyMark = document.createElement('div');
+            replyMark.style.fontSize = '12px';
+            replyMark.style.color = '#999';
+            replyMark.textContent = 'Ответ на комментарий';
+            card.appendChild(replyMark);
+        }
+
+        const text = document.createElement('p');
+        text.textContent = comment.text;
+        card.appendChild(text);
+
+        if (comment.commentStatus === 'Rejected' && comment.rejectionReason) {
+            const reason = document.createElement('p');
+            reason.className = 'rejection-reason';
+            reason.textContent = 'Причина отклонения: ' + comment.rejectionReason;
+            card.appendChild(reason);
+        }
+
+        if (comment.repliesCount > 0) {
+            const stats = document.createElement('div');
+            stats.className = 'content-card-stats';
+            stats.textContent = `💬 Ответов: ${comment.repliesCount}`;
+            card.appendChild(stats);
+        }
+
+        return card;
+    }
+
+    async function loadNextPage() {
+        if (state.isLoading || !state.hasMore) return;
+        state.isLoading = true;
+        showLoader();
+
+        try {
+            const response = await fetch(buildUrl());
+            if (!response.ok) throw new Error('Request failed: ' + response.status);
+            const result = await response.json();
+
+            const items = state.tab === 'reviews' ? result.reviews : result.comments;
+            const renderFn = state.tab === 'reviews' ? renderReviewItem : renderCommentItem;
+
+            if (state.pageNumber === 1 && items.length === 0) {
+                noContentMessage.style.display = 'block';
+            }
+
+            items.forEach(item => contentList.appendChild(renderFn(item)));
+
+            state.hasMore = result.isNextPageExisted;
+            state.pageNumber += 1;
+        } catch (err) {
+            console.error(err);
+            state.hasMore = false;
+        } finally {
+            state.isLoading = false;
+            hideLoader();
+        }
+    }
+
+    function resetAndReload() {
+        state.pageNumber = 1;
+        state.hasMore = true;
+        contentList.innerHTML = '';
+        noContentMessage.style.display = 'none';
+        loadNextPage();
+    }
+
+    function switchTab(tab) {
+        if (state.tab === tab) return;
+        state.tab = tab;
+        tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+        resetAndReload();
+    }
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    if (statusFilter) statusFilter.addEventListener('change', resetAndReload);
+    if (orderFilter) orderFilter.addEventListener('change', resetAndReload);
+
+    loadNextPage();
+
+    const sentinel = document.getElementById('sentinel');
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            loadNextPage();
+        }
+    }, {
+        rootMargin: '100px'
+    });
+    observer.observe(sentinel);
+</script>
