@@ -289,7 +289,7 @@ namespace Web.MVC.Controllers
         {
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
 
-            var reviewResponse = await httpClient.GetAsync($"/api/Review/get-by-id/{reviewId}");
+            var reviewResponse = await httpClient.GetAsync($"/api/Review/get/review/{reviewId}/verified");
             reviewResponse.EnsureSuccessStatusCode();
             var review = await reviewResponse.Content.ReadFromJsonAsync<ReviewResponse>();
 
