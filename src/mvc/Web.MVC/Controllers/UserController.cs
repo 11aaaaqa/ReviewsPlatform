@@ -9,9 +9,12 @@ using Web.MVC.Constants;
 using Web.MVC.DTOs.user;
 using Web.MVC.Models.Api_responses;
 using Web.MVC.Models.Api_responses.account;
+using Web.MVC.Models.Api_responses.category;
 using Web.MVC.Models.Api_responses.comment;
 using Web.MVC.Models.Api_responses.review;
 using Web.MVC.Models.Api_responses.review.enums;
+using Web.MVC.Models.View_models.Category;
+using Web.MVC.Models.View_models.Review;
 using Web.MVC.Models.View_models.User;
 using Web.MVC.Services;
 
@@ -86,6 +89,63 @@ namespace Web.MVC.Controllers
             var reviewsResult = await reviewsResponse.Content.ReadFromJsonAsync<ReviewsResultResponse>();
 
             return Json(reviewsResult);
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("user/reviews/{reviewId}")] //sensible GetUserById view
+        public async Task<IActionResult> GetUserReviewById([FromRoute] Guid reviewId)
+        {
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+
+            var reviewResponse = await httpClient.GetAsync($"/api/Review/get/review/{reviewId}");
+            reviewResponse.EnsureSuccessStatusCode();
+            var review = await reviewResponse.Content.ReadFromJsonAsync<ReviewResponse>();
+
+            var itemResponse = await httpClient.GetAsync($"/api/Item/get-by-id/{review!.ItemId}");
+            itemResponse.EnsureSuccessStatusCode();
+            var item = await itemResponse.Content.ReadFromJsonAsync<ItemResponse>();
+
+            var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{review.UserId}");
+            userResponse.EnsureSuccessStatusCode();
+            var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
+
+            var userDisplay = new UserDisplay
+            {
+                Id = user!.Id, Roles = user.Roles, Email = user.Email, IsAvatarDefault = user.IsAvatarDefault,
+                IsEmailVerified = user.IsEmailVerified, RegistrationDate = user.RegistrationDate,
+                UserName = user.UserName,
+                AvatarSrc = imageConverter.GetImageSrc(user.AvatarSource)
+            };
+
+            var itemDisplay = new ItemDisplay
+            {
+                Id = item!.Id, Brand = item.Brand, GeneralEstimation = item.GeneralEstimation,
+                Name = item.Name, ReviewsCount = item.ReviewsCount, SubcategoryId = item.SubcategoryId,
+                PictureSrc = imageConverter.GetImageSrc(item.Picture)
+            };
+
+            var reviewDisplay = new ReviewDisplay
+            {
+                Id = review.Id, Item = itemDisplay, CreatedAt = review.CreatedAt, ItemEstimation = review.ItemEstimation,
+                Text = review.Text, CommentsCount = review.CommentsCount, CreatedByUser = userDisplay, DislikesCount = review.DislikesCount,
+                IsCreatedWithItem = review.IsCreatedWithItem, LikesCount = review.LikesCount, ShortReview = review.ShortReview,
+                PicturesSrc = new List<string>()
+            };
+
+            foreach (var picture in review.Pictures)
+            {
+                reviewDisplay.PicturesSrc.Add(imageConverter.GetImageSrc(picture));
+            }
+
+            string currentUserIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid currentUserId = new Guid(currentUserIdStr);
+
+            return View(new GetUserReviewByIdViewModel
+            {
+                Review = reviewDisplay, ReviewStatus = review.ReviewStatus,
+                ReviewRejectionReason = review.RejectionReason, CurrentUserId = currentUserId
+            });
         }
 
         [Authorize]
