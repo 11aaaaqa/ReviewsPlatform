@@ -1,6 +1,7 @@
 ﻿@using System.Security.Claims
 @model Web.MVC.Models.View_models.User.GetUserByIdViewModel
 <link rel="stylesheet" href="~/css/user/get-user-by-id.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <div class="get-user-by-id-page-block">
     <div class="user-info-block">
@@ -66,7 +67,7 @@
                     </div>
                 }
             }
-            @if (Model.User.Id == new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
+            @if (Model.CurrentUserId != null && Model.User.Id == Model.CurrentUserId)
             {
                 <a class="btn-wide-stretched" style="margin-top: 5px;" asp-controller="User" asp-action="EditUserProfile">
                     Настройка профиля
@@ -74,21 +75,314 @@
             }
         </div>
     </div>
+    
+    <div class="content-section"
+         data-user-id="@Model.User.Id"
+         data-can-view-all="@Model.CanUserViewCommsReviewsWithDifferentStatuses.ToString().ToLower()">
+
+        <div class="content-tabs">
+            <button class="tab-btn active" data-tab="reviews" type="button">Отзывы</button>
+            <button class="tab-btn" data-tab="comments" type="button">Комментарии</button>
+        </div>
+
+        <div class="filters-block">
+            @if (Model.CanUserViewCommsReviewsWithDifferentStatuses)
+            {
+                <select class="filter-select" id="statusFilter">
+                    <option value="Verified" selected>Одобренные</option>
+                    <option value="UnderConsideration">На рассмотрении</option>
+                    <option value="Rejected">Отклонённые</option>
+                </select>
+                <select class="filter-select" id="orderFilter">
+                    <option value="Descending" selected>Сначала новые</option>
+                    <option value="Ascending">Сначала старые</option>
+                </select>
+            }
+        </div>
+
+        <div class="content-list" id="contentList"></div>
+
+        <div id="sentinel" style="height: 10px;"></div>
+        <div id="loadSpinnerContainer" class="load-spinner-container"></div>
+
+        <p class="no-content-message" id="noContentMessage" style="display:none;">Ничего не найдено</p>
+    </div>
 </div>
 @if (Model.CanUserSetTheRoles && Model.User.Id != new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
 {
     <script>
-        const overlay = document.getElementById('modalOverlay');
-        const openModalBtn = document.getElementById('openModalBtn');
+    const overlay = document.getElementById('modalOverlay');
+    const openModalBtn = document.getElementById('openModalBtn');
 
-        overlay.onclick = (e) => {
-            if(e.target === overlay) {
-                overlay.style.display = 'none';
-            }
+    overlay.onclick = (e) => {
+        if(e.target === overlay) {
+            overlay.style.display = 'none';
         }
+    }
 
-        openModalBtn.onclick = () => {
-            overlay.style.display = 'flex';
-        }
-    </script>
+    openModalBtn.onclick = () => {
+        overlay.style.display = 'flex';
+    }
+</script>
 }
+<script src="~/js/loadSpinner.js"></script>
+<script>
+    const section = document.querySelector('.content-section');
+    
+    const userId = section.dataset.userId;
+    const canViewAll = section.dataset.canViewAll === 'true';
+
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const statusFilter = document.getElementById('statusFilter');
+    const orderFilter = document.getElementById('orderFilter');
+    const contentList = document.getElementById('contentList');
+    const noContentMessage = document.getElementById('noContentMessage');
+
+    const PAGE_SIZE = 25;
+
+    let state = {
+        tab: 'reviews',
+        pageNumber: 1,
+        isLoading: false,
+        hasMore: true
+    };
+
+    function buildUrl() {
+        const params = new URLSearchParams({
+            pageNumber: state.pageNumber,
+            pageSize: PAGE_SIZE
+        });
+
+        if (canViewAll) {
+            params.set('orderByDate', orderFilter.value);
+            params.set(state.tab === 'reviews' ? 'reviewStatus' : 'commentStatus', statusFilter.value);
+            return `/users/${userId}/${state.tab}?${params.toString()}`;
+        }
+
+        return `/users/${userId}/${state.tab}/verified?${params.toString()}`;
+    }
+
+    function statusBadgeClass(status) {
+        return 'status-badge ' + String(status).toLowerCase();
+    }
+
+    function statusLabel(status) {
+        switch (status) {
+            case 'Verified': return 'Одобрено';
+            case 'UnderConsideration': return 'На рассмотрении';
+            case 'Rejected': return 'Отклонено';
+            default: return status;
+        }
+    }
+
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    function renderReviewItem(review) {
+        const card = document.createElement('div');
+        card.className = 'content-card';
+
+        const body = document.createElement('div');
+        body.className = 'content-card-body';
+
+        const content = document.createElement('div');
+
+        if (review.reviewStatus.toLowerCase() !== 'verified') {
+            const badgeWrapper = document.createElement('div');
+            badgeWrapper.style.marginBottom = '3px';
+            const badge = document.createElement('span');
+            badge.className = statusBadgeClass(review.reviewStatus);
+            badge.textContent = statusLabel(review.reviewStatus);
+
+            badgeWrapper.appendChild(badge);
+            content.appendChild(badgeWrapper);
+        }
+
+        const date = document.createElement('span');
+        date.textContent = formatDate(review.createdAt);
+        date.className = 'content-date';
+
+        const starRating = document.createElement('div');
+        starRating.classList.add('star-rating');
+
+        const starFill = document.createElement('div');
+        starFill.classList.add('star-rating-fill');
+        starFill.style.width = `${review.itemEstimation * 20}%`;
+        starFill.textContent = '★★★★★';
+
+        starRating.appendChild(starFill);
+        content.appendChild(starRating);
+
+        const shortReview = document.createElement('div');
+        shortReview.className = 'content-text';
+        shortReview.innerHTML = review.shortReview;
+        content.appendChild(shortReview);
+
+        if (review.reviewStatus === 'Rejected' && review.rejectionReason) {
+            const reason = document.createElement('p');
+            reason.className = 'rejection-reason';
+            reason.textContent = 'Причина отклонения: ' + review.rejectionReason;
+            content.appendChild(reason);
+        } else if(review.reviewStatus === 'Verified') {
+            const stats = document.createElement('div');
+            stats.className = 'content-card-stats';
+
+            const likesFlex = document.createElement('div');
+            likesFlex.classList.add('content-card-stats-unit');
+            likesFlex.innerHTML = `<i class="fa-regular fa-thumbs-up"></i><span class="content-count">${review.likesCount}</span>`;
+
+            const dislikesFlex = document.createElement('div');
+            dislikesFlex.classList.add('content-card-stats-unit');
+            dislikesFlex.innerHTML = `<i class="fa-regular fa-thumbs-down"></i><span class="content-count">${review.dislikesCount}</span>`;
+
+            const commentsFlex = document.createElement('div');
+            commentsFlex.classList.add('content-card-stats-unit');
+            commentsFlex.innerHTML = `<i class="fa-regular fa-comment"></i><span class="content-count">${review.commentsCount}</span>`;
+
+            stats.appendChild(likesFlex);
+            stats.appendChild(dislikesFlex);
+            stats.appendChild(commentsFlex);
+
+            content.appendChild(stats);
+        }
+
+        body.appendChild(content);
+        body.appendChild(date);
+        card.appendChild(body);
+
+        return card;
+    }
+
+    function renderCommentItem(comment) {
+        const card = document.createElement('div');
+        card.className = 'content-card';
+
+        const body = document.createElement('div');
+        body.className = 'content-card-body';
+
+        const content = document.createElement('div');
+
+        if (comment.commentStatus.toLowerCase() !== 'verified') {
+            const badgeWrapper = document.createElement('div');
+            if (!comment.parentCommentId) {
+                badgeWrapper.style.marginBottom = '10px';
+            }
+            const badge = document.createElement('span');
+            badge.className = statusBadgeClass(comment.commentStatus);
+            badge.textContent = statusLabel(comment.commentStatus);
+
+            badgeWrapper.appendChild(badge);
+            content.appendChild(badgeWrapper);
+        }
+
+        const date = document.createElement('span');
+        date.textContent = formatDate(comment.createdAt);
+        date.className = 'content-date';
+
+        if (comment.parentCommentId) {
+            const replyMark = document.createElement('div');
+            replyMark.style.fontSize = '12px';
+            replyMark.style.color = '#999';
+            replyMark.style.marginBottom = '10px';
+            replyMark.textContent = 'Ответ на комментарий';
+            content.appendChild(replyMark);
+        }
+
+        const text = document.createElement('div');
+        text.className = 'content-text';
+        text.innerHTML = comment.text;
+        content.appendChild(text);
+
+        if (comment.commentStatus === 'Rejected' && comment.rejectionReason) {
+            const reason = document.createElement('p');
+            reason.className = 'rejection-reason';
+            reason.textContent = 'Причина отклонения: ' + comment.rejectionReason;
+            content.appendChild(reason);
+        }
+
+        if (comment.repliesCount > 0) {
+            const stats = document.createElement('div');
+            stats.className = 'content-card-stats';
+
+            const commentsFlex = document.createElement('div');
+            commentsFlex.classList.add('content-card-stats-unit');
+            commentsFlex.innerHTML = `<i class="fa-regular fa-comment"></i><span style="margin-bottom: 1px;">Ответов: ${comment.repliesCount}</span>`;
+
+            stats.appendChild(commentsFlex);
+
+            content.appendChild(stats);
+        }
+
+        body.appendChild(content);
+        body.appendChild(date);
+        card.appendChild(body);
+
+        return card;
+    }
+
+    async function loadNextPage() {
+        if (state.isLoading || !state.hasMore) return;
+        state.isLoading = true;
+        showLoader();
+
+        try {
+            const response = await fetch(buildUrl());
+            if (!response.ok) throw new Error('Request failed: ' + response.status);
+            const result = await response.json();
+
+            const items = state.tab === 'reviews' ? result.reviews : result.comments;
+            const renderFn = state.tab === 'reviews' ? renderReviewItem : renderCommentItem;
+
+            if (state.pageNumber === 1 && items.length === 0) {
+                noContentMessage.style.display = 'block';
+            }
+
+            items.forEach(item => contentList.appendChild(renderFn(item)));
+
+            state.hasMore = result.isNextPageExisted;
+            state.pageNumber += 1;
+        } catch (err) {
+            console.error(err);
+            state.hasMore = false;
+        } finally {
+            state.isLoading = false;
+            hideLoader();
+        }
+    }
+
+    function resetAndReload() {
+        state.pageNumber = 1;
+        state.hasMore = true;
+        contentList.innerHTML = '';
+        noContentMessage.style.display = 'none';
+        loadNextPage();
+    }
+
+    function switchTab(tab) {
+        if (state.tab === tab) return;
+        state.tab = tab;
+        tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+        resetAndReload();
+    }
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    if (statusFilter) statusFilter.addEventListener('change', resetAndReload);
+    if (orderFilter) orderFilter.addEventListener('change', resetAndReload);
+
+    loadNextPage();
+
+    const sentinel = document.getElementById('sentinel');
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            loadNextPage();
+        }
+    }, {
+        rootMargin: '100px'
+    });
+    observer.observe(sentinel);
+</script>

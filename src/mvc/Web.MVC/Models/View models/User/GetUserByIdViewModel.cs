@@ -5,8 +5,10 @@ namespace Web.MVC.Models.View_models.User
     public class GetUserByIdViewModel
     {
         public UserResponse User { get; set; }
+        public Guid? CurrentUserId { get; set; } = null;
         public bool CanUserSetTheRoles { get; set; }
         public bool CanUserViewTheRoles { get; set; }
+        public bool CanUserViewCommsReviewsWithDifferentStatuses { get; set; }
         public string AvatarSrc { get; set; }
         public List<RoleResponse> AllRoles { get; set; } = new();
     }

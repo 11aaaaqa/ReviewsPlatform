@@ -7,7 +7,11 @@ using System.Text;
 using System.Text.Json;
 using Web.MVC.Constants;
 using Web.MVC.DTOs.user;
+using Web.MVC.Models.Api_responses;
 using Web.MVC.Models.Api_responses.account;
+using Web.MVC.Models.Api_responses.comment;
+using Web.MVC.Models.Api_responses.review;
+using Web.MVC.Models.Api_responses.review.enums;
 using Web.MVC.Models.View_models.User;
 using Web.MVC.Services;
 
@@ -46,7 +50,8 @@ namespace Web.MVC.Controllers
             var model = new GetUserByIdViewModel
             {
                 User = user, CanUserSetTheRoles = canUserSetTheRoles,
-                CanUserViewTheRoles = canUserViewTheRoles, AvatarSrc = avatarSrc
+                CanUserViewTheRoles = canUserViewTheRoles, AvatarSrc = avatarSrc, 
+                CanUserViewCommsReviewsWithDifferentStatuses = false
             };
             if (canUserSetTheRoles)
             {
@@ -56,7 +61,75 @@ namespace Web.MVC.Controllers
                 model.AllRoles = allRoles;
             }
 
+            if (User.Identity.IsAuthenticated)
+            {
+                string currentUserIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+                Guid currentUserId = new Guid(currentUserIdStr);
+                if (currentUserId == userId || User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.Moderator))
+                    model.CanUserViewCommsReviewsWithDifferentStatuses = true;
+
+                model.CurrentUserId = currentUserId;
+            }
+
             return View(model);
+        }
+
+        [Route("users/{userId}/reviews/verified")]
+        public async Task<IActionResult> GetVerifiedReviewsByUserId([FromRoute] Guid userId, [FromQuery] int pageNumber,
+            [FromQuery] int pageSize)
+        {
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+
+            var reviewsResponse = await httpClient.GetAsync(
+                $"/api/Review/get/all/{userId}/verified?pageNumber={pageNumber}&pageSize={pageSize}");
+            reviewsResponse.EnsureSuccessStatusCode();
+            var reviewsResult = await reviewsResponse.Content.ReadFromJsonAsync<ReviewsResultResponse>();
+
+            return Json(reviewsResult);
+        }
+
+        [Authorize]
+        [Route("users/{userId}/reviews")]
+        public async Task<IActionResult> GetReviewsByUserId([FromRoute] Guid userId, EntityStatus reviewStatus,
+            OrderByDate orderByDate, int pageNumber, int pageSize)
+        {
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+
+            var reviewsResponse = await httpClient.GetAsync(
+                $"/api/Review/get/all/{userId}?reviewStatus={reviewStatus}&orderByDate={orderByDate}&pageNumber={pageNumber}&pageSize={pageSize}");
+            reviewsResponse.EnsureSuccessStatusCode();
+            var reviewsResult = await reviewsResponse.Content.ReadFromJsonAsync<ReviewsResultResponse>();
+
+            return Json(reviewsResult);
+        }
+
+        [Route("users/{userId}/comments/verified")]
+        public async Task<IActionResult> GetVerifiedCommentsByUserId([FromRoute] Guid userId, [FromQuery] int pageNumber,
+            [FromQuery] int pageSize)
+        {
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
+
+            var commentsResponse = await httpClient.GetAsync(
+                $"/api/Comment/get/all/{userId}/verified?pageNumber={pageNumber}&pageSize={pageSize}");
+            commentsResponse.EnsureSuccessStatusCode();
+            var commentsResult = await commentsResponse.Content.ReadFromJsonAsync<CommentsResultResponse>();
+
+            return Json(commentsResult);
+        }
+
+        [Authorize]
+        [Route("users/{userId}/comments")]
+        public async Task<IActionResult> GetCommentsByUserId([FromRoute] Guid userId, EntityStatus commentStatus,
+            OrderByDate orderByDate, int pageNumber, int pageSize)
+        {
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+
+            var commentsResponse = await httpClient.GetAsync(
+                $"/api/Comment/get/all/{userId}/?entityStatus={commentStatus}&orderByDate={orderByDate}&pageNumber={pageNumber}&pageSize={pageSize}");
+            commentsResponse.EnsureSuccessStatusCode();
+            var commentsResult = await commentsResponse.Content.ReadFromJsonAsync<CommentsResultResponse>();
+
+            return Json(commentsResult);
         }
 
         [Authorize(Roles = RoleNames.Admin)]

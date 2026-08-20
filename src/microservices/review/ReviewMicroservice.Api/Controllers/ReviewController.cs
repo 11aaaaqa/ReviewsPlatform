@@ -63,10 +63,28 @@ namespace ReviewMicroservice.Api.Controllers
         }
 
         [HttpGet]
-        [Route("get-by-user-id/{userId}")]
+        [Route("get/all/{userId}/verified")]
+        public async Task<IActionResult> GetAllVerifiedReviewsByUserIdAsync([FromRoute] Guid userId, [FromQuery] Pagination pagination)
+        {
+            var reviews = await unitOfWork.ReviewRepository.GetByUserIdAsync(userId, EntityStatus.Verified,
+                OrderByDate.Descending, pagination.PageNumber, pagination.PageSize);
+
+            var reviewsNextPage = await unitOfWork.ReviewRepository.GetByUserIdAsync(userId, EntityStatus.Verified,
+                OrderByDate.Descending, pagination.PageNumber + 1, pagination.PageSize);
+
+            return Ok(new ReviewsResult { Reviews = reviews, IsNextPageExisted = reviewsNextPage.Count > 0 });
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("get/all/{userId}")]
         public async Task<IActionResult> GetAllReviewsByUserIdAsync([FromRoute] Guid userId, [FromQuery] EntityStatus reviewStatus,
             [FromQuery] OrderByDate orderByDate, [FromQuery] Pagination pagination)
         {
+            string currentUserIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid currentUserId = new Guid(currentUserIdStr);
+            if (currentUserId != userId && !User.IsInRole(RoleNames.Admin) && !User.IsInRole(RoleNames.Moderator)) return Forbid();
+
             var reviews =
                 await unitOfWork.ReviewRepository.GetByUserIdAsync(userId, reviewStatus, orderByDate, pagination.PageNumber, pagination.PageSize);
 
