@@ -11,6 +11,9 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
         public async Task<Review?> GetByIdAsync(Guid id)
             => await context.Reviews.SingleOrDefaultAsync(x => x.Id == id);
 
+        public async Task<Review?> GetByIdAsync(Guid id, EntityStatus status)
+            => await context.Reviews.SingleOrDefaultAsync(x => x.Id == id && x.ReviewStatus == status);
+
         public async Task<List<ReviewNoPictures>> GetAllByStatusAsync(EntityStatus status, OrderByDate orderByDate, int pageNumber, int pageSize)
         {
             var reviews = context.Reviews.Where(x => x.ReviewStatus == status).Select(x => 

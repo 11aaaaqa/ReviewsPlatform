@@ -24,12 +24,29 @@ namespace ReviewMicroservice.Api.Controllers
         ImageValidator imageValidator, IReactionService reactionService) : ControllerBase
     {
         [HttpGet]
-        [Route("get-by-id/{reviewId}")]
+        [Route("get/review/{reviewId}/verified")]
+        public async Task<IActionResult> GetVerifiedReviewByIdAsync([FromRoute] Guid reviewId)
+        {
+            var review = await unitOfWork.ReviewRepository.GetByIdAsync(reviewId, EntityStatus.Verified);
+            if (review == null)
+                return NotFound("Review with current identifier does not exist");
+
+            return Ok(review);
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("get/review/{reviewId}")]
         public async Task<IActionResult> GetReviewByIdAsync([FromRoute] Guid reviewId)
         {
+            string currentUserIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid currentUserId = new Guid(currentUserIdStr);
+
             var review = await unitOfWork.ReviewRepository.GetByIdAsync(reviewId);
-            if (review == null)
-                return NotFound("Reviews with current identifier does not exist");
+            if (review == null) 
+                return NotFound("Review with current identifier does not exist");
+            if (review.UserId != currentUserId && !User.IsInRole(RoleNames.Admin) && !User.IsInRole(RoleNames.Moderator))
+                return Forbid();
 
             return Ok(review);
         }
@@ -202,6 +219,9 @@ namespace ReviewMicroservice.Api.Controllers
             Guid userId = new Guid(userIdStr);
             if (review.UserId != userId && !User.IsInRole(RoleNames.Admin) && !User.IsInRole(RoleNames.Moderator))
                 return Forbid();
+
+            if (review.ReviewStatus == EntityStatus.Rejected)
+                return BadRequest("Cannot remove rejected review");
 
             Guid itemId = review.ItemId;
             EntityStatus reviewStatus = review.ReviewStatus;
