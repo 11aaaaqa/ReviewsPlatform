@@ -1,0 +1,156 @@
+﻿@using Web.MVC.Models.Api_responses
+@model Web.MVC.Models.View_models.User.GetUserReviewByIdViewModel
+<link rel="stylesheet" href="~/css/review/get-review-by-id.css" />
+<link rel="stylesheet" href="~/css/user/get-user-review.css"/>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
+<script src="https://cdn.jsdelivr.net/npm/@@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+
+@{
+    string GetReviewWord(int count)
+    {
+        int mod100 = count % 100;
+        int mod10 = count % 10;
+
+        if (mod10 == 1 && mod100 != 11) return "отзыв";
+        if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "отзыва";
+        return "отзывов";
+    }
+}
+
+<div class="get-review-by-id-page-block">
+    @if (Model.ReviewStatus == EntityStatus.Rejected)
+    {
+        <div style="margin-bottom: 15px;"><span class="status-badge rejected">Отклонено</span></div>
+    }
+    else if (Model.ReviewStatus == EntityStatus.UnderConsideration)
+    {
+        <div style="margin-bottom: 15px;"><span class="status-badge underconsideration">На рассмотрении</span></div>
+    }
+    
+    @if (Model.Review.IsCreatedWithItem)
+    {
+        @if (Model.ReviewStatus == EntityStatus.Rejected)
+        {
+            <h4 style="margin-bottom: 10px;">Отзыв создан вместе с товаром</h4>
+        }
+        else if (Model.ReviewStatus == EntityStatus.UnderConsideration)
+        {
+            <h4 style="margin-bottom: 10px;">Отзыв создается вместе с товаром</h4>
+        }
+    }
+
+    <div class="item-info-block">
+        <h3 style="margin-bottom: 18px;">@Model.Review.Item.Name</h3>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <img src="@Model.Review.Item.PictureSrc" style="max-width: 220px; max-height: 220px;"/>
+            <div>
+                @if (!Model.Review.IsCreatedWithItem || Model.ReviewStatus == EntityStatus.Verified)
+                {
+                    <div class="star-rating" style="font-size: 30px;">
+                        <div class="star-rating-fill" style="width: @(Model.Review.Item.GeneralEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                    </div>
+                    <p style="color: gray; font-size: 14px; font-weight: 700;">
+                        Среднее: @Model.Review.Item.GeneralEstimation (@Model.Review.Item.ReviewsCount @GetReviewWord(Model.Review.Item.ReviewsCount))
+                    </p>
+                }
+                @if (Model.Review.Item.Brand != null)
+                {
+                    <p style="font-size: 15px;">Бренд: @Model.Review.Item.Brand</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="review-block">
+        <div>
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 5px;">
+                <img src="@Model.Review.CreatedByUser.AvatarSrc" style="width: 50px; height: 50px; object-fit: cover;"/>
+                <a class="user-name-link" asp-controller="User" asp-action="GetUserById" asp-route-userId="@Model.Review.CreatedByUser.Id">
+                    @Model.Review.CreatedByUser.UserName
+                </a>
+            </div>
+            <p style="color: rgba(125, 125, 125, 0.7); font-size: 14px;">Опубликовано @Model.Review.CreatedAt.ToString("dd.MM.yyyy")</p>
+            <div style="display: flex; align-items: center; gap: 7px; margin: 12px 0 12px 0;">
+                <h4 style="margin-top: 8px;">Оценка:</h4>
+                <div class="star-rating" style="font-size: 30px;">
+                    <div class="star-rating-fill" style="width: @(Model.Review.ItemEstimation * 20)%; font-size: 30px;">★★★★★</div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div style="margin-bottom: 15px;">
+                <h5 style="margin: 0 0 3px 0;">Краткий отзыв:</h5>
+                @Html.Raw(Model.Review.ShortReview)
+            </div>
+
+            <div>
+                <h5 style="margin: 0 0 3px 0;">Текст отзыва:</h5>
+                @Html.Raw(Model.Review.Text)
+            </div>
+
+            @if (Model.Review.PicturesSrc.Any())
+            {
+                int maxVisiblePhotos = 4;
+                int totalPhotos = Model.Review.PicturesSrc.Count;
+
+                <div class="review-images-grid" id="review-gallery-grid">
+                    @for (int i = 0; i < totalPhotos; i++)
+                    {
+                        bool isHidden = i >= maxVisiblePhotos;
+                        bool isLastVisibleWithMore = (i == maxVisiblePhotos - 1) && (totalPhotos > maxVisiblePhotos);
+
+                        <div class="review-img-wrapper @(isHidden ? "hidden-photo" : "") @(isLastVisibleWithMore ? "has-more" : "")"
+                             @(isLastVisibleWithMore ? $"data-more-text=+{totalPhotos - maxVisiblePhotos + 1}" : "")>
+
+                            <a href="@Url.Content(Model.Review.PicturesSrc[i])" data-fancybox="review-gallery">
+                                <img src="@Url.Content(Model.Review.PicturesSrc[i])" class="review-img-thumb" alt="Фото отзыва"/>
+                            </a>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div style="display: flex; margin-top: 10px; justify-content: space-between; align-items: center;">
+            <div>
+                @if (Model.ReviewStatus == EntityStatus.Verified)
+                {
+                    <div style="display: flex; gap: 12px; font-size: 20px;">
+                        <div class="get-reviews-flex">
+                            <i id="likeI" class="fa-regular fa-thumbs-up"></i>
+                            <span id="likesCountSpan" style="font-size: 16px;">@Model.Review.LikesCount</span>
+                        </div>
+                        <div class="get-reviews-flex">
+                            <i id="dislikeI" class="fa-regular fa-thumbs-down"></i>
+                            <span id="dislikesCountSpan" style="font-size: 16px;">@Model.Review.DislikesCount</span>
+                        </div>
+                    </div>
+                }
+            </div>
+            @if (Model.CurrentUserId == Model.Review.CreatedByUser.Id && Model.ReviewStatus != EntityStatus.Rejected)
+            {
+                <div>
+                    <form method="post" asp-controller="Review" asp-action="RemoveReview" asp-route-reviewId="@Model.Review.Id">
+                        <input type="submit" class="btn-red" value="Удалить" onclick="return confirm('Вы уверены, что хотите удалить этот отзыв?');"/>
+                    </form>
+                </div>
+            }
+        </div>
+    </div>
+    
+    @if (Model.ReviewRejectionReason != null)
+    {
+        <p class="rejection-reason">Причина отклонения: @Model.ReviewRejectionReason</p>
+    }
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        Fancybox.bind("[data-fancybox='review-gallery']", {
+            Infinite: true,
+            Images: { Panzoom: { maxScale: 3 } }
+        });
+    });
+</script>

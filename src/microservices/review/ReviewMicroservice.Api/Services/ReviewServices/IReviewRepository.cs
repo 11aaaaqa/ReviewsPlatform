@@ -7,6 +7,7 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
     public interface IReviewRepository
     {
         Task<Review?> GetByIdAsync(Guid id);
+        Task<Review?> GetByIdAsync(Guid id, EntityStatus status);
         Task<List<ReviewNoPictures>> GetAllByStatusAsync(EntityStatus status, OrderByDate orderByDate, int pageNumber, int pageSize);
         Task<List<ReviewNoPictures>> GetByUserIdAsync(Guid userId, EntityStatus reviewStatus, OrderByDate orderByDate, int pageNumber, int pageSize);
         Task<List<ReviewNoPictures>> GetByItemIdAsync(Guid itemId, EntityStatus reviewStatus, OrderByDate orderByDate, int pageNumber, int pageSize);

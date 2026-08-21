@@ -111,7 +111,7 @@ namespace Web.MVC.Controllers
         {
             HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
 
-            var reviewResponse = await httpClient.GetAsync($"/api/Review/get-by-id/{reviewId}");
+            var reviewResponse = await httpClient.GetAsync($"/api/Review/get/review/{reviewId}");
             reviewResponse.EnsureSuccessStatusCode();
             var review = await reviewResponse.Content.ReadFromJsonAsync<ReviewResponse>();
 
@@ -297,7 +297,7 @@ namespace Web.MVC.Controllers
             userCreatedByResponse.EnsureSuccessStatusCode();
             var userCreatedBy = await userCreatedByResponse.Content.ReadFromJsonAsync<UserResponse>();
 
-            var reviewResponse = await httpClient.GetAsync($"/api/Review/get-by-id/{comment.ReviewId}");
+            var reviewResponse = await httpClient.GetAsync($"/api/Review/get/review/{comment.ReviewId}");
             reviewResponse.EnsureSuccessStatusCode();
             var review = await reviewResponse.Content.ReadFromJsonAsync<ReviewResponse>();
 

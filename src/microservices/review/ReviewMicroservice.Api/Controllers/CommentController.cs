@@ -154,6 +154,9 @@ namespace ReviewMicroservice.Api.Controllers
             if(comment.UserId != currentUserId && !User.IsInRole(RoleNames.Admin) && !User.IsInRole(RoleNames.Moderator))
                 return Forbid();
 
+            if (comment.CommentStatus == EntityStatus.Rejected) 
+                return BadRequest("Cannot remove rejected comment");
+
             try
             {
                 await unitOfWork.BeginTransactionAsync();

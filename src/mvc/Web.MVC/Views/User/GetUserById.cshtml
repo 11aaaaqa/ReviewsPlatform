@@ -38,14 +38,14 @@
                     <div class="modal-overlay" id="modalOverlay">
                         <div class="modal-form">
                             <form method="post" asp-controller="User" asp-action="SetUserRoles" asp-route-userId="@Model.User.Id">
-                                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                <input type="hidden" name="returnUrl" value="@returnUrl"/>
                                 <div class="roles-checkboxes">
                                     @foreach (var role in Model.AllRoles)
                                     {
                                         @if (Model.User.Roles.Any(x => x.Id == role.Id))
                                         {
                                             <label class="checkbox-container">
-                                                <input class="checkbox" type="checkbox" name="roleIds" value="@role.Id" checked />
+                                                <input class="checkbox" type="checkbox" name="roleIds" value="@role.Id" checked/>
                                                 <div class="custom-checkbox"></div>
                                                 <span class="checkbox-text">@role.Name</span>
                                             </label>
@@ -53,7 +53,7 @@
                                         else
                                         {
                                             <label class="checkbox-container">
-                                                <input class="checkbox" type="checkbox" name="roleIds" value="@role.Id" />
+                                                <input class="checkbox" type="checkbox" name="roleIds" value="@role.Id"/>
                                                 <div class="custom-checkbox"></div>
                                                 <span class="checkbox-text">@role.Name</span>
                                             </label>
@@ -61,7 +61,7 @@
                                     }
                                 </div>
 
-                                <input class="btn-green" type="submit" value="Сохранить" />
+                                <input class="btn-green" type="submit" value="Сохранить"/>
                             </form>
                         </div>
                     </div>
@@ -75,7 +75,7 @@
             }
         </div>
     </div>
-    
+
     <div class="content-section"
          data-user-id="@Model.User.Id"
          data-can-view-all="@Model.CanUserViewCommsReviewsWithDifferentStatuses.ToString().ToLower()">
@@ -105,7 +105,7 @@
         <div id="sentinel" style="height: 10px;"></div>
         <div id="loadSpinnerContainer" class="load-spinner-container"></div>
 
-        <p class="no-content-message" id="noContentMessage" style="display:none;">Ничего не найдено</p>
+        <p class="no-content-message" id="noContentMessage" style="display: none;">Ничего не найдено</p>
     </div>
 </div>
 @if (Model.CanUserSetTheRoles && Model.User.Id != new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
@@ -215,10 +215,18 @@
         starRating.appendChild(starFill);
         content.appendChild(starRating);
 
+        const shortReviewLink = document.createElement('a');
+        if (review.reviewStatus.toLowerCase() === 'verified') {
+            shortReviewLink.href = `/reviews/${review.id}`;
+        } else {
+            shortReviewLink.href = `/user/reviews/${review.id}`;
+        }
+        shortReviewLink.className = 'content-link';
         const shortReview = document.createElement('div');
         shortReview.className = 'content-text';
         shortReview.innerHTML = review.shortReview;
-        content.appendChild(shortReview);
+        shortReviewLink.appendChild(shortReview);
+        content.appendChild(shortReviewLink);
 
         if (review.reviewStatus === 'Rejected' && review.rejectionReason) {
             const reason = document.createElement('p');
@@ -290,10 +298,14 @@
             content.appendChild(replyMark);
         }
 
+        const textLink = document.createElement('a');
+        textLink.className = 'content-link';
+        textLink.href = `/reviews/${comment.reviewId}`;
         const text = document.createElement('div');
         text.className = 'content-text';
         text.innerHTML = comment.text;
-        content.appendChild(text);
+        textLink.appendChild(text);
+        content.appendChild(textLink);
 
         if (comment.commentStatus === 'Rejected' && comment.rejectionReason) {
             const reason = document.createElement('p');

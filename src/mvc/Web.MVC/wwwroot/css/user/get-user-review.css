@@ -1,0 +1,21 @@
+﻿.rejection-reason {
+    color: #a02834;
+    font-style: italic;
+    margin-top: 15px;
+}
+
+.status-badge {
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.status-badge.underconsideration {
+    background: #fff3cd;
+    color: #8a6d00;
+}
+
+.status-badge.rejected {
+    background: #f8d7da;
+    color: #a02834;
+}
