@@ -51,8 +51,8 @@ namespace RestrictionMicroservice.Api.Controllers
 
         [AllowAnonymous]
         [HttpGet]
-        [Route("get-active/{userId}")]
-        public async Task<IActionResult> GetActiveRestrictionByUserIdAsync([FromRoute] Guid userId)
+        [Route("get/active")]
+        public async Task<IActionResult> GetActiveRestrictionByUserIdAsync([FromQuery] Guid userId)
         {
             var restriction = await unitOfWork.RestrictionRepository.GetActiveRestrictionByRestrictedUserIdAsync(userId);
             if (restriction == null)
