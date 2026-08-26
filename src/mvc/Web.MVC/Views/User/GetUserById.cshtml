@@ -5,6 +5,17 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <div class="get-user-by-id-page-block">
+    @if (Model.CanUserSetTheRoles && Model.User.Id != new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
+    {
+        <div class="user-actions">
+            <button class="user-actions-btn" id="actionsMenuBtn" type="button">
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+            </button>
+            <div class="user-actions-dropdown" id="actionsDropdown">
+                <button class="user-actions-dropdown-item" id="openModalBtn" type="button">Назначить роль</button>
+            </div>
+        </div>
+    }
     <div class="user-info-block">
         <div class="avatar-block">
             <img src="@Model.AvatarSrc" width="180" height="180" />
@@ -61,21 +72,20 @@
 
                 @if (Model.CanUserSetTheRoles && Model.User.Id != new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
                 {
-                    <button class="btn-wide-stretched" style="margin-top: 5px;" id="openModalBtn">Назначить роль</button>
                     string returnUrl = Context.Request.Path;
                     if (Context.Request.QueryString.HasValue)
                         returnUrl += Context.Request.QueryString;
                     <div class="modal-overlay" id="modalOverlay">
                         <div class="modal-form">
                             <form method="post" asp-controller="User" asp-action="SetUserRoles" asp-route-userId="@Model.User.Id">
-                                <input type="hidden" name="returnUrl" value="@returnUrl"/>
+                                <input type="hidden" name="returnUrl" value="@returnUrl" />
                                 <div class="roles-checkboxes">
                                     @foreach (var role in Model.AllRoles)
                                     {
                                         @if (Model.User.Roles.Any(x => x.Id == role.Id))
                                         {
                                             <label class="checkbox-container">
-                                                <input class="checkbox" type="checkbox" name="roleIds" value="@role.Id" checked/>
+                                                <input class="checkbox" type="checkbox" name="roleIds" value="@role.Id" checked />
                                                 <div class="custom-checkbox"></div>
                                                 <span class="checkbox-text">@role.Name</span>
                                             </label>
@@ -83,7 +93,7 @@
                                         else
                                         {
                                             <label class="checkbox-container">
-                                                <input class="checkbox" type="checkbox" name="roleIds" value="@role.Id"/>
+                                                <input class="checkbox" type="checkbox" name="roleIds" value="@role.Id" />
                                                 <div class="custom-checkbox"></div>
                                                 <span class="checkbox-text">@role.Name</span>
                                             </label>
@@ -91,7 +101,7 @@
                                     }
                                 </div>
 
-                                <input class="btn-green" type="submit" value="Сохранить"/>
+                                <input class="btn-green" type="submit" value="Сохранить" />
                             </form>
                         </div>
                     </div>
@@ -141,19 +151,33 @@
 @if (Model.CanUserSetTheRoles && Model.User.Id != new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
 {
     <script>
-    const overlay = document.getElementById('modalOverlay');
-    const openModalBtn = document.getElementById('openModalBtn');
+        const overlay = document.getElementById('modalOverlay');
+        const openModalBtn = document.getElementById('openModalBtn');
+        const actionsMenuBtn = document.getElementById('actionsMenuBtn');
+        const actionsDropdown = document.getElementById('actionsDropdown');
 
-    overlay.onclick = (e) => {
-        if(e.target === overlay) {
-            overlay.style.display = 'none';
+        overlay.onclick = (e) => {
+            if (e.target === overlay) {
+                overlay.style.display = 'none';
+            }
         }
-    }
 
-    openModalBtn.onclick = () => {
-        overlay.style.display = 'flex';
-    }
-</script>
+        actionsMenuBtn.onclick = (e) => {
+            e.stopPropagation();
+            actionsDropdown.classList.toggle('open');
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!actionsDropdown.contains(e.target) && e.target !== actionsMenuBtn) {
+                actionsDropdown.classList.remove('open');
+            }
+        });
+
+        openModalBtn.onclick = () => {
+            actionsDropdown.classList.remove('open');
+            overlay.style.display = 'flex';
+        }
+    </script>
 }
 <script src="~/js/loadSpinner.js"></script>
 <script>
