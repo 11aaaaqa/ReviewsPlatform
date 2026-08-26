@@ -11,6 +11,7 @@ using Web.MVC.Models.Api_responses;
 using Web.MVC.Models.Api_responses.account;
 using Web.MVC.Models.Api_responses.category;
 using Web.MVC.Models.Api_responses.comment;
+using Web.MVC.Models.Api_responses.restriction;
 using Web.MVC.Models.Api_responses.review;
 using Web.MVC.Models.Api_responses.review.enums;
 using Web.MVC.Models.View_models.Category;
@@ -42,26 +43,39 @@ namespace Web.MVC.Controllers
         [HttpGet]
         public async Task<IActionResult> GetUserById(Guid userId)
         {
-            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
             var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{userId}");
             userResponse.EnsureSuccessStatusCode();
             var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
 
             bool canUserSetTheRoles = User.IsInRole(RoleNames.Admin);
             bool canUserViewTheRoles = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.Moderator);
-            string avatarSrc = imageConverter.GetImageSrc(user.AvatarSource);
+            string avatarSrc = imageConverter.GetImageSrc(user!.AvatarSource);
             var model = new GetUserByIdViewModel
             {
                 User = user, CanUserSetTheRoles = canUserSetTheRoles,
                 CanUserViewTheRoles = canUserViewTheRoles, AvatarSrc = avatarSrc, 
-                CanUserViewCommsReviewsWithDifferentStatuses = false
+                CanUserViewCommsReviewsWithDifferentStatuses = false, ActiveRestriction = null
             };
             if (canUserSetTheRoles)
             {
-                var allRolesResponse = await httpClient.GetAsync("/api/Role/all");
+                HttpClient httpClientToken = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+                var allRolesResponse = await httpClientToken.GetAsync("/api/Role/all");
                 allRolesResponse.EnsureSuccessStatusCode();
                 var allRoles = await allRolesResponse.Content.ReadFromJsonAsync<List<RoleResponse>>();
-                model.AllRoles = allRoles;
+                model.AllRoles = allRoles!;
+            }
+
+            var activeRestrictionResponse = await httpClient.GetAsync($"/api/Restriction/get/active?userId={userId}");
+            if (activeRestrictionResponse.IsSuccessStatusCode)
+            {
+                var activeRestriction = await activeRestrictionResponse.Content.ReadFromJsonAsync<RestrictionResponse>();
+                model.ActiveRestriction = activeRestriction;
+            }
+            else
+            {
+                if (activeRestrictionResponse.StatusCode != HttpStatusCode.NotFound)
+                    activeRestrictionResponse.EnsureSuccessStatusCode();
             }
 
             if (User.Identity.IsAuthenticated)

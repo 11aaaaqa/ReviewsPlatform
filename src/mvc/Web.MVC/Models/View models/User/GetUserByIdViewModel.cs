@@ -1,4 +1,5 @@
 ﻿using Web.MVC.Models.Api_responses.account;
+using Web.MVC.Models.Api_responses.restriction;
 
 namespace Web.MVC.Models.View_models.User
 {
@@ -10,6 +11,7 @@ namespace Web.MVC.Models.View_models.User
         public bool CanUserViewTheRoles { get; set; }
         public bool CanUserViewCommsReviewsWithDifferentStatuses { get; set; }
         public string AvatarSrc { get; set; }
+        public RestrictionResponse? ActiveRestriction { get; set; }
         public List<RoleResponse> AllRoles { get; set; } = new();
     }
 }

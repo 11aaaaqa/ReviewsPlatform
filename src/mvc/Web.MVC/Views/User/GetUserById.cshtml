@@ -1,4 +1,5 @@
 ﻿@using System.Security.Claims
+@using Web.MVC.Models.Api_responses.restriction.enums
 @model Web.MVC.Models.View_models.User.GetUserByIdViewModel
 <link rel="stylesheet" href="~/css/user/get-user-by-id.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,6 +12,35 @@
         <div>
             <h4>@Model.User.UserName</h4>
             <p class="dim-colored bolder">Дата регистрации: @Model.User.RegistrationDate.ToString("dd.MM.yyyy")</p>
+            @if (Model.ActiveRestriction != null)
+            {
+                <div class="restriction-info-block">
+                    <p>У пользователя есть ограничение по причине: @Model.ActiveRestriction.Reason</p>
+                    @switch (Model.ActiveRestriction.RestrictionType)
+                    {
+                        case RestrictionType.All:
+                            <p>Тип ограничения: Все</p>
+                            break;
+                        case RestrictionType.Commenting:
+                            <p>Тип ограничения: Создание комментариев</p>
+                            break;
+                        case RestrictionType.ReviewPosting:
+                            <p>Тип ограничения: Публикация отзывов</p>
+                            break;
+                        case RestrictionType.Reporting:
+                            <p>Тип ограничения: Сообщение о нарушениях</p>
+                            break;
+                    }
+                    @if (Model.ActiveRestriction.IsPermanent)
+                    {
+                        <p>Ограничение действует до: Перманентно</p>
+                    }
+                    else
+                    {
+                        <p>Ограничение действует до: @Model.ActiveRestriction.ExpiryTime.ToString("dd.MM.yyyy")</p>
+                    }
+                </div>
+            }
             @if (Model.CanUserViewTheRoles)
             {
                 @if (Model.User.Roles.Count > 0)

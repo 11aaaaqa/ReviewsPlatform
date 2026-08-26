@@ -5,6 +5,17 @@
     align-items: center;
 }
 
+.restriction-info-block {
+    margin-top: 7px;
+}
+
+.restriction-info-block p {
+    color: #d32f2f;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 15px;
+}
+
 .avatar-block {
     margin-right: 15px;
 }
@@ -216,6 +227,10 @@
 
     .modal-form {
         width: 70%;
+    }
+
+    .restriction-info-block p {
+        font-size: 14px;
     }
 }
 
