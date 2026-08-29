@@ -400,5 +400,45 @@ namespace Web.MVC.Controllers
 
             return RedirectToAction("GetComments");
         }
+
+        [HttpPost]
+        [Route("users/{userId}/reviews/reject/all")]
+        public async Task<IActionResult> RejectAllReviewsByUserId([FromRoute] Guid userId, [FromForm] RejectAllReviewsByUserIdDto model)
+        {
+            if (ModelState.IsValid)
+            {
+                HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+                using StringContent jsonContent = new(JsonSerializer.Serialize(model), Encoding.UTF8, "application/json");
+
+                var rejectReviewsResponse = await httpClient.PutAsync(
+                    $"/api/Review/reject/review/all?userId={userId}", jsonContent);
+                rejectReviewsResponse.EnsureSuccessStatusCode();
+
+                return RedirectToAction("GetUserById","User", new { userId });
+            }
+
+            return BadRequest(new
+                { errors = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList() });
+        }
+
+        [HttpPost]
+        [Route("users/{userId}/comments/reject/all")]
+        public async Task<IActionResult> RejectAllCommentsByUserId([FromRoute] Guid userId, [FromForm] RejectAllCommentsByUserIdDto model)
+        {
+            if (ModelState.IsValid)
+            {
+                HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+                using StringContent jsonContent = new(JsonSerializer.Serialize(model), Encoding.UTF8, "application/json");
+
+                var rejectCommentsResponse = await httpClient.PutAsync(
+                    $"/api/Comment/reject/comment/all?userId={userId}", jsonContent);
+                rejectCommentsResponse.EnsureSuccessStatusCode();
+
+                return RedirectToAction("GetUserById", "User", new { userId });
+            }
+
+            return BadRequest(new
+                { errors = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList() });
+        }
     }
 }

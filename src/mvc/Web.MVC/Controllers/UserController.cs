@@ -55,7 +55,8 @@ namespace Web.MVC.Controllers
             {
                 User = user, CanUserSetTheRoles = canUserSetTheRoles,
                 CanUserViewTheRoles = canUserViewTheRoles, AvatarSrc = avatarSrc, 
-                CanUserViewCommsReviewsWithDifferentStatuses = false, ActiveRestriction = null
+                CanUserViewCommsReviewsWithDifferentStatuses = false, ActiveRestriction = null,
+                CanUserRejectComments = false, CanUserRejectReviews = false
             };
             if (canUserSetTheRoles)
             {
@@ -78,7 +79,7 @@ namespace Web.MVC.Controllers
                     activeRestrictionResponse.EnsureSuccessStatusCode();
             }
 
-            if (User.Identity.IsAuthenticated)
+            if (User.Identity!.IsAuthenticated)
             {
                 string currentUserIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
                 Guid currentUserId = new Guid(currentUserIdStr);
@@ -86,6 +87,23 @@ namespace Web.MVC.Controllers
                     model.CanUserViewCommsReviewsWithDifferentStatuses = true;
 
                 model.CurrentUserId = currentUserId;
+
+                if (User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.Moderator))
+                {
+                    HttpClient httpClientToken = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+
+                    var reviewsUnderConsiderationResponse = await httpClientToken.GetAsync(
+                        $"/api/Review/get/under-consideration/user/{userId}?pageSize=10&pageNumber=1");
+                    reviewsUnderConsiderationResponse.EnsureSuccessStatusCode();
+                    var reviewsUnderConsideration = await reviewsUnderConsiderationResponse.Content.ReadFromJsonAsync<ReviewsResultResponse>();
+                    if (reviewsUnderConsideration!.Reviews.Count > 0) model.CanUserRejectReviews = true;
+
+                    var commentsUnderConsiderationResponse = await httpClientToken.GetAsync(
+                        $"/api/Comment/get/under-consideration/user/{userId}?pageSize=10&pageNumber=1");
+                    commentsUnderConsiderationResponse.EnsureSuccessStatusCode();
+                    var commentsUnderConsideration = await commentsUnderConsiderationResponse.Content.ReadFromJsonAsync<CommentsResultResponse>();
+                    if (commentsUnderConsideration!.Comments.Count > 0) model.CanUserRejectComments = true;
+                }
             }
 
             return View(model);

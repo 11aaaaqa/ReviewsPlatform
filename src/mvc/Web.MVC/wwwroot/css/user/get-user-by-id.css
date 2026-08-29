@@ -9,6 +9,27 @@
     margin-top: 7px;
 }
 
+.user-label {
+    margin-bottom: 3px;
+}
+
+.restriction-textarea {
+    width: 100%;
+    resize: none;
+    overflow: hidden;
+    outline: none;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px 12px;
+    transition: border-color 0.2s;
+}
+
+.restriction-textarea:focus {
+    outline: none;
+    border-color: #d32f2f;
+}
+
 .restriction-info-block p {
     color: #d32f2f;
     font-style: italic;

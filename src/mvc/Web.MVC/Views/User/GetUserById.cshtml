@@ -1,18 +1,72 @@
-﻿@using System.Security.Claims
+﻿@using Web.MVC.Constants
 @using Web.MVC.Models.Api_responses.restriction.enums
 @model Web.MVC.Models.View_models.User.GetUserByIdViewModel
 <link rel="stylesheet" href="~/css/user/get-user-by-id.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <div class="get-user-by-id-page-block">
-    @if (Model.CanUserSetTheRoles && Model.User.Id != new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
+    @if ((Model.CanUserSetTheRoles || Model.CanUserRejectReviews || Model.CanUserRejectComments) && 
+         (Model.CurrentUserId != null && Model.User.Id != Model.CurrentUserId))
     {
+        @if (Model.CanUserRejectReviews)
+        {
+            <div class="modal-overlay" id="modalOverlayRejectReviews">
+                <div class="modal-form">
+                    <form id="rejectAllUserReviewsForm" method="post" asp-controller="Admin" asp-action="RejectAllReviewsByUserId"
+                          asp-route-userId="@Model.User.Id">
+                        <div id="rejectReviewsErrorMessageContainer" style="display: none; color: red; margin-bottom: 3px;"></div>
+                        <div>
+                            <label for="rejectionReasonReviews" class="user-label">Причина отклонения отзывов</label>
+                            <textarea id="rejectionReasonReviews"
+                                            class="restriction-textarea"
+                                            placeholder="Введите причину отказа"
+                                            rows="3"
+                                            name="RejectionReason"
+                                            maxlength="@StringLengthDtoConstants.ReviewRejectReasonMax"></textarea>
+                        </div>
+                        <input class="btn-red" type="submit" value="Удалить"/>
+                    </form>
+                </div>
+            </div>
+        }
+        @if (Model.CanUserRejectComments)
+        {
+            <div class="modal-overlay" id="modalOverlayRejectComments">
+                <div class="modal-form">
+                    <form id="rejectAllUserCommentsForm" method="post" asp-controller="Admin" asp-action="RejectAllCommentsByUserId"
+                          asp-route-userId="@Model.User.Id">
+                        <div id="rejectCommentsErrorMessageContainer" style="display: none; color: red; margin-bottom: 3px;"></div>
+                        <div>
+                            <label for="rejectionReasonComments" class="user-label">Причина отклонения комментариев</label>
+                            <textarea id="rejectionReasonComments"
+                                              class="restriction-textarea"
+                                              placeholder="Введите причину отказа"
+                                              rows="3"
+                                              name="RejectionReason"
+                                              maxlength="@StringLengthDtoConstants.CommentRejectReasonMax"></textarea>
+                        </div>
+                        <input class="btn-red" type="submit" value="Удалить" />
+                    </form>
+                </div>
+            </div>
+        }
         <div class="user-actions">
             <button class="user-actions-btn" id="actionsMenuBtn" type="button">
                 <i class="fa-solid fa-ellipsis-vertical"></i>
             </button>
             <div class="user-actions-dropdown" id="actionsDropdown">
-                <button class="user-actions-dropdown-item" id="openModalBtn" type="button">Назначить роль</button>
+                @if (Model.CanUserSetTheRoles)
+                {
+                    <button class="user-actions-dropdown-item" id="openModalBtn" type="button">Назначить роль</button>
+                }
+                @if (Model.CanUserRejectReviews)
+                {
+                    <button class="user-actions-dropdown-item" id="openRejectReviewsModalBtn" type="button">Удалить все предложенные отзывы</button>
+                }
+                @if (Model.CanUserRejectComments)
+                {
+                    <button class="user-actions-dropdown-item" id="openRejectCommentsModalBtn" type="button">Удалить все предложенные комментарии</button>
+                }
             </div>
         </div>
     }
@@ -70,7 +124,7 @@
                     <p>Ролей нет</p>
                 }
 
-                @if (Model.CanUserSetTheRoles && Model.User.Id != new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
+                @if (Model.CanUserSetTheRoles && Model.CurrentUserId != null && Model.User.Id != Model.CurrentUserId)
                 {
                     string returnUrl = Context.Request.Path;
                     if (Context.Request.QueryString.HasValue)
@@ -148,38 +202,184 @@
         <p class="no-content-message" id="noContentMessage" style="display: none;">Ничего не найдено</p>
     </div>
 </div>
-@if (Model.CanUserSetTheRoles && Model.User.Id != new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
-{
-    <script>
-        const overlay = document.getElementById('modalOverlay');
-        const openModalBtn = document.getElementById('openModalBtn');
-        const actionsMenuBtn = document.getElementById('actionsMenuBtn');
-        const actionsDropdown = document.getElementById('actionsDropdown');
-
-        overlay.onclick = (e) => {
-            if (e.target === overlay) {
-                overlay.style.display = 'none';
-            }
-        }
-
-        actionsMenuBtn.onclick = (e) => {
-            e.stopPropagation();
-            actionsDropdown.classList.toggle('open');
-        }
-
-        document.addEventListener('click', (e) => {
-            if (!actionsDropdown.contains(e.target) && e.target !== actionsMenuBtn) {
-                actionsDropdown.classList.remove('open');
-            }
-        });
-
-        openModalBtn.onclick = () => {
-            actionsDropdown.classList.remove('open');
-            overlay.style.display = 'flex';
-        }
-    </script>
-}
 <script src="~/js/loadSpinner.js"></script>
+@if (Model.CurrentUserId != null && Model.User.Id != Model.CurrentUserId)
+{
+    @if (Model.CanUserSetTheRoles || Model.CanUserRejectReviews || Model.CanUserRejectComments)
+    {
+        <script>
+            const actionsMenuBtn = document.getElementById('actionsMenuBtn');
+            const actionsDropdown = document.getElementById('actionsDropdown');
+
+            actionsMenuBtn.onclick = (e) => {
+                e.stopPropagation();
+                actionsDropdown.classList.toggle('open');
+            }
+
+            document.addEventListener('click', (e) => {
+                if (!actionsDropdown.contains(e.target) && e.target !== actionsMenuBtn) {
+                    actionsDropdown.classList.remove('open');
+                }
+            });
+        </script>
+    }
+    @if (Model.CanUserSetTheRoles)
+    {
+        <script>
+            const overlay = document.getElementById('modalOverlay');
+            const openModalBtn = document.getElementById('openModalBtn');
+
+            overlay.onclick = (e) => {
+                if (e.target === overlay) {
+                    overlay.style.display = 'none';
+                }
+            }
+
+            openModalBtn.onclick = () => {
+                actionsDropdown.classList.remove('open');
+                overlay.style.display = 'flex';
+            }
+        </script>
+    }
+    @if (Model.CanUserRejectReviews)
+    {
+        <script>
+            const rejectReviewsOverlay = document.getElementById('modalOverlayRejectReviews');
+            const openRejectReviewsModalBtn = document.getElementById('openRejectReviewsModalBtn');
+            const rejectAllUserReviewsForm = document.getElementById('rejectAllUserReviewsForm');
+            const rejectReviewsErrorMessageContainer = document.getElementById('rejectReviewsErrorMessageContainer');
+            let rejectAllUserReviewsProcessing = false;
+            rejectReviewsOverlay.onclick = (e) => {
+                if (e.target === rejectReviewsOverlay) {
+                    rejectReviewsOverlay.style.display = 'none';
+                }
+            }
+            openRejectReviewsModalBtn.onclick = () => {
+                actionsDropdown.classList.remove('open');
+                rejectReviewsOverlay.style.display = 'flex';
+            }
+            rejectAllUserReviewsForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                if (rejectAllUserReviewsProcessing) return;
+
+                rejectAllUserReviewsProcessing = true;
+                rejectReviewsErrorMessageContainer.style.display = 'none';
+
+                const formData = new FormData(this);
+                try {
+                    const response = await fetch(this.action,
+                        {
+                            method: this.method,
+                            body: formData
+                        });
+
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else if (response.status === 400) {
+                        const result = await response.json();
+
+                        rejectReviewsErrorMessageContainer.textContent = '';
+
+                        if (result.errors && result.errors.length > 0) {
+                            result.errors.forEach(error => {
+                                const errorItem = document.createElement('div');
+                                errorItem.textContent = error;
+                                rejectReviewsErrorMessageContainer.appendChild(errorItem);
+                            });
+                            rejectReviewsErrorMessageContainer.style.display = 'block';
+                        }
+                    } else {
+                        rejectReviewsErrorMessageContainer.textContent = 'Что-то пошло не так';
+                        rejectReviewsErrorMessageContainer.style.display = 'block';
+                    }
+                } catch (e) {
+                    rejectReviewsErrorMessageContainer.textContent = 'Что-то пошло не так';
+                    rejectReviewsErrorMessageContainer.style.display = 'block';
+                    console.log('Failed to execute');
+                } finally {
+                    rejectAllUserReviewsProcessing = false;
+                }
+            });
+
+            const rejectionReasonReviews = document.getElementById('rejectionReasonReviews');
+            function autoResizeReviews(textarea) {
+                textarea.style.height = 'auto';
+                textarea.style.height = textarea.scrollHeight + 'px';
+            }
+            rejectionReasonReviews.addEventListener('input', () => autoResizeReviews(rejectionReasonReviews));
+        </script>
+    }
+    @if (Model.CanUserRejectComments)
+    {
+        <script>
+            const rejectCommentsOverlay = document.getElementById('modalOverlayRejectComments');
+            const openRejectCommentsModalBtn = document.getElementById('openRejectCommentsModalBtn');
+            const rejectAllUserCommentsForm = document.getElementById('rejectAllUserCommentsForm');
+            const rejectCommentsErrorMessageContainer = document.getElementById('rejectCommentsErrorMessageContainer');
+            let rejectAllUserCommentsProcessing = false;
+            rejectCommentsOverlay.onclick = (e) => {
+                if (e.target === rejectCommentsOverlay) {
+                    rejectCommentsOverlay.style.display = 'none';
+                }
+            }
+            openRejectCommentsModalBtn.onclick = () => {
+                actionsDropdown.classList.remove('open');
+                rejectCommentsOverlay.style.display = 'flex';
+            }
+            rejectAllUserCommentsForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                if (rejectAllUserCommentsProcessing) return;
+
+                rejectAllUserCommentsProcessing = true;
+                rejectCommentsErrorMessageContainer.style.display = 'none';
+
+                const formData = new FormData(this);
+                try {
+                    const response = await fetch(this.action,
+                        {
+                            method: this.method,
+                            body: formData
+                        });
+
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else if (response.status === 400) {
+                        const result = await response.json();
+
+                        rejectCommentsErrorMessageContainer.textContent = '';
+
+                        if (result.errors && result.errors.length > 0) {
+                            result.errors.forEach(error => {
+                                const errorItem = document.createElement('div');
+                                errorItem.textContent = error;
+                                rejectCommentsErrorMessageContainer.appendChild(errorItem);
+                            });
+                            rejectCommentsErrorMessageContainer.style.display = 'block';
+                        }
+                    } else {
+                        rejectCommentsErrorMessageContainer.textContent = 'Что-то пошло не так';
+                        rejectCommentsErrorMessageContainer.style.display = 'block';
+                    }
+                } catch (e) {
+                    rejectCommentsErrorMessageContainer.textContent = 'Что-то пошло не так';
+                    rejectCommentsErrorMessageContainer.style.display = 'block';
+                    console.log('Failed to execute');
+                } finally {
+                    rejectAllUserCommentsProcessing = false;
+                }
+            });
+
+            const rejectionReasonComments = document.getElementById('rejectionReasonComments');
+            function autoResizeComments(textarea) {
+                textarea.style.height = 'auto';
+                textarea.style.height = textarea.scrollHeight + 'px';
+            }
+            rejectionReasonComments.addEventListener('input', () => autoResizeComments(rejectionReasonComments));
+        </script>
+    }
+}
 <script>
     const section = document.querySelector('.content-section');
     
