@@ -79,6 +79,20 @@ namespace ReviewMicroservice.Api.Controllers
             return Ok(new ReviewsResult { IsNextPageExisted = reviewsNextPage.Count > 0, Reviews = reviews });
         }
 
+        [Authorize(Roles = RoleNames.Admin + "," + RoleNames.Moderator)]
+        [HttpGet]
+        [Route("get/under-consideration/user/{userId}")]
+        public async Task<IActionResult> GetAllUserReviewsUnderConsiderationAsync([FromRoute] Guid userId, [FromQuery] Pagination pagination)
+        {
+            var reviews = await unitOfWork.ReviewRepository.GetByUserIdAsync(userId, EntityStatus.UnderConsideration,
+                OrderByDate.Ascending, pagination.PageNumber, pagination.PageSize);
+
+            var reviewsNextPage = await unitOfWork.ReviewRepository.GetByUserIdAsync(userId, EntityStatus.UnderConsideration,
+                OrderByDate.Ascending, pagination.PageNumber + 1, pagination.PageSize);
+
+            return Ok(new ReviewsResult { IsNextPageExisted = reviewsNextPage.Count > 0, Reviews = reviews });
+        }
+
         [HttpGet]
         [Route("get/all/{userId}/verified")]
         public async Task<IActionResult> GetAllVerifiedReviewsByUserIdAsync([FromRoute] Guid userId, [FromQuery] Pagination pagination)
@@ -384,6 +398,47 @@ namespace ReviewMicroservice.Api.Controllers
             logger.LogInformation("User {UserId} rejected review {ReviewId}", userIdStr, model.ReviewId);
 
             if (model.AddRestriction != null) return Accepted();
+
+            return Ok();
+        }
+
+        [Authorize(Roles = RoleNames.Admin + "," + RoleNames.Moderator)]
+        [HttpPut]
+        [Route("reject/review/all")]
+        public async Task<IActionResult> RejectAllReviewsByUserIdAsync([FromQuery] Guid userId, [FromBody] RejectAllUserReviewsDto model)
+        {
+            var reviews = await unitOfWork.ReviewRepository.GetByUserIdAsync(userId, EntityStatus.UnderConsideration);
+            if (reviews.Count == 0) return NotFound("Reviews by user with current identifier do not exist");
+
+            List<Guid> reviewIds = reviews.Select(x => x.Id).ToList();
+
+            List<Guid> itemIdsCreatedWithReviews = new();
+            foreach (var review in reviews)
+            {
+                if(review.IsCreatedWithItem)
+                    itemIdsCreatedWithReviews.Add(review.ItemId);
+            }
+
+            try
+            {
+                await unitOfWork.BeginTransactionAsync();
+
+                await unitOfWork.ReviewRepository.ExecuteReviewsUpdateAsync(reviewIds, EntityStatus.Rejected, model.RejectionReason);
+
+                if (itemIdsCreatedWithReviews.Count > 0)
+                    await messagePublisher.PublishAsync(new ReviewsCreatedWithItemRejectedEvent { ItemIds = itemIdsCreatedWithReviews });
+
+                await unitOfWork.CommitTransactionAsync();
+            }
+            catch (Exception e)
+            {
+                await unitOfWork.RollbackTransactionAsync();
+                logger.LogCritical(e, "An exception was thrown while processing user reviews rejecting method");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+
+            string userIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            logger.LogInformation("User {AdminUserId} rejected reviews by {UserId}", userIdStr, userId);
 
             return Ok();
         }
