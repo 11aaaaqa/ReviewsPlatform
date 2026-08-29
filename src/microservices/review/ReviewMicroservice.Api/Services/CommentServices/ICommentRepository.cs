@@ -8,6 +8,7 @@ namespace ReviewMicroservice.Api.Services.CommentServices
         Task<Comment?> GetByIdAsync(Guid commentId);
         Task<List<Comment>> GetByReviewIdAsync(Guid reviewId, int pageSize, int pageNumber);
         Task<List<Comment>> GetCommentRepliesAsync(Guid parentCommentId, int pageSize, int pageNumber);
+        Task<List<Comment>> GetByUserIdAsync(Guid userId, EntityStatus status);
         Task<List<Comment>> GetByUserIdAsync(Guid userId, EntityStatus status, OrderByDate orderByDate, int pageSize, int pageNumber);
         Task<List<Comment>> GetAllByStatusAsync(EntityStatus status, OrderByDate orderByDate, int pageSize, int pageNumber);
         Task<List<Guid>> GetAllCommentIdsByReviewIdAsync(Guid reviewId);
@@ -15,6 +16,7 @@ namespace ReviewMicroservice.Api.Services.CommentServices
         Task ExecuteDeleteCommentsByIdsAsync(List<Guid> commentIds);
         Task ExecuteDeleteCommentsByParentIdsAsync(List<Guid> parentIds);
         Task ExecuteDeleteCommentsByReviewIdAsync(Guid reviewId);
+        Task ExecuteCommentsUpdateAsync(List<Guid> commentIds, EntityStatus newStatus, string rejectionReason, Guid consideredByUserId);
         Task AddAsync(Comment model);
         void Update(Comment model);
         Task RemoveAsync(Guid commentId);

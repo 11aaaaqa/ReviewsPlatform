@@ -36,6 +36,9 @@ namespace ReviewMicroservice.Api.Services.CommentServices
                 .ToListAsync();
         }
 
+        public async Task<List<Comment>> GetByUserIdAsync(Guid userId, EntityStatus status)
+            => await context.Comments.Where(x => x.UserId == userId && x.CommentStatus == status).ToListAsync();
+
         public async Task<List<Comment>> GetByUserIdAsync(Guid userId, EntityStatus status, OrderByDate orderByDate, int pageSize, int pageNumber)
         {
             var comments = context.Comments.Where(x => x.CommentStatus == status)
@@ -97,6 +100,19 @@ namespace ReviewMicroservice.Api.Services.CommentServices
         public async Task ExecuteDeleteCommentsByReviewIdAsync(Guid reviewId)
         {
             await context.Comments.Where(x => x.ReviewId == reviewId).ExecuteDeleteAsync();
+        }
+
+        public async Task ExecuteCommentsUpdateAsync(List<Guid> commentIds, EntityStatus newStatus, string rejectionReason,
+            Guid consideredByUserId)
+        {
+            await context.Comments
+                .Where(x => commentIds.Contains(x.Id))
+                .ExecuteUpdateAsync(x =>
+                {
+                    x.SetProperty(y => y.CommentStatus, newStatus);
+                    x.SetProperty(y => y.RejectionReason, rejectionReason);
+                    x.SetProperty(y => y.ConsideredByUserId, consideredByUserId);
+                });
         }
 
         public async Task AddAsync(Comment model)
