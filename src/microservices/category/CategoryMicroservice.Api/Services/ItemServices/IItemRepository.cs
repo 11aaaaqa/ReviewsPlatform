@@ -7,6 +7,7 @@ namespace CategoryMicroservice.Api.Services.ItemServices
         Task<Item?> GetByIdAsync(Guid itemId);
         Task<Item?> GetVerifiedItemByNameAsync(string name);
         Task<List<Item>> GetByNameAsync(string name);
+        Task<List<Item>> GetByItemIdsAsync(List<Guid> itemIds);
         Task<List<Item>> GetAllBySubcategoryIdAsync(Guid subcategoryId, int pageNumber, int pageSize);
         Task<List<Item>> GetAllBySubcategoryIdAsync(Guid subcategoryId);
         Task<List<Item>> GetAllBySubcategoryIdAsync(List<Guid> subcategoryIds);

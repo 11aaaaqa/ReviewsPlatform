@@ -16,6 +16,9 @@ namespace CategoryMicroservice.Api.Services.ItemServices
         public async Task<List<Item>> GetByNameAsync(string name)
             => await context.Items.Where(x => x.Name.ToLower() == name.ToLower()).ToListAsync();
 
+        public async Task<List<Item>> GetByItemIdsAsync(List<Guid> itemIds)
+            => await context.Items.Where(x => itemIds.Contains(x.Id)).ToListAsync();
+
         public async Task<List<Item>> GetAllBySubcategoryIdAsync(Guid subcategoryId, int pageNumber, int pageSize)
         {
             var items = await context.Items
