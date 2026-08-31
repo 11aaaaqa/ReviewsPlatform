@@ -37,6 +37,15 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
             return await reviews.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
         }
 
+        public async Task<List<ReviewNoPictures>> GetByUserIdAsync(Guid userId, EntityStatus status)
+            => await context.Reviews.Where(x => x.UserId == userId && x.ReviewStatus == status).Select(x => new ReviewNoPictures
+            { 
+                Id = x.Id, ReviewStatus = x.ReviewStatus, UserId = x.UserId, ItemId = x.ItemId, ItemEstimation = x.ItemEstimation,
+                IsCreatedWithItem = x.IsCreatedWithItem, CreatedAt = x.CreatedAt, DislikesCount = x.DislikesCount,
+                LikesCount = x.LikesCount, RejectionReason = x.RejectionReason, ShortReview = x.ShortReview, Text = x.Text,
+                CommentsCount = x.CommentsCount
+            }).ToListAsync();
+
         public async Task<List<ReviewNoPictures>> GetByUserIdAsync(Guid userId, EntityStatus reviewStatus,
             OrderByDate orderByDate, int pageNumber, int pageSize)
         {
@@ -118,6 +127,17 @@ namespace ReviewMicroservice.Api.Services.ReviewServices
                 .Where(x => x.Id == reviewId)
                 .ExecuteUpdateAsync(x => 
                     x.SetProperty(y => y.CommentsCount, y => y.CommentsCount + delta));
+        }
+
+        public async Task ExecuteReviewsUpdateAsync(List<Guid> reviewIds, EntityStatus newStatus, string rejectionReason)
+        {
+            await context.Reviews
+                .Where(x => reviewIds.Contains(x.Id))
+                .ExecuteUpdateAsync(x =>
+                {
+                    x.SetProperty(y => y.ReviewStatus, newStatus);
+                    x.SetProperty(y => y.RejectionReason, rejectionReason);
+                });
         }
 
         public async Task<List<ReviewNoPictures>> GetByItemIdAsync(Guid itemId, OrderByEstimation orderByEstimation, int pageNumber, int pageSize)

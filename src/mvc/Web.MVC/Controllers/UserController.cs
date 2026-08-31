@@ -11,6 +11,7 @@ using Web.MVC.Models.Api_responses;
 using Web.MVC.Models.Api_responses.account;
 using Web.MVC.Models.Api_responses.category;
 using Web.MVC.Models.Api_responses.comment;
+using Web.MVC.Models.Api_responses.restriction;
 using Web.MVC.Models.Api_responses.review;
 using Web.MVC.Models.Api_responses.review.enums;
 using Web.MVC.Models.View_models.Category;
@@ -42,29 +43,44 @@ namespace Web.MVC.Controllers
         [HttpGet]
         public async Task<IActionResult> GetUserById(Guid userId)
         {
-            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+            HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.Default);
             var userResponse = await httpClient.GetAsync($"/api/User/get-user-by-id/{userId}");
             userResponse.EnsureSuccessStatusCode();
             var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
 
             bool canUserSetTheRoles = User.IsInRole(RoleNames.Admin);
             bool canUserViewTheRoles = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.Moderator);
-            string avatarSrc = imageConverter.GetImageSrc(user.AvatarSource);
+            string avatarSrc = imageConverter.GetImageSrc(user!.AvatarSource);
             var model = new GetUserByIdViewModel
             {
                 User = user, CanUserSetTheRoles = canUserSetTheRoles,
                 CanUserViewTheRoles = canUserViewTheRoles, AvatarSrc = avatarSrc, 
-                CanUserViewCommsReviewsWithDifferentStatuses = false
+                CanUserViewCommsReviewsWithDifferentStatuses = false, ActiveRestriction = null,
+                CanUserRejectComments = false, CanUserRejectReviews = false, CanUserAddRestriction = false,
+                CanUserDisableRestriction = false
             };
             if (canUserSetTheRoles)
             {
-                var allRolesResponse = await httpClient.GetAsync("/api/Role/all");
+                HttpClient httpClientToken = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+                var allRolesResponse = await httpClientToken.GetAsync("/api/Role/all");
                 allRolesResponse.EnsureSuccessStatusCode();
                 var allRoles = await allRolesResponse.Content.ReadFromJsonAsync<List<RoleResponse>>();
-                model.AllRoles = allRoles;
+                model.AllRoles = allRoles!;
             }
 
-            if (User.Identity.IsAuthenticated)
+            var activeRestrictionResponse = await httpClient.GetAsync($"/api/Restriction/get/active?userId={userId}");
+            if (activeRestrictionResponse.IsSuccessStatusCode)
+            {
+                var activeRestriction = await activeRestrictionResponse.Content.ReadFromJsonAsync<RestrictionResponse>();
+                model.ActiveRestriction = activeRestriction;
+            }
+            else
+            {
+                if (activeRestrictionResponse.StatusCode != HttpStatusCode.NotFound)
+                    activeRestrictionResponse.EnsureSuccessStatusCode();
+            }
+
+            if (User.Identity!.IsAuthenticated)
             {
                 string currentUserIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
                 Guid currentUserId = new Guid(currentUserIdStr);
@@ -72,6 +88,28 @@ namespace Web.MVC.Controllers
                     model.CanUserViewCommsReviewsWithDifferentStatuses = true;
 
                 model.CurrentUserId = currentUserId;
+
+                if (User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.Moderator))
+                {
+                    if (model.ActiveRestriction != null)
+                        model.CanUserDisableRestriction = true;
+                    else
+                        model.CanUserAddRestriction = true;
+                    
+                    HttpClient httpClientToken = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+
+                    var reviewsUnderConsiderationResponse = await httpClientToken.GetAsync(
+                        $"/api/Review/get/under-consideration/user/{userId}?pageSize=10&pageNumber=1");
+                    reviewsUnderConsiderationResponse.EnsureSuccessStatusCode();
+                    var reviewsUnderConsideration = await reviewsUnderConsiderationResponse.Content.ReadFromJsonAsync<ReviewsResultResponse>();
+                    if (reviewsUnderConsideration!.Reviews.Count > 0) model.CanUserRejectReviews = true;
+
+                    var commentsUnderConsiderationResponse = await httpClientToken.GetAsync(
+                        $"/api/Comment/get/under-consideration/user/{userId}?pageSize=10&pageNumber=1");
+                    commentsUnderConsiderationResponse.EnsureSuccessStatusCode();
+                    var commentsUnderConsideration = await commentsUnderConsiderationResponse.Content.ReadFromJsonAsync<CommentsResultResponse>();
+                    if (commentsUnderConsideration!.Comments.Count > 0) model.CanUserRejectComments = true;
+                }
             }
 
             return View(model);

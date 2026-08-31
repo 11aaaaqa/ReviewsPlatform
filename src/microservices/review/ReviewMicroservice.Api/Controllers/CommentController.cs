@@ -45,6 +45,20 @@ namespace ReviewMicroservice.Api.Controllers
             return Ok(new CommentsResult { Comments = comments, IsNextPageExisted = commentsNextPage.Count > 0 });
         }
 
+        [Authorize(Roles = RoleNames.Admin + "," + RoleNames.Moderator)]
+        [HttpGet]
+        [Route("get/under-consideration/user/{userId}")]
+        public async Task<IActionResult> GetUserCommentsUnderConsiderationAsync([FromRoute] Guid userId, [FromQuery] Pagination pagination)
+        {
+            var comments = await unitOfWork.CommentRepository.GetByUserIdAsync(userId, EntityStatus.UnderConsideration,
+                OrderByDate.Ascending, pagination.PageSize, pagination.PageNumber);
+
+            var commentsNextPage = await unitOfWork.CommentRepository.GetByUserIdAsync(userId, EntityStatus.UnderConsideration,
+                OrderByDate.Ascending, pagination.PageSize, pagination.PageNumber + 1);
+
+            return Ok(new CommentsResult { Comments = comments, IsNextPageExisted = commentsNextPage.Count > 0 });
+        }
+
         [HttpGet]
         [Route("get-by-review-id/{reviewId}")]
         public async Task<IActionResult> GetCommentsByReviewIdAsync([FromRoute] Guid reviewId, [FromQuery] Pagination pagination)
@@ -291,6 +305,37 @@ namespace ReviewMicroservice.Api.Controllers
             }
 
             if (model.AddRestriction != null) return Accepted();
+
+            return Ok();
+        }
+
+        [Authorize(Roles = RoleNames.Admin + "," + RoleNames.Moderator)]
+        [HttpPut]
+        [Route("reject/comment/all")]
+        public async Task<IActionResult> RejectAllCommentsByUserIdAsync([FromQuery] Guid userId, [FromBody] RejectAllUserCommentsDto model)
+        {
+            var comments = await unitOfWork.CommentRepository.GetByUserIdAsync(userId, EntityStatus.UnderConsideration);
+            if (comments.Count == 0) return NotFound("Comments by user with current identifier do not exist");
+
+            List<Guid> commentIds = comments.Select(x => x.Id).ToList();
+
+            string currentUserIdStr = User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value;
+            Guid currentUserId = new Guid(currentUserIdStr);
+            try
+            {
+                await unitOfWork.BeginTransactionAsync();
+
+                await unitOfWork.CommentRepository.ExecuteCommentsUpdateAsync(commentIds, EntityStatus.Rejected,
+                    model.RejectionReason, currentUserId);
+
+                await unitOfWork.CommitTransactionAsync();
+            }
+            catch (Exception e)
+            {
+                await unitOfWork.RollbackTransactionAsync();
+                logger.LogCritical(e, "An exception was thrown while processing user comments rejecting method");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
 
             return Ok();
         }

@@ -57,7 +57,8 @@ builder.Services.AddRabbitMqMessageBus(new RabbitMqOptions
     .AddMessageBusHandler<ReviewCreatedSagaEvent, ReviewCreatedSagaEventConsumer>()
     .AddMessageBusHandler<ReviewRemovedEvent, ReviewRemovedEventConsumer>()
     .AddMessageBusHandler<ReviewAcceptedEvent, ReviewAcceptedEventConsumer>()
-    .AddMessageBusHandler<ReviewCreatedWithItemRejectedEvent, ReviewCreatedWithItemRejectedEventConsumer>();
+    .AddMessageBusHandler<ReviewCreatedWithItemRejectedEvent, ReviewCreatedWithItemRejectedEventConsumer>()
+    .AddMessageBusHandler<ReviewsCreatedWithItemRejectedEvent, ReviewsCreatedWithItemRejectedEventConsumer>();
 
 builder.Services.AddGrpcClient<RestrictionInfo.RestrictionInfoClient>(x =>
 {

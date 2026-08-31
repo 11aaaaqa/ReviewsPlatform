@@ -1,9 +1,164 @@
-﻿@using System.Security.Claims
+﻿@using Web.MVC.Constants
+@using Web.MVC.Models.Api_responses.restriction.enums
 @model Web.MVC.Models.View_models.User.GetUserByIdViewModel
 <link rel="stylesheet" href="~/css/user/get-user-by-id.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <div class="get-user-by-id-page-block">
+    @if ((Model.CanUserSetTheRoles || Model.CanUserRejectReviews || Model.CanUserRejectComments || Model.CanUserAddRestriction || Model.CanUserDisableRestriction)
+         && (Model.CurrentUserId != null && Model.User.Id != Model.CurrentUserId))
+    {
+        string returnUrl = Context.Request.Path;
+        if (Context.Request.QueryString.HasValue)
+            returnUrl += Context.Request.QueryString;
+
+        @if (Model.CanUserRejectReviews)
+        {
+            <div class="modal-overlay" id="modalOverlayRejectReviews">
+                <div class="modal-form">
+                    <form id="rejectAllUserReviewsForm" method="post" asp-controller="Admin" asp-action="RejectAllReviewsByUserId"
+                          asp-route-userId="@Model.User.Id">
+                        <div id="rejectReviewsErrorMessageContainer" style="display: none; color: red; margin-bottom: 3px;"></div>
+                        <div>
+                            <label for="rejectionReasonReviews" class="user-label">Причина отклонения отзывов</label>
+                            <textarea id="rejectionReasonReviews"
+                                            class="restriction-textarea"
+                                            placeholder="Введите причину отказа"
+                                            rows="3"
+                                            name="RejectionReason"
+                                            maxlength="@StringLengthDtoConstants.ReviewRejectReasonMax"></textarea>
+                        </div>
+                        <input class="btn-red" type="submit" value="Удалить"/>
+                    </form>
+                </div>
+            </div>
+        }
+        @if (Model.CanUserRejectComments)
+        {
+            <div class="modal-overlay" id="modalOverlayRejectComments">
+                <div class="modal-form">
+                    <form id="rejectAllUserCommentsForm" method="post" asp-controller="Admin" asp-action="RejectAllCommentsByUserId"
+                          asp-route-userId="@Model.User.Id">
+                        <div id="rejectCommentsErrorMessageContainer" style="display: none; color: red; margin-bottom: 3px;"></div>
+                        <div>
+                            <label for="rejectionReasonComments" class="user-label">Причина отклонения комментариев</label>
+                            <textarea id="rejectionReasonComments"
+                                              class="restriction-textarea"
+                                              placeholder="Введите причину отказа"
+                                              rows="3"
+                                              name="RejectionReason"
+                                              maxlength="@StringLengthDtoConstants.CommentRejectReasonMax"></textarea>
+                        </div>
+                        <input class="btn-red" type="submit" value="Удалить" />
+                    </form>
+                </div>
+            </div>
+        }
+        @if (Model.CanUserAddRestriction)
+        {
+            <div class="modal-overlay" id="modalOverlayAddRestriction">
+                <div class="modal-form">
+                    <form id="addRestrictionForm" method="post" asp-controller="Admin" asp-action="AddUserRestriction" asp-route-returnUrl="@returnUrl"
+                          asp-route-userId="@Model.User.Id">
+                        <div id="addRestrictionErrorMessageContainer" style="display: none; color: red; margin-bottom: 3px;"></div>
+
+                        <div class="form-group">
+                            <label>Тип блокировки</label>
+                            <div class="radio-pill-group">
+                                <label class="radio-pill">
+                                    <input type="radio" name="RestrictionType" value="ReviewPosting" checked/>
+                                    <span>Создание отзывов</span>
+                                </label>
+                                <label class="radio-pill">
+                                    <input type="radio" name="RestrictionType" value="Commenting"/>
+                                    <span>Создание комментариев</span>
+                                </label>
+                                <label class="radio-pill">
+                                    <input type="radio" name="RestrictionType" value="Reporting"/>
+                                    <span>Отправка жалоб</span>
+                                </label>
+                                <label class="radio-pill">
+                                    <input type="radio" name="RestrictionType" value="All"/>
+                                    <span>Все действия</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="restrictionDurationBlock">
+                            <label for="restrictionDuration">Длительность (в днях)</label>
+                            <input type="number" id="restrictionDuration" name="DurationDays" min="0" placeholder="Например, 7"/>
+                        </div>
+
+                        <label class="checkbox-row" for="isPermanentInput">
+                            <input id="isPermanentInput" type="checkbox" name="IsPermanent" value="false" />
+                            <span class="checkbox-custom"></span>
+                            <span class="checkbox-label">Заблокировать навсегда</span>
+                        </label>
+
+                        <div class="form-group">
+                            <label for="blockReason">Причина блокировки</label>
+                            <textarea id="blockReason"
+                                    class="restriction-textarea"
+                                    name="Reason"
+                                    rows="3"
+                                    placeholder="Введите причину блокировки"
+                                    maxlength="@StringLengthDtoConstants.RestrictionReasonMax"></textarea>
+                        </div>
+
+                        <input class="btn-red" type="submit" value="Отправить" />
+                    </form>
+                </div>
+            </div>
+        }
+        @if (Model.CanUserDisableRestriction)
+        {
+            <div class="modal-overlay" id="modalOverlayDisableRestriction">
+                <div class="modal-form">
+                    <form id="disableRestrictionForm" method="post" asp-controller="Admin" asp-action="DisableUserRestriction" asp-route-returnUrl="@returnUrl"
+                          asp-route-restrictionId="@Model.ActiveRestriction!.Id">
+                        <div id="disableRestrictionErrorMessageContainer" style="display: none; color: red; margin-bottom: 3px;"></div>
+                        <div>
+                            <label for="disableRestrictionReason" class="user-label">Причина снятия блокировки</label>
+                            <textarea id="disableRestrictionReason"
+                                      class="disable-restriction-textarea"
+                                      placeholder="Введите причину"
+                                      rows="3"
+                                      name="DisablingReason"
+                                      maxlength="@StringLengthDtoConstants.DisableRestrictionReasonMax"></textarea>
+                        </div>
+                        <input class="btn-red" type="submit" value="Отправить" />
+                    </form>
+                </div>
+            </div>
+        }
+        <div class="user-actions">
+            <button class="user-actions-btn" id="actionsMenuBtn" type="button">
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+            </button>
+            <div class="user-actions-dropdown" id="actionsDropdown">
+                @if (Model.CanUserSetTheRoles)
+                {
+                    <button class="user-actions-dropdown-item" id="openModalBtn" type="button">Назначить роль</button>
+                }
+                @if (Model.CanUserRejectReviews)
+                {
+                    <button class="user-actions-dropdown-item" id="openRejectReviewsModalBtn" type="button">Удалить все предложенные отзывы</button>
+                }
+                @if (Model.CanUserRejectComments)
+                {
+                    <button class="user-actions-dropdown-item" id="openRejectCommentsModalBtn" type="button">Удалить все предложенные комментарии</button>
+                }
+                @if (Model.CanUserAddRestriction)
+                {
+                    <button class="user-actions-dropdown-item" id="openAddRestrictionModalBtn" type="button">Заблокировать пользователя</button>
+                }
+                @if (Model.CanUserDisableRestriction)
+                {
+                    <button class="user-actions-dropdown-item" id="openDisableRestrictionModalBtn" type="button">Снять ограничение</button>
+                }
+            </div>
+        </div>
+    }
     <div class="user-info-block">
         <div class="avatar-block">
             <img src="@Model.AvatarSrc" width="180" height="180" />
@@ -11,6 +166,35 @@
         <div>
             <h4>@Model.User.UserName</h4>
             <p class="dim-colored bolder">Дата регистрации: @Model.User.RegistrationDate.ToString("dd.MM.yyyy")</p>
+            @if (Model.ActiveRestriction != null)
+            {
+                <div class="restriction-info-block">
+                    <p>У пользователя есть ограничение по причине: @Model.ActiveRestriction.Reason</p>
+                    @switch (Model.ActiveRestriction.RestrictionType)
+                    {
+                        case RestrictionType.All:
+                            <p>Тип ограничения: Все</p>
+                            break;
+                        case RestrictionType.Commenting:
+                            <p>Тип ограничения: Создание комментариев</p>
+                            break;
+                        case RestrictionType.ReviewPosting:
+                            <p>Тип ограничения: Публикация отзывов</p>
+                            break;
+                        case RestrictionType.Reporting:
+                            <p>Тип ограничения: Сообщение о нарушениях</p>
+                            break;
+                    }
+                    @if (Model.ActiveRestriction.IsPermanent)
+                    {
+                        <p>Ограничение действует до: Перманентно</p>
+                    }
+                    else
+                    {
+                        <p>Ограничение действует до: @Model.ActiveRestriction.ExpiryTime.ToString("dd.MM.yyyy")</p>
+                    }
+                </div>
+            }
             @if (Model.CanUserViewTheRoles)
             {
                 @if (Model.User.Roles.Count > 0)
@@ -29,23 +213,22 @@
                     <p>Ролей нет</p>
                 }
 
-                @if (Model.CanUserSetTheRoles && Model.User.Id != new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
+                @if (Model.CanUserSetTheRoles && Model.CurrentUserId != null && Model.User.Id != Model.CurrentUserId)
                 {
-                    <button class="btn-wide-stretched" style="margin-top: 5px;" id="openModalBtn">Назначить роль</button>
                     string returnUrl = Context.Request.Path;
                     if (Context.Request.QueryString.HasValue)
                         returnUrl += Context.Request.QueryString;
                     <div class="modal-overlay" id="modalOverlay">
                         <div class="modal-form">
                             <form method="post" asp-controller="User" asp-action="SetUserRoles" asp-route-userId="@Model.User.Id">
-                                <input type="hidden" name="returnUrl" value="@returnUrl"/>
+                                <input type="hidden" name="returnUrl" value="@returnUrl" />
                                 <div class="roles-checkboxes">
                                     @foreach (var role in Model.AllRoles)
                                     {
                                         @if (Model.User.Roles.Any(x => x.Id == role.Id))
                                         {
                                             <label class="checkbox-container">
-                                                <input class="checkbox" type="checkbox" name="roleIds" value="@role.Id" checked/>
+                                                <input class="checkbox" type="checkbox" name="roleIds" value="@role.Id" checked />
                                                 <div class="custom-checkbox"></div>
                                                 <span class="checkbox-text">@role.Name</span>
                                             </label>
@@ -53,7 +236,7 @@
                                         else
                                         {
                                             <label class="checkbox-container">
-                                                <input class="checkbox" type="checkbox" name="roleIds" value="@role.Id"/>
+                                                <input class="checkbox" type="checkbox" name="roleIds" value="@role.Id" />
                                                 <div class="custom-checkbox"></div>
                                                 <span class="checkbox-text">@role.Name</span>
                                             </label>
@@ -61,7 +244,7 @@
                                     }
                                 </div>
 
-                                <input class="btn-green" type="submit" value="Сохранить"/>
+                                <input class="btn-green" type="submit" value="Сохранить" />
                             </form>
                         </div>
                     </div>
@@ -108,24 +291,323 @@
         <p class="no-content-message" id="noContentMessage" style="display: none;">Ничего не найдено</p>
     </div>
 </div>
-@if (Model.CanUserSetTheRoles && Model.User.Id != new Guid(User.Claims.Single(x => x.Type == ClaimTypes.NameIdentifier).Value))
-{
-    <script>
-    const overlay = document.getElementById('modalOverlay');
-    const openModalBtn = document.getElementById('openModalBtn');
-
-    overlay.onclick = (e) => {
-        if(e.target === overlay) {
-            overlay.style.display = 'none';
-        }
-    }
-
-    openModalBtn.onclick = () => {
-        overlay.style.display = 'flex';
-    }
-</script>
-}
+<script src="~/js/autoResize.js"></script>
 <script src="~/js/loadSpinner.js"></script>
+@if (Model.CurrentUserId != null && Model.User.Id != Model.CurrentUserId)
+{
+    @if (Model.CanUserSetTheRoles || Model.CanUserRejectReviews || Model.CanUserRejectComments || Model.CanUserAddRestriction || Model.CanUserDisableRestriction)
+    {
+        <script>
+            const actionsMenuBtn = document.getElementById('actionsMenuBtn');
+            const actionsDropdown = document.getElementById('actionsDropdown');
+
+            actionsMenuBtn.onclick = (e) => {
+                e.stopPropagation();
+                actionsDropdown.classList.toggle('open');
+            }
+
+            document.addEventListener('click', (e) => {
+                if (!actionsDropdown.contains(e.target) && e.target !== actionsMenuBtn) {
+                    actionsDropdown.classList.remove('open');
+                }
+            });
+        </script>
+    }
+    @if (Model.CanUserSetTheRoles)
+    {
+        <script>
+            const overlay = document.getElementById('modalOverlay');
+            const openModalBtn = document.getElementById('openModalBtn');
+
+            overlay.onclick = (e) => {
+                if (e.target === overlay) {
+                    overlay.style.display = 'none';
+                }
+            }
+
+            openModalBtn.onclick = () => {
+                actionsDropdown.classList.remove('open');
+                overlay.style.display = 'flex';
+            }
+        </script>
+    }
+    @if (Model.CanUserRejectReviews)
+    {
+        <script>
+            const rejectReviewsOverlay = document.getElementById('modalOverlayRejectReviews');
+            const openRejectReviewsModalBtn = document.getElementById('openRejectReviewsModalBtn');
+            const rejectAllUserReviewsForm = document.getElementById('rejectAllUserReviewsForm');
+            const rejectReviewsErrorMessageContainer = document.getElementById('rejectReviewsErrorMessageContainer');
+            let rejectAllUserReviewsProcessing = false;
+            rejectReviewsOverlay.onclick = (e) => {
+                if (e.target === rejectReviewsOverlay) {
+                    rejectReviewsOverlay.style.display = 'none';
+                }
+            }
+            openRejectReviewsModalBtn.onclick = () => {
+                actionsDropdown.classList.remove('open');
+                rejectReviewsOverlay.style.display = 'flex';
+            }
+            rejectAllUserReviewsForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                if (rejectAllUserReviewsProcessing) return;
+
+                rejectAllUserReviewsProcessing = true;
+                rejectReviewsErrorMessageContainer.style.display = 'none';
+
+                const formData = new FormData(this);
+                try {
+                    const response = await fetch(this.action,
+                        {
+                            method: this.method,
+                            body: formData
+                        });
+
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else if (response.status === 400) {
+                        const result = await response.json();
+
+                        rejectReviewsErrorMessageContainer.textContent = '';
+
+                        if (result.errors && result.errors.length > 0) {
+                            result.errors.forEach(error => {
+                                const errorItem = document.createElement('div');
+                                errorItem.textContent = error;
+                                rejectReviewsErrorMessageContainer.appendChild(errorItem);
+                            });
+                            rejectReviewsErrorMessageContainer.style.display = 'block';
+                        }
+                    } else {
+                        rejectReviewsErrorMessageContainer.textContent = 'Что-то пошло не так';
+                        rejectReviewsErrorMessageContainer.style.display = 'block';
+                    }
+                } catch (e) {
+                    rejectReviewsErrorMessageContainer.textContent = 'Что-то пошло не так';
+                    rejectReviewsErrorMessageContainer.style.display = 'block';
+                    console.log('Failed to execute');
+                } finally {
+                    rejectAllUserReviewsProcessing = false;
+                }
+            });
+
+            const rejectionReasonReviews = document.getElementById('rejectionReasonReviews');
+            rejectionReasonReviews.addEventListener('input', () => autoResizeTextarea(rejectionReasonReviews));
+        </script>
+    }
+    @if (Model.CanUserRejectComments)
+    {
+        <script>
+            const rejectCommentsOverlay = document.getElementById('modalOverlayRejectComments');
+            const openRejectCommentsModalBtn = document.getElementById('openRejectCommentsModalBtn');
+            const rejectAllUserCommentsForm = document.getElementById('rejectAllUserCommentsForm');
+            const rejectCommentsErrorMessageContainer = document.getElementById('rejectCommentsErrorMessageContainer');
+            let rejectAllUserCommentsProcessing = false;
+            rejectCommentsOverlay.onclick = (e) => {
+                if (e.target === rejectCommentsOverlay) {
+                    rejectCommentsOverlay.style.display = 'none';
+                }
+            }
+            openRejectCommentsModalBtn.onclick = () => {
+                actionsDropdown.classList.remove('open');
+                rejectCommentsOverlay.style.display = 'flex';
+            }
+            rejectAllUserCommentsForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                if (rejectAllUserCommentsProcessing) return;
+
+                rejectAllUserCommentsProcessing = true;
+                rejectCommentsErrorMessageContainer.style.display = 'none';
+
+                const formData = new FormData(this);
+                try {
+                    const response = await fetch(this.action,
+                        {
+                            method: this.method,
+                            body: formData
+                        });
+
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else if (response.status === 400) {
+                        const result = await response.json();
+
+                        rejectCommentsErrorMessageContainer.textContent = '';
+
+                        if (result.errors && result.errors.length > 0) {
+                            result.errors.forEach(error => {
+                                const errorItem = document.createElement('div');
+                                errorItem.textContent = error;
+                                rejectCommentsErrorMessageContainer.appendChild(errorItem);
+                            });
+                            rejectCommentsErrorMessageContainer.style.display = 'block';
+                        }
+                    } else {
+                        rejectCommentsErrorMessageContainer.textContent = 'Что-то пошло не так';
+                        rejectCommentsErrorMessageContainer.style.display = 'block';
+                    }
+                } catch (e) {
+                    rejectCommentsErrorMessageContainer.textContent = 'Что-то пошло не так';
+                    rejectCommentsErrorMessageContainer.style.display = 'block';
+                    console.log('Failed to execute');
+                } finally {
+                    rejectAllUserCommentsProcessing = false;
+                }
+            });
+
+            const rejectionReasonComments = document.getElementById('rejectionReasonComments');
+            rejectionReasonComments.addEventListener('input', () => autoResizeTextarea(rejectionReasonComments));
+        </script>
+    }
+    @if (Model.CanUserAddRestriction)
+    {
+        <script>
+            const restrictionDurationInput = document.getElementById('restrictionDuration');
+            const restrictionDurationBlock = document.getElementById('restrictionDurationBlock');
+            const isPermanentInput = document.getElementById('isPermanentInput');
+            isPermanentInput.addEventListener('change', function() {
+                const isPermanent = this.checked;
+                this.value = isPermanent ? 'true' : 'false';
+                restrictionDurationBlock.style.display = isPermanent ? 'none' : '';
+                if (isPermanent && !restrictionDurationInput.value) {
+                    restrictionDurationInput.value = '0';
+                } else if (!isPermanent && restrictionDurationInput.value === '0') {
+                    restrictionDurationInput.value = '';
+                }
+            });
+
+            const addRestrictionErrorMessageContainer = document.getElementById('addRestrictionErrorMessageContainer');
+            let addRestrictionProcessing = false;
+            const addRestrictionForm = document.getElementById('addRestrictionForm');
+            addRestrictionForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                if (addRestrictionProcessing) return;
+
+                addRestrictionProcessing = true;
+                addRestrictionErrorMessageContainer.style.display = 'none';
+
+                const formData = new FormData(this);
+                try {
+                    const response = await fetch(this.action,
+                        {
+                            method: this.method,
+                            body: formData
+                        });
+
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else if (response.status === 400) {
+                        const result = await response.json();
+
+                        addRestrictionErrorMessageContainer.textContent = '';
+
+                        if (result.errors && result.errors.length > 0) {
+                            result.errors.forEach(error => {
+                                const errorItem = document.createElement('div');
+                                errorItem.textContent = error;
+                                addRestrictionErrorMessageContainer.appendChild(errorItem);
+                            });
+                            addRestrictionErrorMessageContainer.style.display = 'block';
+                        }
+                    } else {
+                        addRestrictionErrorMessageContainer.textContent = 'Что-то пошло не так';
+                        addRestrictionErrorMessageContainer.style.display = 'block';
+                    }
+                } catch (e) {
+                    addRestrictionErrorMessageContainer.textContent = 'Что-то пошло не так';
+                    addRestrictionErrorMessageContainer.style.display = 'block';
+                    console.log('Failed to execute');
+                } finally {
+                    addRestrictionProcessing = false;
+                }
+            });
+
+            const addRestrictionReason = document.getElementById('blockReason');
+            addRestrictionReason.addEventListener('input', () => autoResizeTextarea(addRestrictionReason));
+
+            const openAddRestrictionModalBtn = document.getElementById('openAddRestrictionModalBtn');
+            const modalOverlayAddRestriction = document.getElementById('modalOverlayAddRestriction');
+            modalOverlayAddRestriction.onclick = (e) => {
+                if (e.target === modalOverlayAddRestriction) {
+                    modalOverlayAddRestriction.style.display = 'none';
+                }
+            }
+            openAddRestrictionModalBtn.onclick = () => {
+                actionsDropdown.classList.remove('open');
+                modalOverlayAddRestriction.style.display = 'flex';
+            }
+        </script>
+    }
+    @if (Model.CanUserDisableRestriction)
+    {
+        <script>
+            const disableRestrictionErrorMessageContainer = document.getElementById('disableRestrictionErrorMessageContainer');
+            let disableRestrictionProcessing = false;
+            const disableRestrictionForm = document.getElementById('disableRestrictionForm');
+            disableRestrictionForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                if (disableRestrictionProcessing) return;
+
+                disableRestrictionProcessing = true;
+                disableRestrictionErrorMessageContainer.style.display = 'none';
+
+                const formData = new FormData(this);
+                try {
+                    const response = await fetch(this.action,
+                        {
+                            method: this.method,
+                            body: formData
+                        });
+
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else if (response.status === 400) {
+                        const result = await response.json();
+
+                        disableRestrictionErrorMessageContainer.textContent = '';
+
+                        if (result.errors && result.errors.length > 0) {
+                            result.errors.forEach(error => {
+                                const errorItem = document.createElement('div');
+                                errorItem.textContent = error;
+                                disableRestrictionErrorMessageContainer.appendChild(errorItem);
+                            });
+                            disableRestrictionErrorMessageContainer.style.display = 'block';
+                        }
+                    } else {
+                        disableRestrictionErrorMessageContainer.textContent = 'Что-то пошло не так';
+                        disableRestrictionErrorMessageContainer.style.display = 'block';
+                    }
+                } catch (e) {
+                    disableRestrictionErrorMessageContainer.textContent = 'Что-то пошло не так';
+                    disableRestrictionErrorMessageContainer.style.display = 'block';
+                    console.log('Failed to execute');
+                } finally {
+                    disableRestrictionProcessing = false;
+                }
+            });
+
+            const disableRestrictionReason = document.getElementById('disableRestrictionReason');
+            disableRestrictionReason.addEventListener('input', () => autoResizeTextarea(disableRestrictionReason));
+
+            const openDisableRestrictionModalBtn = document.getElementById('openDisableRestrictionModalBtn');
+            const modalOverlayDisableRestriction = document.getElementById('modalOverlayDisableRestriction');
+            modalOverlayDisableRestriction.onclick = (e) => {
+                if (e.target === modalOverlayDisableRestriction) {
+                    modalOverlayDisableRestriction.style.display = 'none';
+                }
+            }
+            openDisableRestrictionModalBtn.onclick = () => {
+                actionsDropdown.classList.remove('open');
+                modalOverlayDisableRestriction.style.display = 'flex';
+            }
+        </script>
+    }
+}
 <script>
     const section = document.querySelector('.content-section');
     

@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 using Web.MVC.Constants;
@@ -43,6 +44,12 @@ builder.Services.AddTransient<DisplayConverter>();
 builder.Services.AddTransient<AuthHandler>();
 builder.Services.AddSingleton<ImageConverter>();
 builder.Services.AddSingleton<SortService>();
+
+builder.Services.Configure<MvcOptions>(options =>
+{
+    options.ModelBindingMessageProvider.SetValueMustNotBeNullAccessor(
+        value => "Поле обязательно для заполнения");
+});
 
 builder.Services.AddHttpClient(HttpClientNameConstants.Default, httpClient =>
 {
