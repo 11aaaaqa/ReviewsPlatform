@@ -440,5 +440,72 @@ namespace Web.MVC.Controllers
             return BadRequest(new
                 { errors = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList() });
         }
+
+        [HttpPost]
+        [Route("users/{userId}/restrictions/add")]
+        public async Task<IActionResult> AddUserRestriction([FromRoute] Guid userId, [FromQuery] string? returnUrl,
+            [FromForm] AddUserRestrictionDto model)
+        {
+            if (ModelState.IsValid)
+            {
+                HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+                using StringContent jsonContent = new(JsonSerializer.Serialize(new
+                {
+                    RestrictedUserId = userId, model.RestrictionType,
+                    Duration = new TimeSpan(days: model.DurationDays, hours: 0, minutes: 0, seconds: 0),
+                    model.IsPermanent, model.Reason
+                }), Encoding.UTF8, "application/json");
+
+                var addRestrictionResponse = await httpClient.PostAsync("/api/Restriction/add", jsonContent);
+
+                if (addRestrictionResponse.IsSuccessStatusCode)
+                {
+                    if (returnUrl != null)
+                        return LocalRedirect(returnUrl);
+
+                    return RedirectToAction("GetUserById", "User", new { userId });
+                }
+
+                if (addRestrictionResponse.StatusCode != HttpStatusCode.Conflict)
+                    addRestrictionResponse.EnsureSuccessStatusCode();
+                else
+                    ModelState.AddModelError(string.Empty,
+                        "У пользователя уже есть активное ограничение. Снимите его, если хотите добавить новое");
+            }
+
+            return BadRequest(new
+                { errors = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList() });
+        }
+
+        [HttpPost]
+        [Route("users/restrictions/{restrictionId}/disable")]
+        public async Task<IActionResult> DisableUserRestriction([FromRoute] Guid restrictionId, [FromQuery] string? returnUrl,
+            [FromForm] DisableUserRestrictionDto model)
+        {
+            if (ModelState.IsValid)
+            {
+                HttpClient httpClient = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
+                using StringContent jsonContent = new(JsonSerializer.Serialize(new
+                { RestrictionId = restrictionId, model.DisablingReason}), Encoding.UTF8, "application/json");
+
+                var disableRestrictionResponse = await httpClient.PutAsync("/api/Restriction/disable", jsonContent);
+
+                if (disableRestrictionResponse.IsSuccessStatusCode)
+                {
+                    if (returnUrl != null)
+                        return LocalRedirect(returnUrl);
+
+                    return RedirectToAction("Index", "Home");
+                }
+
+                if (disableRestrictionResponse.StatusCode != HttpStatusCode.NotFound)
+                    disableRestrictionResponse.EnsureSuccessStatusCode();
+                else
+                    ModelState.AddModelError(string.Empty, "Такого ограничения не существует");
+            }
+
+            return BadRequest(new
+                { errors = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList() });
+        }
     }
 }

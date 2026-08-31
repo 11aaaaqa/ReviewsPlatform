@@ -13,7 +13,117 @@
     margin-bottom: 3px;
 }
 
-.restriction-textarea {
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group > label {
+    display: block;
+    color: #444;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.radio-pill-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.radio-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.radio-pill input {
+    margin: 0;
+}
+
+.radio-pill:has(input:checked) {
+    border-color: #d32f2f;
+    background-color: rgba(211, 47, 47, 0.06);
+}
+
+#restrictionDurationBlock input[type="number"] {
+    width: 100%;
+    max-width: 200px;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+#restrictionDurationBlock input[type="number"]:focus {
+    border-color: #d32f2f;
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 16px 0;
+    font-size: 15px;
+    font-weight: 500;
+    color: #444;
+    cursor: pointer;
+    user-select: none;
+    cursor: pointer;
+}
+
+.checkbox-row input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.checkbox-custom {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    flex-shrink: 0;
+    position: relative;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.checkbox-custom::after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.checkbox-row:hover input:not(:disabled) ~ .checkbox-custom {
+    border-color: #d32f2f;
+}
+
+.checkbox-row input:checked ~ .checkbox-custom {
+    background-color: #d32f2f;
+    border-color: #d32f2f;
+}
+
+.checkbox-row input:checked ~ .checkbox-custom::after {
+    display: block;
+}
+
+.restriction-textarea, .disable-restriction-textarea {
     width: 100%;
     resize: none;
     overflow: hidden;
@@ -22,12 +132,16 @@
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 10px 12px;
+    outline: none;
     transition: border-color 0.2s;
 }
 
 .restriction-textarea:focus {
-    outline: none;
     border-color: #d32f2f;
+}
+
+.disable-restriction-textarea:focus {
+    border-color: salmon;
 }
 
 .restriction-info-block p {

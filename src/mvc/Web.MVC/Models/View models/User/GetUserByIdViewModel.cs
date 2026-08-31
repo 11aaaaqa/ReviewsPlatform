@@ -12,6 +12,8 @@ namespace Web.MVC.Models.View_models.User
         public bool CanUserSetTheRoles { get; set; }
         public bool CanUserViewTheRoles { get; set; }
         public bool CanUserViewCommsReviewsWithDifferentStatuses { get; set; }
+        public bool CanUserAddRestriction { get; set; }
+        public bool CanUserDisableRestriction { get; set; }
         public string AvatarSrc { get; set; }
         public RestrictionResponse? ActiveRestriction { get; set; }
         public List<RoleResponse> AllRoles { get; set; } = new();

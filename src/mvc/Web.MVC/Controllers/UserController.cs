@@ -56,7 +56,8 @@ namespace Web.MVC.Controllers
                 User = user, CanUserSetTheRoles = canUserSetTheRoles,
                 CanUserViewTheRoles = canUserViewTheRoles, AvatarSrc = avatarSrc, 
                 CanUserViewCommsReviewsWithDifferentStatuses = false, ActiveRestriction = null,
-                CanUserRejectComments = false, CanUserRejectReviews = false
+                CanUserRejectComments = false, CanUserRejectReviews = false, CanUserAddRestriction = false,
+                CanUserDisableRestriction = false
             };
             if (canUserSetTheRoles)
             {
@@ -90,6 +91,11 @@ namespace Web.MVC.Controllers
 
                 if (User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.Moderator))
                 {
+                    if (model.ActiveRestriction != null)
+                        model.CanUserDisableRestriction = true;
+                    else
+                        model.CanUserAddRestriction = true;
+                    
                     HttpClient httpClientToken = httpClientFactory.CreateClient(HttpClientNameConstants.DefaultWithToken);
 
                     var reviewsUnderConsiderationResponse = await httpClientToken.GetAsync(
