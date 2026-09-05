@@ -9,6 +9,7 @@
         public string PasswordHash { get; set; }
         public string PasswordSalt { get; set; }
         public byte[] AvatarSource { get; set; }
+        public string DefaultAvatarColorHex { get; set; }
         public bool IsAvatarDefault { get; set; }
         public DateOnly RegistrationDate { get; set; }
         public string? RefreshToken { get; set; }
@@ -16,17 +17,5 @@
         public DateTime RefreshTokenExpiryTime { get; set; }
 
         public List<Role> Roles { get; set; } = new();
-
-        public override bool Equals(object? obj)
-        {
-            if (obj is User user)
-                return Id == user.Id;
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Id);
-        }
     }
 }
