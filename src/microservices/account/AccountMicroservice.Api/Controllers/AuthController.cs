@@ -36,6 +36,7 @@ namespace AccountMicroservice.Api.Controllers
                 PasswordHash = passwordHashStr, PasswordSalt = passwordSaltStr, 
                 RegistrationDate = DateOnly.FromDateTime(DateTime.UtcNow)
             };
+            userToAdd.DefaultAvatarColorHex = avatarService.GenerateUserAvatarHexColor();
             userToAdd.AvatarSource = avatarService.GetDefaultUserAvatar(userToAdd);
             userToAdd.IsAvatarDefault = true;
 

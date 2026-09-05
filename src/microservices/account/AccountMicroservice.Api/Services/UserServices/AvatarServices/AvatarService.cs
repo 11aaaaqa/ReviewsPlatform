@@ -5,6 +5,7 @@ namespace AccountMicroservice.Api.Services.UserServices.AvatarServices
 {
     public class AvatarService : IAvatarService
     {
+        private static readonly Random random = new();
         private readonly SKColor[] colors = new[]
         {
             SKColors.DeepSkyBlue, SKColors.Green, SKColors.CornflowerBlue, SKColors.Orange,
@@ -12,12 +13,17 @@ namespace AccountMicroservice.Api.Services.UserServices.AvatarServices
             SKColors.DarkMagenta, SKColors.Red, SKColors.DeepPink
         };
 
+        public string GenerateUserAvatarHexColor()
+        {
+            int colorIndex = random.Next(colors.Length);
+            return colors[colorIndex].ToString();
+        }
+
         public byte[] GetDefaultUserAvatar(User user, int size = 200)
         {
             string displaySymbol = user.UserName.Trim().ToUpper()[0].ToString();
 
-            int colorIndex = Math.Abs(user.GetHashCode()) % colors.Length;
-            SKColor backgroundColor = colors[colorIndex];
+            SKColor backgroundColor = SKColor.Parse(user.DefaultAvatarColorHex);
 
             using SKSurface surface = SKSurface.Create(new SKImageInfo(size, size));
             SKCanvas canvas = surface.Canvas;
